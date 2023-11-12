@@ -10,6 +10,3 @@
   <img alt="PyPI" src="https://img.shields.io/pypi/v/fastprop">
   <img alt="PyPI - License" src="https://img.shields.io/github/license/JacksonBurns/fastprop">
 </p>
-
-## Online Documentation
-[Click here to read the documentation](https://JacksonBurns.github.io/fastprop/)
