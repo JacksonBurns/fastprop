@@ -2,12 +2,12 @@ import os
 import sys
 import unittest
 
-# from blankpythonproject import blankpythonproject
+# from fastprop import fastprop
 
 
-class Test_blankpythonproject(unittest.TestCase):
+class Test_fastprop(unittest.TestCase):
     """
-    Test the various functionalities of blankpythonproject.
+    Test the various functionalities of fastprop.
     """
 
     @classmethod

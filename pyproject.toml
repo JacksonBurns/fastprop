@@ -3,17 +3,17 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "blpyproj"
-version = "0.0.0"
+name = "fastprop"
+version = "0.0.0a0"
 authors = [
     { name = "Jackson Burns" },
 ]
 license = { text = "MIT" }
-description = "Catchy slogan."
+description = "Fast Molecular Property Prediction with mordredcommunity"
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-urls = { Homepage = "https://github.com/JacksonBurns/blank-python-project" }
+urls = { Homepage = "https://github.com/JacksonBurns/fastprop" }
 requires-python = ">=3.8"
 dependencies = []
 
@@ -33,5 +33,5 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["blankpythonproject*"]
+include = ["fastprop*"]
 exclude = ["docs*", "examples*", "test*"]

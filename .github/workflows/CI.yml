@@ -96,10 +96,10 @@ jobs:
       do_publish: ${{ steps.versioncheck.outputs.local_version_is_higher }} 
   
   pypi-package:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI
+    name: Build and publish Python distributions to PyPI
     runs-on: ubuntu-latest
     needs: [check-for-new-release, ci-report-status]
-    if: ${{ needs.check-for-new-release.outputs.do_publish == 'true' && github.ref == 'refs/heads/main' && github.repository == 'JacksonBurns/blank-python-project'}}
+    if: ${{ needs.check-for-new-release.outputs.do_publish == 'true' && github.ref == 'refs/heads/main' && github.repository == 'JacksonBurns/fastprop'}}
     steps:
     - uses: actions/checkout@master
     - name: Set up Python 3.10
@@ -120,7 +120,7 @@ jobs:
         --wheel
         --outdir dist/
         .
-    - name: Publish distribution 📦 to PyPI
+    - name: Publish distribution to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}

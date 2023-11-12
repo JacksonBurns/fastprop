@@ -1,10 +1,10 @@
-blank-python-project
+fastprop
 ====================
 
 .. toctree::
    :maxdepth: 4
 
-   blankpythonproject
+   fastprop
    setup
    start_project
    test
