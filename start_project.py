@@ -3,7 +3,8 @@ import fileinput
 import os
 
 
-print(r'''
+print(
+    r"""
          .______    __           ___      .__   __.  __  ___
          |   _  \  |  |         /   \     |  \ |  | |  |/  /
          |  |_)  | |  |        /  ^  \    |   \|  | |  '  /
@@ -27,79 +28,87 @@ print(r'''
 
                             by Jackson Burns
                github.com/JacksonBurns/blank-python-project
-''')
+"""
+)
 
 gh_uname = input("GitHub username: ")
 while not re.search(r"^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$", gh_uname, re.IGNORECASE):
-    print('''
+    print(
+        """
 Username may only contain alphanumeric characters or hyphens,
 cannot have multiple consecutive hyphens, and cannot begin or end with a hyphen.
 Maximum length is 39 characters.
-''')
+"""
+    )
     gh_uname = input("GitHub username: ")
 
 usr_name = input("Your name: ")
 
 prj_name = input("Name of the project: ")
 while not re.search(r"^[a-z\d](?:[a-z\d]|-|_(?=[a-z\d])){0,61}$", prj_name, re.IGNORECASE):
-    print('''
+    print(
+        """
 Project name may only contain alphanumeric characters or hyphens/underscores,
 cannot have multiple consecutive hyphens, and cannot begin or end with a hyphen.
 Maximum length is 62 characters.
-''')
+"""
+    )
     prj_name = input("Name of the project: ")
 
 pypi_name = input("Name for the PyPI package: ")
 while not re.search(r"^[a-z\d](?:[a-z\d]|-|_(?=[a-z\d])){0,61}$", pypi_name):
-    print('''
+    print(
+        """
 Package name may only contain lowercase alphanumeric characters or underscores and should be succinct.
-    ''')
+    """
+    )
     pypi_name = input("Name for the PyPI package: ")
 
 slogan = input("Slogan for your project: ")
 
 project_files = [
-    'pyproject.toml',
-    'README.md',
-    'test/test_blankpythonproject.py',
-    'blankpythonproject/__init__.py',
-    'blankpythonproject/blankpythonproject.py',
-    '.github/workflows/CI.yml',
-    '.github/workflows/gen_docs.yml',
-    'docs/conf.py',
-    'docs/index.rst',
-    'docs/modules.rst',
+    "pyproject.toml",
+    "README.md",
+    "test/test_blankpythonproject.py",
+    "blankpythonproject/__init__.py",
+    "blankpythonproject/blankpythonproject.py",
+    ".github/workflows/CI.yml",
+    ".github/workflows/gen_docs.yml",
+    "docs/conf.py",
+    "docs/index.rst",
+    "docs/modules.rst",
 ]
 
 
 def replace_blanks():
     changed = False
     for filename in project_files:
+        print("ATTEMPTING TO READ", filename)
         with fileinput.FileInput(filename, inplace=True) as file:
             for line in file:
                 if re.search("blankpythonproject", line):
-                    print(line.replace('blankpythonproject', prj_name), end='')
+                    print(line.replace("blankpythonproject", prj_name), end="")
                     changed = True
                 elif re.search("BlankPythonProject", line):
-                    print(line.replace('BlankPythonProject', prj_name), end='')
+                    print(line.replace("BlankPythonProject", prj_name), end="")
                     changed = True
                 elif re.search("blank-python-project", line):
-                    print(line.replace('blank-python-project', prj_name), end='')
+                    print(line.replace("blank-python-project", prj_name), end="")
                     changed = True
                 elif re.search("JacksonBurns", line):
-                    print(line.replace('JacksonBurns', gh_uname), end='')
+                    print(line.replace("JacksonBurns", gh_uname), end="")
                     changed = True
                 elif re.search("Jackson Burns", line):
-                    print(line.replace('Jackson Burns', usr_name), end='')
+                    print(line.replace("Jackson Burns", usr_name), end="")
                     changed = True
                 elif re.search("blpyproj", line):
-                    print(line.replace('blpyproj', pypi_name), end='')
+                    print(line.replace("blpyproj", pypi_name), end="")
                     changed = True
                 elif re.search("Catchy slogan.", line):
-                    print(line.replace('Catchy slogan.', slogan), end='')
+                    print(line.replace("Catchy slogan.", slogan), end="")
                     changed = True
                 else:
-                    print(line, end='')
+                    print(line, end="")
     return changed
 
 
@@ -111,26 +120,27 @@ while it_limit < 10:
 
 og_dir = os.getcwd()
 
-os.rename('blankpythonproject_logo.png', prj_name + '_logo.png')
+os.rename("blankpythonproject_logo.png", prj_name + "_logo.png")
 
 os.rename(
-    os.path.join(og_dir, 'test', 'test_blankpythonproject.py'),
-    os.path.join(og_dir, 'test', 'test_' + prj_name + '.py'),
+    os.path.join(og_dir, "test", "test_blankpythonproject.py"),
+    os.path.join(og_dir, "test", "test_" + prj_name + ".py"),
 )
 
 os.rename(
-    os.path.join(og_dir, 'examples', 'blankpythonproject_example.ipynb'),
-    os.path.join(og_dir, 'examples', prj_name + '_example.ipynb'),
+    os.path.join(og_dir, "examples", "blankpythonproject_example.ipynb"),
+    os.path.join(og_dir, "examples", prj_name + "_example.ipynb"),
 )
 
 os.rename(
-    os.path.join(og_dir, 'blankpythonproject', 'blankpythonproject.py'),
-    os.path.join(og_dir, 'blankpythonproject', prj_name + '.py'),
+    os.path.join(og_dir, "blankpythonproject", "blankpythonproject.py"),
+    os.path.join(og_dir, "blankpythonproject", prj_name + ".py"),
 )
 
-os.rename('blankpythonproject', prj_name)
+os.rename("blankpythonproject", prj_name)
 
-print(r'''
+print(
+    r"""
 ...updates complete - delete this file (start_project.py) and make your
 first commit to get started.
 
@@ -138,4 +148,5 @@ If you wish to use a license other than MIT, delete the existing LICENSE
 file and update pyproject.toml to reflect the new license.
 
 Happy coding!
-''')
+"""
+)
