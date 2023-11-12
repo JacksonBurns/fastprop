@@ -1,0 +1,3 @@
+def validate_config(config: dict):
+    ...
+    # validate that the configuration dictionary is reasonable

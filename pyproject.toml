@@ -25,6 +25,9 @@ demos = ["jupyter"]
 file = "README.md"
 content-type = "text/markdown"
 
+[project.scripts]
+fastprop = "fastprop.cli.fastprop_cli:main"
+
 [tool.isort]
 profile = "black"
 
