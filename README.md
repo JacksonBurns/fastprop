@@ -41,22 +41,30 @@ MPNNs and graph-based learning methods are computationally expensive in comparis
 This operation is inexpensive, making the most expensive part of training just the generation of features (which are easily saved to disk, eliminating the cost after the initial generation).
 The representation is then passed to a typical FNN to predict the actual output.
 
-## `fastprop` Architecture
-There are four distinct steps in `fastprop` that define its architecture:
- 1. Featurization - 
-Featurization, Pre-Processing, Training, Prediction
+## `fastprop` Framework
+There are four distinct steps in `fastprop` that define its framework:
+ 1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
+ 2. Preprocessing - clean the descriptors by removing or imputing missing values then rescaling the remainder
+ 3. Training - send the processed input to the neural network, which has this simple architecture:
+    - Representation Learning: series of fully-connected layers _without bias_ of equal dimension to the number of remaining descriptors, followed by a dropout layer
+    - FNN: sequential fully-connected layers _with bias_ decreasing in dimension to the final output size, with an activation function between layers
+ 4. Prediction - saved the trained model and preprocessing pipeline for future use
 
 ## Configurable Parameters
- - featurization: which to include, etc.
+The below parameters from the framework can be configured as shown:
+ - featurization: which to include, etc. (and also if we should cache the results to disk (mordred will do this by default based on the filename and warn the user that it is doing so), where to cache them to, or where they are already cached, or where is the normal output from mordred (the csv output from the command line call))
 (1) just generate all (2) just generate some (3) generate all but only for subset (configurable size), do pre-processing, then generate rest from subset
  - pre-processing pipeline: no optional to drop missing, optionally include scaling, dropping of zero variance, droppign of colinear, keep the names true or false (?)
- - training: number of interaction layers, size of representations, learning rate, batch size, FNN configs 
- - prediction
+ - training: number of interaction layers and the dropout rate, size of FNN layers
+ generic training parameters: learning rate, batch size, FNN configs, checkpoint file to resume from
+ - prediction: file to make predictions from
 
 # Using `fastprop`
+`fastprop` can be run from the command line or as a Python module.
+Regardless of the method of use the parameters described in [Configurable Parameters](#configurable-parameters) can be modified.
 
 ## Command Line
-### Configuration File
+### Configuration File [recommended]
 
 ### Arguments
 
