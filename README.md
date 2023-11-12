@@ -10,3 +10,9 @@
   <img alt="PyPI" src="https://img.shields.io/pypi/v/fastprop">
   <img alt="PyPI - License" src="https://img.shields.io/github/license/JacksonBurns/fastprop">
 </p>
+
+ - featurization: which to include, etc.
+(1) just generate all (2) just generate some (3) generate all but only for subset (configurable size), do pre-processing, then generate rest from subset
+ - pre-processing pipeline: no optional to drop missing, optionally include scaling, dropping of zero variance, droppign of colinear, keep the names true or false (?)
+ - training: number of interaction layers, size of representations, learning rate, batch size, FNN configs 
+ - prediction
