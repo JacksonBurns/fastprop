@@ -2,7 +2,7 @@
 <h3 align="center">Fast Molecular Property Prediction with mordredcommunity</h3>
 
 <p align="center">  
-  <img alt="fastproplogo" src="https://github.com/JacksonBurns/fastprop/blob/main/fastprop_logo.png">
+  <img alt="fastproplogo" height="400" src="https://github.com/JacksonBurns/fastprop/blob/main/fastprop_logo.png">
 </p> 
 <p align="center">
   <img alt="GitHub Repo Stars" src="https://img.shields.io/github/stars/JacksonBurns/fastprop?style=social">
