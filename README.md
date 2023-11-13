@@ -40,6 +40,8 @@ MPNNs and graph-based learning methods are computationally expensive in comparis
 This operation is inexpensive, making the most expensive part of training just the generation of features (which are easily saved to disk, eliminating the cost after the initial generation).
 The representation is then passed to a typical FNN to predict the actual output.
 
+[This study](https://doi.org/10.1016/j.fuel.2022.123836) did something similar to what `fastprop` does, but did not allow the flexibility to learn interactions within the NN itself, instead relying on classical techniques.
+
 ## `fastprop` Framework
 There are four distinct steps in `fastprop` that define its framework:
  1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
