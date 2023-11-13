@@ -1,0 +1,10 @@
+# previously trained model from fastprop
+checkpoint: /path/to/checkpoint.cpkt
+
+# specify either a single SMILES string
+smiles: C
+# or a path a text file containing SMILES strings
+input_file: /path/to/smiles.SMILES
+
+# destination for predictions (default is stdout)
+output: /path/to/output.txt

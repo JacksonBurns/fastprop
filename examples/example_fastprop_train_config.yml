@@ -1,0 +1,24 @@
+# featurization
+input_file: /path/to/data.csv
+target_columns: lipohilicity
+smiles_column: smiles
+
+descriptors: optimized
+enable_cache: True
+# or
+precomputed: /path/to/precomputed/descriptors.csv
+
+# preprocessing
+rescaling: True
+zero_variance_drop: True
+colinear_drop: False
+
+# training
+interaction_layers: 2
+dropout_rate: 0.2
+fnn_layers: 3
+learning_rate: 0.0001
+batch_size: 2048
+problem_type: regression
+# optionally
+checkpoint: /path/to/checkpoint.ckpt

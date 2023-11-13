@@ -47,27 +47,74 @@ There are four distinct steps in `fastprop` that define its framework:
  3. Training - send the processed input to the neural network, which has this simple architecture:
     - Representation Learning: series of fully-connected layers _without bias_ of equal dimension to the number of remaining descriptors, followed by a dropout layer
     - FNN: sequential fully-connected layers _with bias_ decreasing in dimension to the final output size, with an activation function between layers
- 4. Prediction - saved the trained model and preprocessing pipeline for future use
+ 4. Prediction - save the trained model and preprocessing pipeline for future use
 
 ## Configurable Parameters
-The below parameters from the framework can be configured as shown:
- - featurization: which to include, etc. (and also if we should cache the results to disk (mordred will do this by default based on the filename and warn the user that it is doing so), where to cache them to, or where they are already cached, or where is the normal output from mordred (the csv output from the command line call))
-(1) just generate all (2) just generate some (3) generate all but only for subset (configurable size), do pre-processing, then generate rest from subset
- - pre-processing pipeline: no optional to drop missing, optionally include scaling, dropping of zero variance, droppign of colinear, keep the names true or false (?)
- - training: number of interaction layers and the dropout rate, size of FNN layers
- generic training parameters: learning rate, batch size, FNN configs, checkpoint file to resume from
- - prediction: file to make predictions from
+ 1. Featurization
+    - Input CSV file: comma separated values (CSV) file (with headers) containing SMILES strings representing the molecules and the targets
+    - SMILES column name: name of the column containing the SMILES strings
+    - Target column name(s): name(s) of the columns containing the targets
+
+    _and_
+    - Which `mordred` descriptors to calculate: all, optimized, smallest, or search (`fastprop` will use 10% of the dataset to find which descriptors are meaningful)
+    - Enable/Disable caching of calculated descriptors: `fastprop` will by default cache calculated descriptors based on the input filename and warn the user when it loads descriptors from the file rather than calculating on the fly
+
+    _or_
+    - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
+ 2. Preprocessing
+    - Enable/Disable re-scaling of parameters between 0 and 1 (enabled by default and _highly_ recommended)
+    - Enable/Disable dropping of zero-variance parameters (enabled by default)
+    - Enable/Disable dropping of co-linear descriptors (disabled by default; improves speed but typically decreases accuracy)
+    - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
+ 3. Training
+    - Number of interaction layers (default 2; must be a positive integer)
+    - Dropout rate between interaction layers (default 0.2; must be a float between 0 and 1)
+    - Number of FNN layers (default 3; successive halving from the number of descriptors -> 1)
+
+    _generic NN training parameters_
+    - Learning rate
+    - Batch size
+    - Checkpoint file to resume from
+    - Problem type (regression, classification)
+ 4. Prediction
+    - Input SMILES: either a single SMILES or a CSV file
+    - Output format: either a filepath to write the results, defaults to stdout
+    - Checkpoint file: previously trained model file, containing scalers and model weights
 
 # Using `fastprop`
 `fastprop` can be run from the command line or as a Python module.
 Regardless of the method of use the parameters described in [Configurable Parameters](#configurable-parameters) can be modified.
 
 ## Command Line
+After installation, `fastprop` is accessible from the command line via `fastprop`.
+Try `fastprop --help` for more information and see below.
+
 ### Configuration File [recommended]
+See `examples/example_fastprop_*_config.yaml` for configuration files that show all options that can be configured.
+It is everything shown in the [Configurable Parameters](#configurable-parameters) section.
 
 ### Arguments
+All of the options shown in the [Configuration File](#configuration-file-recommended) section can also be passed as command line flags instead of written to a file.
+When passing the arguments, replace all `_` (underscore) with `-` (hyphen), i.e. `fastprop train -i 1`
+See `fastprop train --help` or `fastprop predict --help` for more information.
 
 ## Python Module
+This section documents where the various modules and functions used in `fastprop` are located, as well as how to use them in your own scripts.
+Note that caching of computed descriptors is not available via scripting.
+Users are encouraged to manually save and load descriptors in the same way that `fastprop` does behind the scenes when accessing from the command line.
+### `fastprop`
+ - default training mapping
+ - dataloader
+ - lightning module
+ - train function
+ - predict function
+
+### `fastprop.utils`
+ - validate config
+ - select descriptors (From `mordred`)
+
+### `fastprop.cli`
+fastprop_cli contains all the CLI which is likely not useful in use from a script.
 
 # Benchmarks
 Each entry in the table show the result for `fastprop` and then `chemprop` formatted as `fastprop | chemprop` with the better result **bolded**.
