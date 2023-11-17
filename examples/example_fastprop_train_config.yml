@@ -1,3 +1,6 @@
+# generic
+output_directory: /path/to/output/dir
+
 # featurization
 input_file: /path/to/data.csv
 target_columns: lipohilicity
