@@ -1,1 +1,3 @@
 from .validate_config import validate_config
+from .select_descriptors import mordred_descriptors_from_strings
+from .descriptor_lists import SUBSET_947

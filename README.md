@@ -74,6 +74,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Number of FNN layers (default 3; successive halving from the number of descriptors -> 1)
 
     _generic NN training parameters_
+    - Output Directory
     - Learning rate
     - Batch size
     - Checkpoint file to resume from

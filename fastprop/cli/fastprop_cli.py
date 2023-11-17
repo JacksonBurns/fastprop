@@ -16,6 +16,7 @@ def main():
 
     train_subparser = subparsers.add_parser("train")
     train_subparser.add_argument("config_file", nargs="?", help="YAML configuration file")
+    train_subparser.add_argument("-od","--output-directory", help="directory for fastprop output")
     # featurization
     train_subparser.add_argument("-if", "--input-file", help="csv of SMILES and targets")
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
