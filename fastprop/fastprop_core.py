@@ -1,9 +1,5 @@
 """
-main.py - nntest - trying molecular property prediction with simple descriptors
-
-usage: python main.py
-
-requires: lightning, mordredcommunity, pandas, astartes, tensorboard
+fastprop - molecular property prediction with simple descriptors
 
 This is an attempt to do molecular property prediction using learnable linear
 combinations of the mordred descriptors, rather than a more complex deep learning
@@ -13,49 +9,18 @@ than competing GCN and MPNN approaches. The difficulty will be in making the
 representation sufficiently flexible s.t. the network can actually 'learn' a
 good representation.
 
-Training time to reach <1% accuracy on QM9 heat capacity was THREE MINUTES.
-Really need to speed up feature generation lol.
-
 TODO:
- - only calculate the descriptors that aren't usually getting dropped, but make
-   it optional to calculate all the descriptors and do all the pre-processing.
-    - this has turned out to be quite a technical challenge, and may not be worth it due to the loss of flexibility anyway
  - add the 3D descriptors using a best-guess geometry (openbabel?) to try
    and improve the predictions
- - turn the load() function into a reproducible pipeline for processing data
- - consider dropping features that are highly linearly correlated with one another
  - validate that the transformed input features are actually different from the regular input features
    (i.e. look at the output from the first interaction layer)
  - add a way to support reading mordred output from using it like this: python -m mordred example.smi -o example.csv
    (can be kind of a cop-out for speed considerations)
-   
-   
+
 To reduce total calculation burden, could interpolatively sample dataset to get some small percent,
 and then see which among those are transformed out, and then calc just the remaining for rest of
 dataset. Still should make calc'ing all an option.
-
-.set_output(transform="pandas") --> track_dropped.py
 """
-from types import MappingProxyType
-
-
-# immutable default settings
-DEFAULT_TRAINING_CONFIG = MappingProxyType(
-    dict(
-        descriptors="optimized",
-        enable_cache=True,
-        precomputed=None,
-        rescaling=True,
-        zero_variance_drop=True,
-        colinear_drop=True,
-        interaction_layers=2,
-        fnn_layers=3,
-        learning_rate=0.0001,
-        batch_size=2048,
-        problem_type="regression",
-        checkpoint=None,
-    )
-)
 
 
 # main driver function should accept args that align with those in the default training dict
@@ -77,29 +42,18 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 from astartes import train_val_test_split
-from mordred import Calculator, descriptors
-from select_descriptors import LESS_DESCRIPTORS
+
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from rdkit import Chem
-from sklearn.feature_selection import VarianceThreshold
-from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional import mean_absolute_percentage_error as mape
-
-
-
-from fastprop.utils import mordred_descriptors_from_strings, SUBSET_947
-# for desc in mordred_descriptors_from_strings(SUBSET_947):
-#     pass
 
 
 torch.manual_seed(42)
 warnings.filterwarnings(action="ignore", message=".*does not have many workers which may be a bottleneck.*")
 
 # device configuration
-DEVICE = "cuda"
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_WORKERS = 1
 
 # training configuration
@@ -111,79 +65,19 @@ MAX_EPOCHS = 1000
 INIT_LEARNING_RATE = 5e-5
 
 import logging
-logging.basicConfig(format='[%(asctime)s] %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
+logging.basicConfig(format="[%(asctime)s] %(levelname)s: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
 logger = logging.getLogger("fastprop")
 logger.setLevel(logging.DEBUG)
 
 
-# mordred tried to avoid instantiating multiple Calculator classes, which makes
-# the parallelism slower but more memory efficient. We do this manually, instead:
-def f(in_tuple):
-    mordred_calc = Calculator(LESS_DESCRIPTORS, ignore_3D=True)
-    mordred_descs = np.array(list(mordred_calc.map(in_tuple[0], nproc=1, quiet=in_tuple[1])))
-    return mordred_descs
+def _collate_fn(batch):
+    descs = torch.stack([item[0] for item in batch])
+    labels = torch.stack([item[1] for item in batch])
+    return descs, labels
 
 
-def load(fpath, smiles_column, target_column):
-    src = pd.read_csv(fpath)
-
-    targets = src[target_column].to_numpy()
-    target_scaler = MinMaxScaler()
-    y = target_scaler.fit_transform(targets.reshape(-1, 1))
-
-    X = None
-    cache_file = "cached_" + fpath + ".npy"
-    if not os.path.exists(cache_file):
-        smiles = src[smiles_column].to_numpy()
-        rdkit_mols = list(Chem.MolFromSmiles(i) for i in smiles)
-        # calculate the features
-
-        # higher level parallelism - uses more memory
-        batches = np.array_split(rdkit_mols, 8)
-        # let the root process show a progress bar, since array split will make
-        # that one the largest
-        to_procs = [(batches[i], True if i else False) for i in range(8)]
-        with Pool(8) as p:
-            mordred_descs = np.vstack(p.map(f, to_procs, 1))
-
-        # when starting from all descs, use .set_output(transform="pandas") to track which are dropped
-
-        # mordred parallelism
-        # mordred_calc = Calculator(descriptors, ignore_3D=True)
-        # mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=8, quiet=False)))
-        
-        print("initial size:", mordred_descs.shape)
-
-        # TODO: change this processing pipeline to operate in place where possible to save memory
-        # impute missing values with mean, throwing out columns where all values are missing
-        imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
-        with warnings.catch_warnings():
-            warnings.filterwarnings(action="ignore", message="Skipping features without any observed values.*")
-            cleaned_mordred_descs = imp_mean.fit_transform(mordred_descs, targets)
-        del mordred_descs
-
-        # scale each column 0-1
-        feature_scaler = MinMaxScaler()
-        cleaned_normalized_mordred_descs = feature_scaler.fit_transform(cleaned_mordred_descs, targets)
-        print("size after clean (drop empty, impute missing, scale 0-1):", cleaned_normalized_mordred_descs.shape)
-        del cleaned_mordred_descs
-
-        # drop low variance features
-        X = VarianceThreshold(threshold=0).fit_transform(cleaned_normalized_mordred_descs, y)
-        print("size after invariant feature removal:", X.shape)
-        del cleaned_normalized_mordred_descs
-
-        np.save(cache_file, X)
-    else:
-        print("cached feature file found, loading from file")
-        X = np.load(cache_file)
-
-    assert np.isfinite(X).all(), "still had nan after preparation, oops."
-
-    return X, y, target_scaler
-
-
-class BoilingPointData(TorchDataset):
+class ArbitraryDataset(TorchDataset):
     def __init__(self, data, targets):
         self.data = data
         self.length = len(targets)
@@ -196,13 +90,7 @@ class BoilingPointData(TorchDataset):
         return self.data[index], self.targets[index]
 
 
-def custom_collate(batch):
-    descs = torch.stack([item[0] for item in batch])
-    labels = torch.stack([item[1] for item in batch])
-    return descs, labels
-
-
-class BoilingPointDataModule(LightningDataModule):
+class ArbitraryDataModule(LightningDataModule):
     def __init__(self, cleaned_data, targets):
         super().__init__()
         self.data = cleaned_data
@@ -232,60 +120,30 @@ class BoilingPointDataModule(LightningDataModule):
             random_state=42,
             return_indices=True,
         )
-        
+
     def _init_dataloader(self, shuffle, idxs):
         return torch.utils.data.DataLoader(
-            BoilingPointData(
+            ArbitraryDataset(
                 [self.data[i] for i in idxs],
                 [self.targets[i] for i in idxs],
             ),
             batch_size=BATCH_SIZE,
             shuffle=shuffle,
             num_workers=NUM_WORKERS,
-            collate_fn=custom_collate if BATCH_SIZE > 1 else None,
+            collate_fn=_collate_fn if BATCH_SIZE > 1 else None,
         )
 
     def train_dataloader(self):
         return self._init_dataloader(True, self.train_idxs)
-        # return torch.utils.data.DataLoader(
-        #     BoilingPointData(
-        #         [self.data[i] for i in self.train_idxs],
-        #         [self.targets[i] for i in self.train_idxs],
-        #     ),
-        #     batch_size=BATCH_SIZE,
-        #     shuffle=True,
-        #     num_workers=NUM_WORKERS,
-        #     collate_fn=custom_collate if BATCH_SIZE > 1 else None,
-        # )
 
     def val_dataloader(self):
         return self._init_dataloader(False, self.val_idxs)
-        # return torch.utils.data.DataLoader(
-        #     BoilingPointData(
-        #         [self.data[i] for i in self.val_idxs],
-        #         [self.targets[i] for i in self.val_idxs],
-        #     ),
-        #     batch_size=BATCH_SIZE,
-        #     shuffle=False,
-        #     num_workers=NUM_WORKERS,
-        #     collate_fn=custom_collate if BATCH_SIZE > 1 else None,
-        # )
 
     def test_dataloader(self):
         return self._init_dataloader(False, self.test_idxs)
-        # return torch.utils.data.DataLoader(
-        #     BoilingPointData(
-        #         [self.data[i] for i in self.test_idxs],
-        #         [self.targets[i] for i in self.test_idxs],
-        #     ),
-        #     batch_size=BATCH_SIZE,
-        #     shuffle=False,
-        #     num_workers=NUM_WORKERS,
-        #     collate_fn=custom_collate if BATCH_SIZE > 1 else None,
-        # )
 
 
-class FNN(pl.LightningModule):
+class fastprop(pl.LightningModule):
     def __init__(self, number_features, target_scaler):
         super().__init__()
         # for saving human-readable accuracy metrics and predicting
@@ -396,33 +254,73 @@ def train_and_test(X, y, target_scaler):
         check_val_every_n_epoch=1,
     )
 
-    model = FNN(X.shape[1], target_scaler)
+    model = fastprop(X.shape[1], target_scaler)
     # currently (early nov. '23) bugged
     # https://github.com/Lightning-AI/lightning/issues/17177
     # might need to use Python 3.10?
-    compiled_model = torch.compile(model)
-    datamodule = BoilingPointDataModule(
+    compiled_model = None
+    try:
+        compiled_model = torch.compile(model)
+    except Exception as e:
+        print("Couldn't compiled: ", str(e))
+
+    if compiled_model:
+        model = compiled_model
+
+    datamodule = ArbitraryDataModule(
         X,
         y,
     )
     t1_start = perf_counter()
     trainer.fit(
-        compiled_model,
+        model,
         datamodule,
     )
     t1_stop = perf_counter()
     print("Elapsed time during training:", t1_stop - t1_start)
     trainer.test(
-        compiled_model,
+        model,
         datamodule,
     )
 
 
-if __name__ == "__main__":
-    # qm8
-    # https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm8.csv
-    X, y, target_scaler = load("qm8.csv", "smiles", "E1-PBE0")
+def train_fastprop(
+    output_directory,
+    input_file,
+    smiles_column,
+    target_columns,
+    descriptors="optimized",
+    enable_cache=True,
+    precomputed=None,
+    rescaling=True,
+    zero_variance_drop=True,
+    colinear_drop=True,
+    interaction_layers=2,
+    dropout_rate=0.2,
+    fnn_layers=3,
+    learning_rate=0.0001,
+    batch_size=2048,
+    problem_type="regression",
+    checkpoint=None,
+):
+    # if cached
+    # laod from cache
+    from fastprop.utils import load_from_csv
 
-    # https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm9.csv
-    # X, y, target_scaler = load("qm9.csv", "smiles", "cv")
+    # put a logging statement before each call
+    targets, mols = load_from_csv(input_file, smiles_column, target_columns)
+    from fastprop.utils import calculate_mordred_desciptors
+
+    # choose the descriptor set absed on the args
+    from fastprop.utils import SUBSET_947
+    from fastprop.utils import mordred_descriptors_from_strings
+
+    d2c = mordred_descriptors_from_strings(SUBSET_947)
+
+    descs = calculate_mordred_desciptors(d2c, mols, 4, "fast")
+    # cache these
+    from fastprop import preprocess
+
+    X, y, target_scaler = preprocess(descs, targets)
+
     train_and_test(X, y, target_scaler)

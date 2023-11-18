@@ -5,6 +5,7 @@ from importlib.metadata import version
 
 from fastprop import DEFAULT_TRAINING_CONFIG
 from fastprop.utils import validate_config
+from fastprop import train_fastprop
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
 
     train_subparser = subparsers.add_parser("train")
     train_subparser.add_argument("config_file", nargs="?", help="YAML configuration file")
-    train_subparser.add_argument("-od","--output-directory", help="directory for fastprop output")
+    train_subparser.add_argument("-od", "--output-directory", help="directory for fastprop output")
     # featurization
     train_subparser.add_argument("-if", "--input-file", help="csv of SMILES and targets")
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
@@ -80,7 +81,7 @@ def main():
 
             print(training_default)
             # validate this dictionary, i.e. layer counts are positive, dropout rates reasonable, etc.
-            # unpack with ** when calling training
+            train_fastprop(**training_default)
         case "predict":
             if args["smiles"] is None and args["input_file"] is None:
                 raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")

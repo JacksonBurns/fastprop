@@ -1,3 +1,3 @@
-from .fastprop import placeholder, DEFAULT_TRAINING_CONFIG
-
-__version__ = "0.0.0"
+from .defaults import DEFAULT_TRAINING_CONFIG
+from .fastprop_core import train_fastprop
+from .preprocessing import preprocess
