@@ -20,9 +20,11 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
     mordred_descs = None
     if strategy == "fast":
         # higher level parallelism - uses more memory
+        # TODO: subdivide batches further to avoid large communication bottleneck after all descriptors are calculated
         batches = np.array_split(rdkit_mols, n_procs)
         # let the root process show a progress bar, since array split will make
         # that one the largest
+        # convert to starmap to avoid having to duplicate the list of descriptor classes - too much communication (?)
         to_procs = [(batch, bool(i), descriptors) for i, batch in enumerate(batches)]
         with Pool(n_procs) as p:
             mordred_descs = np.vstack(p.map(_f, to_procs, 1))

@@ -1,3 +1,14 @@
+# run logs and benchmarking files
+qm9_results
+csv_logs_qm8
+temp
+qm9_benchmark
+qm8_results
+qm8.csv
+qm9.csv
+qm8.yml
+qm9_benchmark.yml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

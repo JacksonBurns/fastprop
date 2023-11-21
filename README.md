@@ -71,7 +71,7 @@ There are four distinct steps in `fastprop` that define its framework:
  3. Training
     - Number of interaction layers (default 2; must be a positive integer)
     - Dropout rate between interaction layers (default 0.2; must be a float between 0 and 1)
-    - Number of FNN layers (default 3; successive halving from the number of descriptors -> 1)
+    - Number of FNN layers (default 3; repeated fully connected layers of hidden size)
 
     _generic NN training parameters_
     - Output Directory

@@ -1,4 +1,5 @@
 import argparse
+import json
 import yaml
 import sys
 from importlib.metadata import version
@@ -37,6 +38,7 @@ def main():
     train_subparser.add_argument("-fl", "--fnn-layers", type=int, help="number of fnn layers")
     train_subparser.add_argument("-lr", "--learning-rate", type=float, help="learning rate")
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
+    train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")
     train_subparser.add_argument("-pt", "--problem-type", help="problem type (regression, classification)")
 
     predict_subparser = subparsers.add_parser("predict")
@@ -74,12 +76,13 @@ def main():
                     raise parser.error("Cannot specify config_file with other command line arguments.")
                 with open(args["config_file"], "r") as f:
                     cfg = yaml.safe_load(f)
+                    cfg["target_columns"] = cfg["target_columns"].split(" ")
                     training_default.update(cfg)
             else:
                 # cannot specify both precomputed and descriptors or enable/cache
                 training_default.update({k: v for k, v in args.items() if v is not None})
 
-            print(training_default)
+            print("training parameters:\n", json.dumps(training_default, indent=4))
             # validate this dictionary, i.e. layer counts are positive, dropout rates reasonable, etc.
             train_fastprop(**training_default)
         case "predict":
