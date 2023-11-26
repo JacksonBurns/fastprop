@@ -38,7 +38,6 @@ from pathlib import Path
 import psutil
 import warnings
 from time import perf_counter
-from multiprocessing import Pool
 
 import numpy as np
 import pandas as pd
@@ -50,6 +49,8 @@ from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from torch.utils.data import Dataset as TorchDataset
 from sklearn.metrics import mean_absolute_percentage_error as mape
+from sklearn.metrics import mean_squared_error as l2_error
+
 
 from fastprop.utils import load_from_morded_csv, load_cached_descs, load_from_csv
 from .preprocessing import preprocess
@@ -74,7 +75,6 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_WORKERS = 1
 
 # training configuration
-BATCH_SIZE = 5096*4*2
 TRAIN_SIZE = 0.6
 VAL_SIZE = 0.2
 TEST_SIZE = 1.0 - TRAIN_SIZE - VAL_SIZE
@@ -107,10 +107,11 @@ class ArbitraryDataset(TorchDataset):
 
 
 class ArbitraryDataModule(LightningDataModule):
-    def __init__(self, cleaned_data, targets):
+    def __init__(self, cleaned_data, targets, batch_size):
         super().__init__()
         self.data = cleaned_data
         self.targets = targets
+        self.batch_size = batch_size
         self.train_idxs, self.val_idxs, self.test_idxs = None, None, None
 
     def prepare_data(self):
@@ -143,10 +144,10 @@ class ArbitraryDataModule(LightningDataModule):
                 [self.data[i] for i in idxs],
                 [self.targets[i] for i in idxs],
             ),
-            batch_size=BATCH_SIZE,
+            batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=NUM_WORKERS,
-            collate_fn=_collate_fn if BATCH_SIZE > 1 else None,
+            collate_fn=_collate_fn if self.batch_size > 1 else None,
         )
 
     def train_dataloader(self):
@@ -160,40 +161,63 @@ class ArbitraryDataModule(LightningDataModule):
 
 
 class fastprop(pl.LightningModule):
-    def __init__(self, number_features, target_scaler):
+    def __init__(self, number_features, target_scaler, num_epochs, hidden_size):
         super().__init__()
         # for saving human-readable accuracy metrics and predicting
         self.target_scaler = target_scaler
-
+        self.num_epochs = num_epochs
         # growing interaction representation - break this into an encode function
         self.square_interactions = torch.nn.Linear(number_features, number_features, bias=False)
         self.dropout1 = torch.nn.Dropout(p=0.20)
         self.cubic_interactions = torch.nn.Linear(number_features, number_features, bias=False)
         self.dropout2 = torch.nn.Dropout(p=0.20)
+        self.quartic_interactions = torch.nn.Linear(number_features, number_features, bias=False)
+        self.dropout2 = torch.nn.Dropout(p=0.20)
 
         # fully-connected nn
-        self.fc1 = torch.nn.Linear(number_features, 256)
-        self.fc2 = torch.nn.Linear(256, 256)
-        self.fc3 = torch.nn.Linear(256, self.target_scaler.n_features_in_)
-        self.act_fn1 = torch.nn.Sigmoid()
-        self.act_fn2 = torch.nn.Sigmoid()
+        self.fc1 = torch.nn.Linear(number_features, hidden_size)
+        self.fc2 = torch.nn.Linear(hidden_size, hidden_size)
+        self.fc3 = torch.nn.Linear(hidden_size, hidden_size)
+        self.readout = torch.nn.Linear(hidden_size, self.target_scaler.n_features_in_)
+        self.act_fn1 = torch.nn.ReLU()
+        self.act_fn2 = torch.nn.ReLU()
+        self.act_fn3 = torch.nn.ReLU()
 
     def forward(self, x):
-        x = self.square_interactions(x)
-        # x = self.dropout1(x)
+        
+        # OPTION 1: directly send learned interactions to FNN
+        # x = self.square_interactions(x)
+        # x = self.cubic_interactions(x)
+        # or do this more involved version:
+        # x = self.dropout1(x)s
         # this is really more like quartic interactions (?)... can we concatenate
         # the input vector to the square interactions vector, and then learn
         # a transformation on that to get the cubic interactions
-        x = self.cubic_interactions(x)  # <-- !! performance is still great without this!
+        # x = self.cubic_interactions(x)  # <-- !! performance is still great without this!
         # x = self.dropout2(x)  # <-- !! performance is still great without this!
         # make the number of these blocks a parameter, and then add n of them to a
         # nn.Sequential inside an encode() function (like how chemprop does it)
         # try adding more hidden layers
+        # x = self.quartic_interactions(x)
+        
+        # OPTION 2: concatenate interaction layers, send to FNN
+        # x is the zero-order 'interactions' (just the values themselves)
+        # square_terms = self.square_interactions(x)
+        # cube_terms = self.cubic_interactions(square_terms)
+        # all_terms = torch.hstack([x, square_terms, cube_terms])
+        
+        # HAHA option 3 is to just send all the descriptors in directly, turns out
+        # its really good anyway
+        
+        # FNN
+        # x = self.fc1(all_terms)
         x = self.fc1(x)
         x = self.act_fn1(x)
         x = self.fc2(x)
         x = self.act_fn2(x)
         x = self.fc3(x)
+        x = self.act_fn3(x)
+        x = self.readout(x)
         return x
 
     def configure_optimizers(self):
@@ -226,31 +250,35 @@ class fastprop(pl.LightningModule):
     def _human_loss(self, pred, real, name):
         # outputs the performance in more human-interpretable manner
         # expensive so we don't do this during training
-        #
-        # TODO: avoid calling MAPE and L1 twice by just doing the reduction manually
         rescaled_pred = self.target_scaler.inverse_transform(pred)
         rescaled_truth = self.target_scaler.inverse_transform(real)
         # mean absolute percentage error
-        avg_mape = mape(rescaled_truth, rescaled_pred)
-        self.log(f"unitful_{name}_mean_mape", avg_mape)
-        per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values")
+        # sklearn asks for an array of weights, but it actually just passes through to np.average which
+        # accepts weights of the same shape as the inputs
+        per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
+        self.log(f"unitful_{name}_mean_wmape", np.mean(per_task_mape))
         for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
-            self.log(f"unitful_{name}_mape_output_{target}", value)
+            self.log(f"unitful_{name}_wmape_output_{target}", value)
 
         # mean absolute error
-        avg_l1 = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth))
-        self.log(f"unitful_{name}_l1_avg", avg_l1)
         all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction='none')
         per_task_loss = all_loss.numpy().mean(axis=0)
+        self.log(f"unitful_{name}_l1_avg", np.mean(per_task_loss))
         for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
             self.log(f"unitful_{name}_l1_output_{target}", value)
 
-    # def on_train_epoch_end(self) -> None:
-    #     if (self.trainer.current_epoch + 1) % (MAX_EPOCHS // 10) == 0:
-    #         print(f"Epoch [{self.trainer.current_epoch + 1}/{MAX_EPOCHS}]")
+        # rmse
+        per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values")
+        self.log(f"unitful_{name}_rmse_avg", np.mean(per_task_loss))
+        for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
+            self.log(f"unitful_{name}_rmse_output_{target}", value)
+
+    def on_train_epoch_end(self) -> None:
+        if (self.trainer.current_epoch + 1) % (self.num_epochs // 10) == 0:
+            print(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
 
-def train_and_test(X, y, target_scaler, outdir, n_epochs):
+def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_size):
     csv_logger = CSVLogger(
         outdir,
         "csv_logs",
@@ -263,14 +291,14 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs):
     trainer = pl.Trainer(
         max_epochs=n_epochs,
         accelerator=DEVICE,
-        enable_progress_bar=True,
+        enable_progress_bar=False,
         logger=[csv_logger, tensorboard_logger],
         log_every_n_steps=1,
         enable_checkpointing=True,
         check_val_every_n_epoch=n_epochs // 10,
     )
 
-    model = fastprop(X.shape[1], target_scaler)
+    model = fastprop(X.shape[1], target_scaler, n_epochs, hidden_size)
     # currently (early nov. '23) bugged
     # https://github.com/Lightning-AI/lightning/issues/17177
     # might need to use Python 3.10?
@@ -286,6 +314,7 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs):
     datamodule = ArbitraryDataModule(
         X,
         y,
+        batch_size
     )
     t1_start = perf_counter()
     trainer.fit(
@@ -293,7 +322,7 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs):
         datamodule,
     )
     t1_stop = perf_counter()
-    logger.info("Elapsed time during training:", str(datetime.timedelta(seconds=t1_stop - t1_start)))
+    logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
     trainer.test(
         model,
         datamodule,
@@ -326,9 +355,9 @@ def train_fastprop(
     descs = None
     if precomputed:
         del mols
+        logger.info(f"Loading precomputed descriptors from {precomputed}.")
         descs = load_from_morded_csv(precomputed)
     else:
-
         in_name = Path(input_file).stem
         # cached descriptors, which contains (1) cached (2) source filename (3) types of descriptors (4) timestamp when file was last touched
         cache_file = os.path.join(output_directory, "cached_" + in_name + "_" + descriptors + "_" + str(int(os.stat(input_file).st_ctime)) + ".csv")
@@ -351,4 +380,4 @@ def train_fastprop(
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
 
-    train_and_test(X, y, target_scaler, output_directory, number_epochs)
+    train_and_test(X, y, target_scaler, output_directory, number_epochs, batch_size, 512)

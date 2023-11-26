@@ -16,7 +16,9 @@ def load_from_csv(fpath, smiles_column, target_columns):
 
 def load_from_morded_csv(fpath):
     # read the csv file from mordred
-    raise NotImplementedError("TODO")
+    src = pd.read_csv(fpath)
+    descs = src[src.columns[1:]].to_numpy(dtype=float)
+    return descs
 
 
 def load_cached_descs(fpath):

@@ -1,7 +1,7 @@
 # given a filepath and some target columns,
 # retrieve the data as numpy arrays
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import SimpleImputer
 
@@ -11,7 +11,7 @@ import warnings
 
 
 def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, colinear_drop=False):
-    target_scaler = MinMaxScaler()
+    target_scaler = StandardScaler()
     y = target_scaler.fit_transform(targets)
 
     imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
@@ -21,7 +21,7 @@ def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, co
 
     if rescaling:
         # scale each column 0-1
-        feature_scaler = MinMaxScaler()
+        feature_scaler = StandardScaler()
         descriptors = feature_scaler.fit_transform(descriptors, targets)
         print("size after clean (drop empty, impute missing, scale 0-1):", descriptors.shape)
 
