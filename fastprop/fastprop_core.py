@@ -16,6 +16,7 @@ TODO:
    (i.e. look at the output from the first interaction layer)
  - add a way to support reading mordred output from using it like this: python -m mordred example.smi -o example.csv
    (can be kind of a cop-out for speed considerations)
+ - https://github.com/chriskiehl/Gooey
 
 To reduce total calculation burden, could interpolatively sample dataset to get some small percent,
 and then see which among those are transformed out, and then calc just the remaining for rest of
@@ -75,10 +76,11 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_WORKERS = 1
 
 # training configuration
-TRAIN_SIZE = 0.6
-VAL_SIZE = 0.2
+TRAIN_SIZE = 0.8
+VAL_SIZE = 0.1
 TEST_SIZE = 1.0 - TRAIN_SIZE - VAL_SIZE
 INIT_LEARNING_RATE = 5e-4
+NUM_VALIDATION_CHECKS = 10
 
 import logging
 
@@ -107,12 +109,13 @@ class ArbitraryDataset(TorchDataset):
 
 
 class ArbitraryDataModule(LightningDataModule):
-    def __init__(self, cleaned_data, targets, batch_size):
+    def __init__(self, cleaned_data, targets, batch_size, random_seed):
         super().__init__()
         self.data = cleaned_data
         self.targets = targets
         self.batch_size = batch_size
         self.train_idxs, self.val_idxs, self.test_idxs = None, None, None
+        self.random_seed = random_seed
 
     def prepare_data(self):
         # cast input numpy data to a tensor
@@ -134,7 +137,7 @@ class ArbitraryDataModule(LightningDataModule):
             val_size=VAL_SIZE,
             test_size=TEST_SIZE,
             sampler="random",
-            random_state=42,
+            random_state=self.random_seed,
             return_indices=True,
         )
 
@@ -256,29 +259,38 @@ class fastprop(pl.LightningModule):
         # sklearn asks for an array of weights, but it actually just passes through to np.average which
         # accepts weights of the same shape as the inputs
         per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
-        self.log(f"unitful_{name}_mean_wmape", np.mean(per_task_mape))
-        for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
-            self.log(f"unitful_{name}_wmape_output_{target}", value)
+        if len(self.target_scaler.feature_names_in_) == 1:
+            self.log(f"unitful_{name}_wmape", np.mean(per_task_mape))
+        else:
+            self.log(f"unitful_{name}_mean_wmape", np.mean(per_task_mape))
+            for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
+                self.log(f"unitful_{name}_wmape_output_{target}", value)
 
         # mean absolute error
         all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction='none')
         per_task_loss = all_loss.numpy().mean(axis=0)
-        self.log(f"unitful_{name}_l1_avg", np.mean(per_task_loss))
-        for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
-            self.log(f"unitful_{name}_l1_output_{target}", value)
+        if len(self.target_scaler.feature_names_in_) == 1:
+            self.log(f"unitful_{name}_l1", np.mean(per_task_loss))
+        else:
+            self.log(f"unitful_{name}_l1_avg", np.mean(per_task_loss))
+            for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
+                self.log(f"unitful_{name}_l1_output_{target}", value)
 
         # rmse
         per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values")
-        self.log(f"unitful_{name}_rmse_avg", np.mean(per_task_loss))
-        for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
-            self.log(f"unitful_{name}_rmse_output_{target}", value)
+        if len(self.target_scaler.feature_names_in_) == 1:
+            self.log(f"unitful_{name}_rmse", np.mean(per_task_loss))
+        else:
+            self.log(f"unitful_{name}_rmse_avg", np.mean(per_task_loss))
+            for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
+                self.log(f"unitful_{name}_rmse_output_{target}", value)
 
     def on_train_epoch_end(self) -> None:
-        if (self.trainer.current_epoch + 1) % (self.num_epochs // 10) == 0:
+        if (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
             print(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
 
-def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_size):
+def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_size, random_seed):
     csv_logger = CSVLogger(
         outdir,
         "csv_logs",
@@ -295,18 +307,18 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
         logger=[csv_logger, tensorboard_logger],
         log_every_n_steps=1,
         enable_checkpointing=True,
-        check_val_every_n_epoch=n_epochs // 10,
+        check_val_every_n_epoch=n_epochs // NUM_VALIDATION_CHECKS,
     )
 
     model = fastprop(X.shape[1], target_scaler, n_epochs, hidden_size)
     # currently (early nov. '23) bugged
     # https://github.com/Lightning-AI/lightning/issues/17177
     # might need to use Python 3.10?
-    compiled_model = None
-    try:
-        compiled_model = torch.compile(model)
-    except Exception as e:
-        print("Couldn't compiled: ", str(e))
+    # compiled_model = None
+    # try:
+    #     compiled_model = torch.compile(model)
+    # except Exception as e:
+    #     print("Couldn't compiled: ", str(e))
 
     # if compiled_model:
     #     model = compiled_model
@@ -314,7 +326,8 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
     datamodule = ArbitraryDataModule(
         X,
         y,
-        batch_size
+        batch_size,
+        random_seed,
     )
     t1_start = perf_counter()
     trainer.fit(
@@ -323,10 +336,11 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
     )
     t1_stop = perf_counter()
     logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    trainer.test(
+    test_results = trainer.test(
         model,
         datamodule,
     )
+    return test_results
 
 
 def train_fastprop(
@@ -380,4 +394,13 @@ def train_fastprop(
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
 
-    train_and_test(X, y, target_scaler, output_directory, number_epochs, batch_size, 512)
+    n_repeats = 5
+    random_seed = 0
+    all_results = []
+    for iter in range(n_repeats):
+        results = train_and_test(X, y, target_scaler, output_directory, number_epochs, batch_size, 512, random_seed)
+        all_results.append(results[0])
+        random_seed += 1
+    # average the results
+    results_df = pd.DataFrame.from_records(all_results)
+    print(results_df.describe())

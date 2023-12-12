@@ -14,6 +14,7 @@ def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, co
     target_scaler = StandardScaler()
     y = target_scaler.fit_transform(targets)
 
+    # make it optional to either drop columns with any missing or do this
     imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore", message="Skipping features without any observed values.*")

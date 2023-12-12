@@ -14,6 +14,8 @@ freesolv.csv
 freesolv.yml
 qm9.smi
 qm9_descriptors_mordred.csv
+boiling
+chemprop_boiling*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,27 @@
+# generic
+output_directory: boiling
+
+# featurization
+input_file: examples/alkane_boiling.csv
+target_columns: boiling_point
+smiles_column: py2opsin_smiles
+
+descriptors: all
+enable_cache: True
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+interaction_layers: 2
+dropout_rate: 0.2
+fnn_layers: 3
+learning_rate: 0.0001
+batch_size: 2048
+number_epochs: 50
+problem_type: regression
+
+# compare to:
+# chemprop_train --data_path examples/chemprop_boiling.csv --dataset_type regression --save_dir chemprop_boiling --metric mae --epochs 200 --split_sizes 60 20 20
