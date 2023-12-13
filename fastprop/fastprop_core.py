@@ -21,6 +21,9 @@ TODO:
 To reduce total calculation burden, could interpolatively sample dataset to get some small percent,
 and then see which among those are transformed out, and then calc just the remaining for rest of
 dataset. Still should make calc'ing all an option.
+
+hyperparameter optimization:
+https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_lightning_simple.py
 """
 
 
@@ -79,7 +82,7 @@ NUM_WORKERS = 1
 TRAIN_SIZE = 0.8
 VAL_SIZE = 0.1
 TEST_SIZE = 1.0 - TRAIN_SIZE - VAL_SIZE
-INIT_LEARNING_RATE = 5e-4
+INIT_LEARNING_RATE = 1e-4
 NUM_VALIDATION_CHECKS = 10
 
 import logging
@@ -277,7 +280,7 @@ class fastprop(pl.LightningModule):
                 self.log(f"unitful_{name}_l1_output_{target}", value)
 
         # rmse
-        per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values")
+        per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values", squared=False)
         if len(self.target_scaler.feature_names_in_) == 1:
             self.log(f"unitful_{name}_rmse", np.mean(per_task_loss))
         else:
@@ -394,7 +397,7 @@ def train_fastprop(
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
 
-    n_repeats = 5
+    n_repeats = 1
     random_seed = 0
     all_results = []
     for iter in range(n_repeats):
