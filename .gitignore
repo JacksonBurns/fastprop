@@ -17,6 +17,8 @@ qm9.smi
 qm9_descriptors_mordred.csv
 boiling
 chemprop_boiling*
+boiling_hopt
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
