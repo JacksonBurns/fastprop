@@ -26,36 +26,38 @@ dataset. Still should make calc'ing all an option.
 hyperparameter optimization:
 https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_lightning_simple.py
 """
-import os
 import datetime
-from pathlib import Path
-import psutil
+import os
 import warnings
+from pathlib import Path
 from time import perf_counter
 from typing import OrderedDict
 
 import numpy as np
 import pandas as pd
+import psutil
 import pytorch_lightning as pl
 import torch
 from astartes import train_val_test_split
-
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from torch.utils.data import Dataset as TorchDataset
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
-
-
-from fastprop.utils import load_from_morded_csv, load_cached_descs, load_from_csv
-from .preprocessing import preprocess
-from .defaults import _LOGGING_ARGS
-
-from fastprop.utils import calculate_mordred_desciptors
+from torch.utils.data import Dataset as TorchDataset
 
 # choose the descriptor set absed on the args
-from fastprop.utils import SUBSET_947, ALL_2D
-from fastprop.utils import mordred_descriptors_from_strings
+from fastprop.utils import (
+    ALL_2D,
+    SUBSET_947,
+    calculate_mordred_desciptors,
+    load_cached_descs,
+    load_from_csv,
+    load_from_morded_csv,
+    mordred_descriptors_from_strings,
+)
+
+from .defaults import _LOGGING_ARGS
+from .preprocessing import preprocess
 
 descriptors_lookup = dict(
     optimized=SUBSET_947,

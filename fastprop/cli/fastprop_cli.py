@@ -1,12 +1,12 @@
 import argparse
 import json
-import yaml
 import sys
 from importlib.metadata import version
 
-from fastprop import DEFAULT_TRAINING_CONFIG
+import yaml
+
+from fastprop import DEFAULT_TRAINING_CONFIG, train_fastprop
 from fastprop.utils import validate_config
-from fastprop import train_fastprop
 
 
 def main():

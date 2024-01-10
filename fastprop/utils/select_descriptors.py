@@ -1,5 +1,6 @@
-from mordred import descriptors, get_descriptors_in_module
 from importlib.metadata import version
+
+from mordred import descriptors, get_descriptors_in_module
 from packaging.version import Version
 
 

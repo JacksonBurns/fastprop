@@ -1,16 +1,15 @@
 # given a filepath and some target columns,
 # retrieve the data as numpy arrays
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import VarianceThreshold
-from sklearn.impute import SimpleImputer
-
-import numpy as np
-
+import logging
 import warnings
 
+import numpy as np
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+
 from .defaults import _LOGGING_ARGS
-import logging
 
 logging.basicConfig(**_LOGGING_ARGS)
 logger = logging.getLogger(__name__)

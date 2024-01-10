@@ -1,7 +1,8 @@
-from mordred import Calculator
-import numpy as np
-from typing import Literal
 from multiprocessing import Pool
+from typing import Literal
+
+import numpy as np
+from mordred import Calculator
 
 
 # mordred tried to avoid instantiating multiple Calculator classes, which makes

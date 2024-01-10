@@ -1,7 +1,7 @@
 import os
 import warnings
-from time import perf_counter
 from multiprocessing import Pool
+from time import perf_counter
 
 import numpy as np
 import pandas as pd
