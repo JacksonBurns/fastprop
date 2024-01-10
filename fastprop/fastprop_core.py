@@ -17,6 +17,7 @@ TODO:
  - add a way to support reading mordred output from using it like this: python -m mordred example.smi -o example.csv
    (can be kind of a cop-out for speed considerations)
  - https://github.com/chriskiehl/Gooey
+ - need a function to write the model to a checkpoint file, and then do so occasionally during training
 
 To reduce total calculation burden, could interpolatively sample dataset to get some small percent,
 and then see which among those are transformed out, and then calc just the remaining for rest of
@@ -25,23 +26,13 @@ dataset. Still should make calc'ing all an option.
 hyperparameter optimization:
 https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_lightning_simple.py
 """
-
-
-# main driver function should accept args that align with those in the default training dict
-# so that it can be called with train_fastprop(**args)
-
-# need a function to write the model to a checkpoint file, as well as the preprocessing pipeline
-# and the result scaler
-
-# by default, also write the checkpoints at 4 intermediates
-# during training
-
 import os
 import datetime
 from pathlib import Path
 import psutil
 import warnings
 from time import perf_counter
+from typing import OrderedDict
 
 import numpy as np
 import pandas as pd
@@ -58,6 +49,7 @@ from sklearn.metrics import mean_squared_error as l2_error
 
 from fastprop.utils import load_from_morded_csv, load_cached_descs, load_from_csv
 from .preprocessing import preprocess
+from .defaults import _LOGGING_ARGS
 
 from fastprop.utils import calculate_mordred_desciptors
 
@@ -70,25 +62,19 @@ descriptors_lookup = dict(
     all=ALL_2D,
 )
 
-
-torch.manual_seed(42)
 warnings.filterwarnings(action="ignore", message=".*does not have many workers which may be a bottleneck.*")
 
 # device configuration
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_WORKERS = 1
 
-# training configuration
-TRAIN_SIZE = 0.8
-VAL_SIZE = 0.1
-TEST_SIZE = 1.0 - TRAIN_SIZE - VAL_SIZE
-INIT_LEARNING_RATE = 1e-4
+# 5e-4 generally a good setting, lowered for qm9
 NUM_VALIDATION_CHECKS = 10
 
 import logging
 
-logging.basicConfig(format="[%(asctime)s] %(levelname)s: %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
-logger = logging.getLogger("fastprop")
+logging.basicConfig(**_LOGGING_ARGS)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
@@ -112,11 +98,13 @@ class ArbitraryDataset(TorchDataset):
 
 
 class ArbitraryDataModule(LightningDataModule):
-    def __init__(self, cleaned_data, targets, batch_size, random_seed):
+    def __init__(self, cleaned_data, targets, batch_size, random_seed, train_size, val_size, test_size, sampler):
         super().__init__()
         self.data = cleaned_data
         self.targets = targets
         self.batch_size = batch_size
+        self.train_size, self.val_size, self.test_size = train_size, val_size, test_size
+        self.sampler = sampler
         self.train_idxs, self.val_idxs, self.test_idxs = None, None, None
         self.random_seed = random_seed
 
@@ -136,10 +124,10 @@ class ArbitraryDataModule(LightningDataModule):
             self.test_idxs,
         ) = train_val_test_split(
             np.array(self.targets),
-            train_size=TRAIN_SIZE,
-            val_size=VAL_SIZE,
-            test_size=TEST_SIZE,
-            sampler="random",
+            train_size=self.train_size,
+            val_size=self.val_size,
+            test_size=self.test_size,
+            sampler=self.sampler,
             random_state=self.random_seed,
             return_indices=True,
         )
@@ -167,92 +155,63 @@ class ArbitraryDataModule(LightningDataModule):
 
 
 class fastprop(pl.LightningModule):
-    def __init__(self, number_features, target_scaler, num_epochs, hidden_size):
+    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers):
         super().__init__()
         # for saving human-readable accuracy metrics and predicting
         self.target_scaler = target_scaler
+
+        # training configuration
         self.num_epochs = num_epochs
-        # growing interaction representation - break this into an encode function
-        self.square_interactions = torch.nn.Linear(number_features, number_features, bias=False)
-        self.dropout1 = torch.nn.Dropout(p=0.20)
-        self.cubic_interactions = torch.nn.Linear(number_features, number_features, bias=False)
-        self.dropout2 = torch.nn.Dropout(p=0.20)
-        self.quartic_interactions = torch.nn.Linear(number_features, number_features, bias=False)
-        self.dropout2 = torch.nn.Dropout(p=0.20)
+        self.learning_rate = learning_rate
 
         # fully-connected nn
-        self.fc1 = torch.nn.Linear(number_features, hidden_size)
-        self.fc2 = torch.nn.Linear(hidden_size, hidden_size)
-        self.fc3 = torch.nn.Linear(hidden_size, hidden_size)
+        layers = OrderedDict(
+            [
+                ("lin1", torch.nn.Linear(number_features, hidden_size)),
+                ("act1", torch.nn.ReLU()),
+            ]
+        )
+        for i in range(fnn_layers - 1):
+            layers[f"lin{i+2}"] = torch.nn.Linear(hidden_size, hidden_size)
+            layers[f"act{i+2}"] = torch.nn.ReLU()
+        self.fnn = torch.nn.Sequential(layers)
         self.readout = torch.nn.Linear(hidden_size, self.target_scaler.n_features_in_)
-        self.act_fn1 = torch.nn.ReLU()
-        self.act_fn2 = torch.nn.ReLU()
-        self.act_fn3 = torch.nn.ReLU()
 
     def forward(self, x):
-        
-        # OPTION 1: directly send learned interactions to FNN
-        # x = self.square_interactions(x)
-        # x = self.cubic_interactions(x)
-        # or do this more involved version:
-        # x = self.dropout1(x)s
-        # this is really more like quartic interactions (?)... can we concatenate
-        # the input vector to the square interactions vector, and then learn
-        # a transformation on that to get the cubic interactions
-        # x = self.cubic_interactions(x)  # <-- !! performance is still great without this!
-        # x = self.dropout2(x)  # <-- !! performance is still great without this!
-        # make the number of these blocks a parameter, and then add n of them to a
-        # nn.Sequential inside an encode() function (like how chemprop does it)
-        # try adding more hidden layers
-        # x = self.quartic_interactions(x)
-        
-        # OPTION 2: concatenate interaction layers, send to FNN
-        # x is the zero-order 'interactions' (just the values themselves)
-        # square_terms = self.square_interactions(x)
-        # cube_terms = self.cubic_interactions(square_terms)
-        # all_terms = torch.hstack([x, square_terms, cube_terms])
-        
-        # HAHA option 3 is to just send all the descriptors in directly, turns out
-        # its really good anyway
-        
-        # FNN
-        # x = self.fc1(all_terms)
-        x = self.fc1(x)
-        x = self.act_fn1(x)
-        x = self.fc2(x)
-        x = self.act_fn2(x)
-        x = self.fc3(x)
-        x = self.act_fn3(x)
+        x = self.fnn.forward(x)
         x = self.readout(x)
         return x
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=INIT_LEARNING_RATE)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return {"optimizer": optimizer}
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.forward(x)
-        loss = torch.nn.functional.mse_loss(y_hat, y, reduction='sum')
+        loss = self._machine_loss(batch, reduction="sum")
         self.log("train_mse_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.forward(x)
-        loss = torch.nn.functional.mse_loss(y_hat, y)
+        loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
         self.log("validation_mse_loss", loss, on_step=False, on_epoch=True)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "validation")
         return loss
 
     def test_step(self, batch, batch_idx):
-        x, y = batch
-        y_hat = self.forward(x)
-        loss = torch.nn.functional.mse_loss(y_hat, y)
+        loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
         self.log("test_mse_loss", loss, on_step=False, on_epoch=True)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "test")
         return loss
-    
+
+    def _machine_loss(self, batch, reduction="mean", return_all=False):
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = torch.nn.functional.mse_loss(y_hat, y, reduction=reduction)
+        if not return_all:
+            return loss
+        else:
+            return loss, x, y, y_hat
+
     def _human_loss(self, pred, real, name):
         # outputs the performance in more human-interpretable manner
         # expensive so we don't do this during training
@@ -270,7 +229,7 @@ class fastprop(pl.LightningModule):
                 self.log(f"unitful_{name}_wmape_output_{target}", value)
 
         # mean absolute error
-        all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction='none')
+        all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction="none")
         per_task_loss = all_loss.numpy().mean(axis=0)
         if len(self.target_scaler.feature_names_in_) == 1:
             self.log(f"unitful_{name}_l1", np.mean(per_task_loss))
@@ -293,7 +252,12 @@ class fastprop(pl.LightningModule):
             print(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
 
-def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_size, random_seed):
+def train_and_test(
+    outdir,
+    n_epochs,
+    datamodule,
+    model,
+):
     csv_logger = CSVLogger(
         outdir,
         "csv_logs",
@@ -313,7 +277,6 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
         check_val_every_n_epoch=n_epochs // NUM_VALIDATION_CHECKS,
     )
 
-    model = fastprop(X.shape[1], target_scaler, n_epochs, hidden_size)
     # currently (early nov. '23) bugged
     # https://github.com/Lightning-AI/lightning/issues/17177
     # might need to use Python 3.10?
@@ -326,12 +289,6 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
     # if compiled_model:
     #     model = compiled_model
 
-    datamodule = ArbitraryDataModule(
-        X,
-        y,
-        batch_size,
-        random_seed,
-    )
     t1_start = perf_counter()
     trainer.fit(
         model,
@@ -346,29 +303,17 @@ def train_and_test(X, y, target_scaler, outdir, n_epochs, batch_size, hidden_siz
     return test_results
 
 
-def train_fastprop(
-    output_directory,
-    input_file,
-    smiles_column,
-    target_columns,
-    descriptors="optimized",
-    enable_cache=True,
-    precomputed=None,
-    rescaling=True,
-    zero_variance_drop=True,
-    colinear_drop=False,
-    interaction_layers=2,
-    dropout_rate=0.2,
-    fnn_layers=3,
-    learning_rate=0.0001,
-    batch_size=2048,
-    number_epochs=1000,
-    problem_type="regression",
-    checkpoint=None,
-):
-    if not os.path.exists(output_directory):
-        os.mkdir(output_directory)
-    targets, mols = load_from_csv(input_file, smiles_column, target_columns)
+def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols):
+    """Loads descriptors according to the user-specified configuration
+
+    Args:
+        precomputed (str): Use precomputed descriptors if str is.
+        input_file (str): Filepath of input data.
+        output_directory (str): Destination directory for caching.
+        descriptors (list): List of strings of descriptors to calculate.
+        enable_cache (bool): Allow/disallow caching mechanism.
+        mols (list): RDKit molecules.
+    """
     descs = None
     if precomputed:
         del mols
@@ -391,19 +336,54 @@ def train_fastprop(
                 d = pd.DataFrame(descs)
                 d.to_csv(cache_file)
                 logger.info(f"Cached descriptors to {cache_file}.")
+    return descs
+
+
+def train_fastprop(
+    output_directory,
+    input_file,
+    smiles_column,
+    target_columns,
+    descriptors="optimized",
+    enable_cache=True,
+    precomputed=None,
+    rescaling=True,
+    zero_variance_drop=True,
+    colinear_drop=False,
+    fnn_layers=3,
+    hidden_size=512,
+    learning_rate=0.0001,
+    batch_size=2048,
+    number_epochs=1000,
+    number_repeats=1,
+    problem_type="regression",
+    checkpoint=None,
+    train_size=0.8,
+    val_size=0.1,
+    test_size=0.1,
+    sampler="random",
+    random_seed=0,
+):
+    torch.manual_seed(random_seed)
+    if not os.path.exists(output_directory):
+        os.mkdir(output_directory)
+    targets, mols = load_from_csv(input_file, smiles_column, target_columns)
+    descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
 
     logger.info("Preprocessing data...")
     X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop)
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
 
-    n_repeats = 1
-    random_seed = 0
+    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
+
+    model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
+
     all_results = []
-    for iter in range(n_repeats):
-        results = train_and_test(X, y, target_scaler, output_directory, number_epochs, batch_size, 512, random_seed)
+    for _ in range(number_repeats):
+        results = train_and_test(output_directory, number_epochs, datamodule, model)
         all_results.append(results[0])
         random_seed += 1
     # average the results
     results_df = pd.DataFrame.from_records(all_results)
-    print(results_df.describe())
+    print(results_df.describe().transpose())

@@ -1,6 +1,8 @@
+import warnings
+
+
 def validate_config(config: dict):
-    ...
-    # validate that the configuration dictionary is reasonable
-
-
-# can use sets or literals to check for valid string inputs
+    warnings.warn(
+        "TODO: Input validation has not been implemented! Skipping.",
+        RuntimeWarning,
+    )

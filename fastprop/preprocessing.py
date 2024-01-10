@@ -9,6 +9,13 @@ import numpy as np
 
 import warnings
 
+from .defaults import _LOGGING_ARGS
+import logging
+
+logging.basicConfig(**_LOGGING_ARGS)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, colinear_drop=False):
     target_scaler = StandardScaler()
@@ -24,13 +31,13 @@ def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, co
         # scale each column 0-1
         feature_scaler = StandardScaler()
         descriptors = feature_scaler.fit_transform(descriptors, targets)
-        print("size after clean (drop empty, impute missing, scale 0-1):", descriptors.shape)
+        logger.info(f"size after clean (drop empty, impute missing, scale 0-1): {descriptors.shape}")
 
     if zero_variance_drop:
         # drop low variance features
         descriptors = VarianceThreshold(threshold=0).fit_transform(descriptors, y)
-        print("size after invariant feature removal:", descriptors.shape)
-    
+        logger.info(f"size after invariant feature removal: {descriptors.shape}")
+
     if colinear_drop:
         raise NotImplementedError("TODO")
 

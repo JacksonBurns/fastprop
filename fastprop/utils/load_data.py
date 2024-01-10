@@ -24,6 +24,6 @@ def load_from_morded_csv(fpath):
 def load_cached_descs(fpath):
     # load descriptors cached by fastprop
     d = pd.read_csv(fpath, low_memory=False)
-    d = d.apply(pd.to_numeric, errors='coerce')
+    d = d.apply(pd.to_numeric, errors="coerce")
     descs = d[d.columns[1:]].to_numpy(dtype=float)
     return descs

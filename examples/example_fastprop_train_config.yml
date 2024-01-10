@@ -17,8 +17,6 @@ zero_variance_drop: True
 colinear_drop: False
 
 # training
-interaction_layers: 2
-dropout_rate: 0.2
 fnn_layers: 3
 learning_rate: 0.0001
 batch_size: 2048

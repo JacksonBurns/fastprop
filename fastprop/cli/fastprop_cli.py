@@ -33,13 +33,17 @@ def main():
     train_subparser.add_argument("-cd", "--colinear-drop", type=bool, help="drop colinear descriptors (defaults to False)")
 
     # training
-    train_subparser.add_argument("-il", "--interaction-layers", type=int, help="number of interactions layers")
-    train_subparser.add_argument("-dr", "--dropout-rate", type=float, help="dropout rate for interaction layers")
     train_subparser.add_argument("-fl", "--fnn-layers", type=int, help="number of fnn layers")
     train_subparser.add_argument("-lr", "--learning-rate", type=float, help="learning rate")
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
     train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")
+    train_subparser.add_argument("-nr", "--number-repeats", type=int, help="number of repeats")
     train_subparser.add_argument("-pt", "--problem-type", help="problem type (regression, classification)")
+    train_subparser.add_argument("-ns", "--train-size", help="train size")
+    train_subparser.add_argument("-vs", "--val-size", help="val size")
+    train_subparser.add_argument("-ts", "--test-size", help="test size")
+    train_subparser.add_argument("-s", "--sampler", help="choice of sampler, i.e. random, kmeans, etc.")
+    train_subparser.add_argument("-rs", "--random-seed", help="random seed for sampling and pytorch seed")
 
     predict_subparser = subparsers.add_parser("predict")
     predict_subparser.add_argument("-c", "--checkpoint", required=True, help="checkpoint file for predictions")
@@ -83,7 +87,8 @@ def main():
                 training_default.update({k: v for k, v in args.items() if v is not None})
 
             print("training parameters:\n", json.dumps(training_default, indent=4))
-            # validate this dictionary, i.e. layer counts are positive, dropout rates reasonable, etc.
+            # validate this dictionary, i.e. layer counts are positive, etc.
+            validate_config(training_default)
             train_fastprop(**training_default)
         case "predict":
             if args["smiles"] is None and args["input_file"] is None:

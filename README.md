@@ -47,7 +47,7 @@ There are four distinct steps in `fastprop` that define its framework:
  1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
  2. Preprocessing - clean the descriptors by removing or imputing missing values then rescaling the remainder
  3. Training - send the processed input to the neural network, which has this simple architecture:
-    - Representation Learning: series of fully-connected layers _without bias_ of equal dimension to the number of remaining descriptors, followed by a dropout layer
+    - Representation Learning: series of fully-connected layers _without bias_ of equal dimension to the number of remaining descriptors
     - FNN: sequential fully-connected layers _with bias_ decreasing in dimension to the final output size, with an activation function between layers
  4. Prediction - save the trained model and preprocessing pipeline for future use
 
@@ -69,8 +69,6 @@ There are four distinct steps in `fastprop` that define its framework:
     - Enable/Disable dropping of co-linear descriptors (disabled by default; improves speed but typically decreases accuracy)
     - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
  3. Training
-    - Number of interaction layers (default 2; must be a positive integer)
-    - Dropout rate between interaction layers (default 0.2; must be a float between 0 and 1)
     - Number of FNN layers (default 3; repeated fully connected layers of hidden size)
 
     _generic NN training parameters_

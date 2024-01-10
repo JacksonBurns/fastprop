@@ -1,3 +1,6 @@
+# Complete list of 2D descriptors implemented in Mordred as well as a subset
+# of those descriptors which are often useful for fastprop after preprocessing
+
 ALL_2D = [
     "ABC",
     "ABCGG",
