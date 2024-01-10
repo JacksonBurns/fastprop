@@ -27,6 +27,7 @@ hyperparameter optimization:
 https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_lightning_simple.py
 """
 import datetime
+import logging
 import os
 import warnings
 from pathlib import Path
@@ -73,7 +74,6 @@ NUM_WORKERS = 1
 # 5e-4 generally a good setting, lowered for qm9
 NUM_VALIDATION_CHECKS = 10
 
-import logging
 
 logging.basicConfig(**_LOGGING_ARGS)
 logger = logging.getLogger(__name__)
