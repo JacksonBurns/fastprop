@@ -157,10 +157,13 @@ class ArbitraryDataModule(LightningDataModule):
 
 
 class fastprop(pl.LightningModule):
-    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers):
+    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers, shh=False):
         super().__init__()
         # for saving human-readable accuracy metrics and predicting
         self.target_scaler = target_scaler
+
+        # shh
+        self.shh = shh
 
         # training configuration
         self.num_epochs = num_epochs
@@ -251,7 +254,8 @@ class fastprop(pl.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         if (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
-            print(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
+            if not self.shh:
+                logging.info(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
 
 def train_and_test(
@@ -259,6 +263,7 @@ def train_and_test(
     n_epochs,
     datamodule,
     model,
+    verbose=True,
 ):
     csv_logger = CSVLogger(
         outdir,
@@ -297,11 +302,9 @@ def train_and_test(
         datamodule,
     )
     t1_stop = perf_counter()
-    logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    test_results = trainer.test(
-        model,
-        datamodule,
-    )
+    if verbose:
+        logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
+    test_results = trainer.test(model, datamodule, verbose=verbose)
     return test_results
 
 

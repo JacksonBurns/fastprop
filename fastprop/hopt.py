@@ -111,24 +111,24 @@ def objective(
     output_directory,
     random_seed,
 ) -> float:
-    with contextlib.redirect_stdout(None):
-        # We optimize the number of layers, hidden units in each layer and dropouts.
-        fnn_layers = trial.suggest_int("n_layers", 1, 5)
-        hidden_size = trial.suggest_int("hidden_size", 128, 2048)
+    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
+    # We optimize the number of layers, hidden units in each layer and dropouts.
+    fnn_layers = trial.suggest_int("n_layers", 1, 5)
+    hidden_size = trial.suggest_int("hidden_size", 128, 2048)
 
-        model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
+    model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, shh=True)
 
-        all_results = []
-        for _ in range(number_repeats):
-            results = train_and_test(output_directory, number_epochs, datamodule, model)
-            all_results.append(results[0])
-            random_seed += 1
+    all_results = []
+    for _ in range(number_repeats):
+        results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=False)
+        all_results.append(results[0])
+        random_seed += 1
 
-        results_df = pd.DataFrame.from_records(all_results)
-        if target_scaler.n_features_in_ == 1:
-            return results_df.describe().at["mean", "unitful_test_l1"]
-        else:
-            return results_df.describe().at["mean", "unitful_test_l1_avg"]
+    results_df = pd.DataFrame.from_records(all_results)
+    if target_scaler.n_features_in_ == 1:
+        return results_df.describe().at["mean", "unitful_test_l1"]
+    else:
+        return results_df.describe().at["mean", "unitful_test_l1_avg"]
 
 
 if __name__ == "__main__":
