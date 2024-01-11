@@ -1,0 +1,43 @@
+# The Harvard Organic PhotoVoltaics (HOPV15) Dataset, as described in:
+# https://doi.org/10.1038/sdata.2016.86
+#
+# Download the data from the figshare:
+# https://figshare.com/articles/dataset/HOPV15_Dataset/1610063/4
+# Then run: python parse.py > benchmark_data.csv
+# to prepare the data for fastprop.
+#
+# Additional Comments:
+# https://pubs.acs.org/doi/epdf/10.1021/acs.iecr.0c03880
+# achieved 1.25 L1 with their architecture, 2.00 with one using mordred
+# this paper got about 1.4 on a subset matching some special criteria:
+# https://api.repository.cam.ac.uk/server/api/core/bitstreams/92606fbe-978e-4366-9bdb-892028e79294/content
+
+
+# generic args
+output_directory: hopv15
+random_seed: 42
+problem_type: regression
+
+# featurization
+input_file: hopv15/benchmark_data.csv
+target_columns: pce
+smiles_column: smiles
+descriptors: all
+enable_cache: True
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 5
+fnn_layers: 2
+hidden_size: 1800
+learning_rate: 0.0001
+batch_size: 2048
+number_epochs: 100
+train_size: 0.8
+val_size: 0.05
+test_size: 0.15
+sampler: random

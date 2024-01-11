@@ -1,25 +1,16 @@
-# run logs and benchmarking files
-qm9_results
-csv_logs_qm8
-temp
-qm9_benchmark
-qm8_results
-qm8.csv
-qm9.csv
-qm8.yml
-qm9_benchmark.yml
-qm9_repeats
-freesolv_output
-qm9_benchmark_no_intxns
-freesolv.csv
-freesolv.yml
-qm9.smi
-qm9_descriptors_mordred.csv
-boiling
-chemprop_boiling*
-boiling_hopt
+# run logs
+csv_logs
+tensorboard_logs
+benchmark_data.csv
+
+# cached descriptors from fastprop
+cached_*.csv
+
+# database from hyperparameter optimization
 *.db
-hopv15
+
+# temporary files for debugging
+temp
 temp.py
 
 # Byte-compiled / optimized / DLL files
