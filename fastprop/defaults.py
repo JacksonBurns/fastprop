@@ -1,6 +1,6 @@
 from types import MappingProxyType
 
-_LOGGING_ARGS = {"format": "[%(asctime)s] %(levelname)s: %(message)s", "datefmt": "%m/%d/%Y %I:%M:%S %p"}
+_LOGGING_ARGS = {"format": "[%(asctime)s %(name)s] %(levelname)s: %(message)s", "datefmt": "%m/%d/%Y %I:%M:%S %p"}
 
 # immutable default settings
 DEFAULT_TRAINING_CONFIG = MappingProxyType(

@@ -256,7 +256,7 @@ class fastprop(pl.LightningModule):
     def on_train_epoch_end(self) -> None:
         if (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
             if not self.shh:
-                logging.info(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
+                logger.info(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
 
 def train_and_test(
@@ -278,7 +278,7 @@ def train_and_test(
     trainer = pl.Trainer(
         max_epochs=n_epochs,
         accelerator=DEVICE,
-        enable_progress_bar=verbose,
+        enable_progress_bar=False,
         logger=[csv_logger, tensorboard_logger],
         log_every_n_steps=1,
         enable_checkpointing=True,
@@ -382,4 +382,4 @@ def train_fastprop(
         random_seed += 1
     # average the results
     results_df = pd.DataFrame.from_records(all_results)
-    print(results_df.describe().transpose())
+    logger.info("Displaying results:\n%s", results_df.describe().transpose().to_string())
