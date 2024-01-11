@@ -51,9 +51,8 @@ from fastprop.utils import (
     ALL_2D,
     SUBSET_947,
     calculate_mordred_desciptors,
-    load_cached_descs,
     load_from_csv,
-    load_from_morded_csv,
+    load_saved_desc,
     mordred_descriptors_from_strings,
 )
 
@@ -311,7 +310,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
     if precomputed:
         del mols
         logger.info(f"Loading precomputed descriptors from {precomputed}.")
-        descs = load_from_morded_csv(precomputed)
+        descs = load_saved_desc(precomputed)
     else:
         in_name = Path(input_file).stem
         # cached descriptors, which contains (1) cached (2) source filename (3) types of descriptors (4) timestamp when file was last touched
@@ -319,7 +318,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
 
         if os.path.exists(cache_file) and enable_cache:
             logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
-            descs = load_cached_descs(cache_file)
+            descs = load_saved_desc(cache_file)
         else:
             d2c = mordred_descriptors_from_strings(descriptors_lookup[descriptors])
             # use all the cpus available

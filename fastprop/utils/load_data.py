@@ -13,15 +13,7 @@ def load_from_csv(fpath, smiles_column, target_columns):
     return targets, rdkit_mols
 
 
-def load_from_morded_csv(fpath):
-    # read the csv file from mordred
-    src = pd.read_csv(fpath)
-    descs = src[src.columns[1:]].to_numpy(dtype=float)
-    return descs
-
-
-def load_cached_descs(fpath):
-    # load descriptors cached by fastprop
+def load_saved_desc(fpath):
     d = pd.read_csv(fpath, low_memory=False)
     d = d.apply(pd.to_numeric, errors="coerce")
     descs = d[d.columns[1:]].to_numpy(dtype=float)
