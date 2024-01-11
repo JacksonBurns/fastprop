@@ -48,6 +48,7 @@ def hopt_fastprop(
     sampler="random",
     random_seed=0,
     n_trials=100,
+    n_parallel=1,
 ):
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
@@ -87,7 +88,7 @@ def hopt_fastprop(
         ),
         n_trials=n_trials,
         timeout=None,
-        n_jobs=-1,
+        n_jobs=n_parallel,
         show_progress_bar=True,
     )
 
@@ -142,5 +143,7 @@ if __name__ == "__main__":
         train_size=0.6,
         val_size=0.2,
         test_size=0.2,
+        number_repeats=5,
         n_trials=48,
+        n_parallel=8,
     )

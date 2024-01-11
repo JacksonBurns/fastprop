@@ -143,6 +143,7 @@ class ArbitraryDataModule(LightningDataModule):
             batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=NUM_WORKERS,
+            persistent_workers=True,
             collate_fn=_collate_fn if self.batch_size > 1 else None,
         )
 
@@ -277,24 +278,12 @@ def train_and_test(
     trainer = pl.Trainer(
         max_epochs=n_epochs,
         accelerator=DEVICE,
-        enable_progress_bar=False,
+        enable_progress_bar=verbose,
         logger=[csv_logger, tensorboard_logger],
         log_every_n_steps=1,
         enable_checkpointing=True,
         check_val_every_n_epoch=n_epochs // NUM_VALIDATION_CHECKS,
     )
-
-    # currently (early nov. '23) bugged
-    # https://github.com/Lightning-AI/lightning/issues/17177
-    # might need to use Python 3.10?
-    # compiled_model = None
-    # try:
-    #     compiled_model = torch.compile(model)
-    # except Exception as e:
-    #     print("Couldn't compiled: ", str(e))
-
-    # if compiled_model:
-    #     model = compiled_model
 
     t1_start = perf_counter()
     trainer.fit(
@@ -335,6 +324,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
         else:
             d2c = mordred_descriptors_from_strings(descriptors_lookup[descriptors])
             # use all the cpus available
+            logger.info("Calculating descriptors.")
             descs = calculate_mordred_desciptors(d2c, mols, psutil.cpu_count(logical=False), "fast")
             # cache these
             if enable_cache:
@@ -369,6 +359,7 @@ def train_fastprop(
     sampler="random",
     random_seed=0,
 ):
+    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
