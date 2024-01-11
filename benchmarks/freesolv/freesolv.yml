@@ -1,0 +1,22 @@
+# The Free Energy of Solvation (FreeSolv) Dataset, as described in:
+# https://doi.org/10.1007/s10822-014-9747-x
+#
+# Download the data from the GitHub:
+# https://github.com/MobleyLab/FreeSolv/blob/master/database.txt
+# Then run: python parse.py > benchmark_data.csv
+# to prepare the data for fastprop.
+#
+# Additional Comments:
+# Goal is ~1 kcal/mol accuracy.
+
+output_directory: freesolv
+problem_type: regression
+input_file: freesolv/benchmark_data.csv
+target_columns: exp  # calc
+smiles_column: SMILES
+
+descriptors: all
+
+# training
+number_epochs: 200
+number_repeats: 5

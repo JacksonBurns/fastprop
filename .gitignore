@@ -2,7 +2,7 @@
 benchmark_data.csv
 benchmarks/alkanes/Alkane
 benchmarks/alkanes/alkane_dataset.tar.gz
-
+benchmarks/freesolv/database.txt
 
 # run logs
 csv_logs
