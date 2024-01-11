@@ -6,7 +6,11 @@ from importlib.metadata import version
 import yaml
 
 from fastprop import DEFAULT_TRAINING_CONFIG, train_fastprop
+from fastprop.defaults import init_logger
 from fastprop.utils import validate_config
+
+
+logger = init_logger(__name__)
 
 
 def main():
@@ -86,11 +90,11 @@ def main():
                 # cannot specify both precomputed and descriptors or enable/cache
                 training_default.update({k: v for k, v in args.items() if v is not None})
 
-            print("training parameters:\n", json.dumps(training_default, indent=4))
+            logger.info(f"Training Parameters:\n {json.dumps(training_default, indent=4)}")
             # validate this dictionary, i.e. layer counts are positive, etc.
             validate_config(training_default)
             train_fastprop(**training_default)
         case "predict":
             if args["smiles"] is None and args["input_file"] is None:
                 raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")
-            print(args)
+            logger.info(f"Predict Parameters:\n {json.dumps(args, indent=4)}")

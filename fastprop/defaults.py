@@ -1,6 +1,15 @@
 from types import MappingProxyType
+import logging
 
 _LOGGING_ARGS = {"format": "[%(asctime)s %(name)s] %(levelname)s: %(message)s", "datefmt": "%m/%d/%Y %I:%M:%S %p"}
+logging.basicConfig(**_LOGGING_ARGS)
+
+
+def init_logger(module_name):
+    logger = logging.getLogger(module_name)
+    logger.setLevel(logging.DEBUG)
+    return logger
+
 
 # immutable default settings
 DEFAULT_TRAINING_CONFIG = MappingProxyType(

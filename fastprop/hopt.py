@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import os
 import time
@@ -7,7 +6,7 @@ import optuna
 import pandas as pd
 import torch
 
-from fastprop.defaults import _LOGGING_ARGS
+from fastprop.defaults import init_logger
 from fastprop.fastprop_core import (
     ArbitraryDataModule,
     _get_descs,
@@ -17,9 +16,7 @@ from fastprop.fastprop_core import (
 from fastprop.preprocessing import preprocess
 from fastprop.utils import load_from_csv
 
-logging.basicConfig(**_LOGGING_ARGS)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger = init_logger(__name__)
 
 # TODO: use this in the future:
 # from optuna.integration import PyTorchLightningPruningCallback

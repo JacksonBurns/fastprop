@@ -1,8 +1,7 @@
-import warnings
+from fastprop.defaults import init_logger
+
+logger = init_logger(__name__)
 
 
 def validate_config(config: dict):
-    warnings.warn(
-        "TODO: Input validation has not been implemented! Skipping.",
-        RuntimeWarning,
-    )
+    logger.warn("TODO: Input validation has not been implemented! Skipping.")

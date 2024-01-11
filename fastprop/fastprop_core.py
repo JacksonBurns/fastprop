@@ -57,13 +57,15 @@ from fastprop.utils import (
     mordred_descriptors_from_strings,
 )
 
-from .defaults import _LOGGING_ARGS
+from .defaults import init_logger
 from .preprocessing import preprocess
 
 descriptors_lookup = dict(
     optimized=SUBSET_947,
     all=ALL_2D,
 )
+
+logger = init_logger(__name__)
 
 warnings.filterwarnings(action="ignore", message=".*does not have many workers which may be a bottleneck.*")
 
@@ -73,11 +75,6 @@ NUM_WORKERS = 1
 
 # 5e-4 generally a good setting, lowered for qm9
 NUM_VALIDATION_CHECKS = 10
-
-
-logging.basicConfig(**_LOGGING_ARGS)
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def _collate_fn(batch):
@@ -279,6 +276,7 @@ def train_and_test(
         max_epochs=n_epochs,
         accelerator=DEVICE,
         enable_progress_bar=False,
+        enable_model_summary=verbose,
         logger=[csv_logger, tensorboard_logger],
         log_every_n_steps=1,
         enable_checkpointing=True,
@@ -359,7 +357,7 @@ def train_fastprop(
     sampler="random",
     random_seed=0,
 ):
-    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
+    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
@@ -376,8 +374,9 @@ def train_fastprop(
     model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
 
     all_results = []
-    for _ in range(number_repeats):
-        results = train_and_test(output_directory, number_epochs, datamodule, model)
+    for i in range(number_repeats):
+        logger.info(f"Training model {i+1} of {number_repeats}")
+        results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True)
         all_results.append(results[0])
         random_seed += 1
     # average the results
