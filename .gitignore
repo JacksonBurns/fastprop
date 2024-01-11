@@ -19,6 +19,8 @@ boiling
 chemprop_boiling*
 boiling_hopt
 *.db
+hopv15
+temp.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

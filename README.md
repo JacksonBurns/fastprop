@@ -30,26 +30,16 @@ All contributions are appreciated!
 See [Developing `fastprop`](#developing-fastprop) for more details.
 
 # About `fastprop`
-`fastprop` is inspired by the ideas presented in [Analyzing Learned Molecular Representations for Property Prediction](https://pubs.acs.org/doi/10.1021/acs.jcim.9b00237).
-When attempting to solve the problem of predicting molecular properties based on only the structure (Quantitative Structure-Property Relationships or QSPR) it quickly became evident that rigid representations and classical regression methods were not sufficiently accurate.
-Learned representations focus on taking some initial set of features for a molecule and 'learning' a new representation based on that input which is better able to predict properties when passed into a Fully-connected Neural Network (FNN, which is better at extrapolation and non-linear fitting than classical regression methods).
-
-The reference study and current literature in general focus on Message Passing Neural Networks (MPNNs, see [`chemprop`](https://github.com/chemprop/chemprop)) and similar graph-based methods.
-MPNNs and graph-based learning methods are computationally expensive in comparison to the method used here. 
-`fastprop` attempts to learn a representation that is a linear combination of actual chemical descriptors (as implemented in [`mordredcommunity`](https://github.com/JacksonBurns/mordred-community), see [Moriwaki et. al](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-018-0258-y)).
-This operation is inexpensive, making the most expensive part of training just the generation of features (which are easily saved to disk, eliminating the cost after the initial generation).
-The representation is then passed to a typical FNN to predict the actual output.
-
-[This study](https://doi.org/10.1016/j.fuel.2022.123836) did something similar to what `fastprop` does, but did not allow the flexibility to learn interactions within the NN itself, instead relying on classical techniques.
+`fastprop` is a package for performing deep-QSPR (Quantitative Structure-Property Relationship) with minimal user intervention.
+By passing in a list of SMILES strings, `fastprop` will automatically generate and cache a set of molecular descriptors using [`mordredcommunity`](https://github.com/JacksonBurns/mordred-community) and train an FNN to predict the corresponding properties.
+See the `examples` and `benchmarks` directories to see how to run training - the rest of this documentation will focus on how you can run, configure, and customize `fastprop`.
 
 ## `fastprop` Framework
 There are four distinct steps in `fastprop` that define its framework:
  1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
  2. Preprocessing - clean the descriptors by removing or imputing missing values then rescaling the remainder
- 3. Training - send the processed input to the neural network, which has this simple architecture:
-    - Representation Learning: series of fully-connected layers _without bias_ of equal dimension to the number of remaining descriptors
-    - FNN: sequential fully-connected layers _with bias_ decreasing in dimension to the final output size, with an activation function between layers
- 4. Prediction - save the trained model and preprocessing pipeline for future use
+ 3. Training - send the processed input to the neural network, which is a sample FNN (sequential fully-connected layers with an activation function between)
+ 4. Prediction - save the trained model for future use
 
 ## Configurable Parameters
  1. Featurization
@@ -58,14 +48,14 @@ There are four distinct steps in `fastprop` that define its framework:
     - Target column name(s): name(s) of the columns containing the targets
 
     _and_
-    - Which `mordred` descriptors to calculate: all, optimized, smallest, or search (`fastprop` will use 10% of the dataset to find which descriptors are meaningful)
+    - Which `mordred` descriptors to calculate: 'all' or 'optimized' (a smaller set of descriptors previously found to be useful).
     - Enable/Disable caching of calculated descriptors: `fastprop` will by default cache calculated descriptors based on the input filename and warn the user when it loads descriptors from the file rather than calculating on the fly
 
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
     - Enable/Disable re-scaling of parameters between 0 and 1 (enabled by default and _highly_ recommended)
-    - Enable/Disable dropping of zero-variance parameters (enabled by default)
+    - Enable/Disable dropping of zero-variance parameters (disabled by default; can possibly speed up training)
     - Enable/Disable dropping of co-linear descriptors (disabled by default; improves speed but typically decreases accuracy)
     - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
  3. Training
@@ -75,12 +65,12 @@ There are four distinct steps in `fastprop` that define its framework:
     - Output Directory
     - Learning rate
     - Batch size
-    - Checkpoint file to resume from
-    - Problem type (regression, classification)
+    - Checkpoint file to resume from (optional)
+    - Problem type (one of: regression, classification)
  4. Prediction
     - Input SMILES: either a single SMILES or a CSV file
     - Output format: either a filepath to write the results, defaults to stdout
-    - Checkpoint file: previously trained model file, containing scalers and model weights
+    - Checkpoint file: previously trained model file
 
 # Using `fastprop`
 `fastprop` can be run from the command line or as a Python module.
@@ -96,34 +86,34 @@ It is everything shown in the [Configurable Parameters](#configurable-parameters
 
 ### Arguments
 All of the options shown in the [Configuration File](#configuration-file-recommended) section can also be passed as command line flags instead of written to a file.
-When passing the arguments, replace all `_` (underscore) with `-` (hyphen), i.e. `fastprop train -i 1`
+When passing the arguments, replace all `_` (underscore) with `-` (hyphen), i.e. `fastprop train --number-epochs 100`
 See `fastprop train --help` or `fastprop predict --help` for more information.
 
 ## Python Module
-This section documents where the various modules and functions used in `fastprop` are located, as well as how to use them in your own scripts.
-Note that caching of computed descriptors is not available via scripting.
-Users are encouraged to manually save and load descriptors in the same way that `fastprop` does behind the scenes when accessing from the command line.
+This section documents where the various modules and functions used in `fastprop` are located.
+Check each file listed for more information, as each contains additional inline documentation useful for development as a Python module.
+
 ### `fastprop`
- - default training mapping
- - dataloader
- - lightning module
- - train function
- - predict function
+ - `defaults`: contains the function `init_logger` used to initialize loggers in different submodules, as well as the default configuration for training.
+ - `hopt`: example code for hyperparameter optimization, which was used to help determine the defaults.
+ - `preprocessing`: contains a single function `preprocess` that performs all of the preprocessing described above.
+ - `fastprop_core`: catch-all for the remaining parts of `fastprop`, including the model itself, data PyTorch Lightning dataloader, some convenience functions for caching descriptors, and the actual training functions used in the CLI.
 
 ### `fastprop.utils`
- - validate config
- - select descriptors (From `mordred`)
+ - `calculate_descriptors`: wraps the `mordredcommunity` descriptor calculator
+ - `descriptor_lists`: hardcoded lists of all of the descriptors implemented in `mordredcommunity`.
+ - `select_descriptors`: the script to retrieve the `mordredcommunity` modules based on the strings in the above file (`mordredcommunity` has a weird interface; thus, it is wrapped).
+ - `load_data`: short wrappers to `pandas` CSV loading utility, but specialized for the output from `mordredcommunity` and `fastprop`.
+ - `validate_config`: (WIP!) validate the input from the command line.
 
 ### `fastprop.cli`
-fastprop_cli contains all the CLI which is likely not useful in use from a script.
+`fastprop_cli`` contains all the CLI code which is likely not useful in use from a script.
+If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
-Each entry in the table show the result for `fastprop` and then `chemprop` formatted as `fastprop | chemprop` with the better result **bolded**.
+The `benchmarks` directory contains the scripts needed to perform the studies as well as the actual results, which are also summarized here.
 
-| Dataset | MAE | MAPE | Time |
-| --- | --- | --- | --- |
-|QM8|  **0.0077** \| 0.011  |    |    |
-|QM9|    |    |    |
+WIP!
 
 # Developing `fastprop`
 `fastprop` is built around PyTorch lightning, which defines a rigid API for implementing models, link to their documentation.

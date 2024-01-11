@@ -341,7 +341,7 @@ def train_fastprop(
     enable_cache=True,
     precomputed=None,
     rescaling=True,
-    zero_variance_drop=True,
+    zero_variance_drop=False,
     colinear_drop=False,
     fnn_layers=3,
     hidden_size=512,
