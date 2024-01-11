@@ -18,9 +18,6 @@ from fastprop.utils import load_from_csv
 
 logger = init_logger(__name__)
 
-# TODO: use this in the future:
-# from optuna.integration import PyTorchLightningPruningCallback
-
 
 def hopt_fastprop(
     output_directory,
