@@ -1,5 +1,6 @@
 # benchmarking files
 benchmark_data.csv
+precomputed.csv
 benchmarks/alkanes/Alkane
 benchmarks/alkanes/alkane_dataset.tar.gz
 benchmarks/freesolv/database.txt

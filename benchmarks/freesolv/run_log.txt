@@ -1,188 +1,0 @@
-[01/11/2024 02:52:44 PM fastprop.cli.fastprop_cli] INFO: Training Parameters:
- {
-    "descriptors": "all",
-    "enable_cache": true,
-    "precomputed": null,
-    "rescaling": true,
-    "zero_variance_drop": false,
-    "colinear_drop": false,
-    "fnn_layers": 2,
-    "learning_rate": 0.0001,
-    "batch_size": 2048,
-    "number_epochs": 200,
-    "number_repeats": 5,
-    "problem_type": "regression",
-    "checkpoint": null,
-    "train_size": 0.8,
-    "val_size": 0.1,
-    "test_size": 0.1,
-    "sampler": "random",
-    "random_seed": 1701,
-    "hidden_size": 1800,
-    "output_directory": "freesolv",
-    "input_file": "freesolv/benchmark_data.csv",
-    "target_columns": [
-        "exp"
-    ],
-    "smiles_column": "SMILES"
-}
-[01/11/2024 02:52:44 PM fastprop.utils.validate_config] WARNING: TODO: Input validation has not been implemented! Skipping.
-[01/11/2024 02:52:44 PM fastprop.fastprop_core] INFO: Calculating descriptors.
-  0%|          | 0/81 [00:00<?, ?it/s]  1%|          | 1/81 [00:00<00:14,  5.38it/s]  4%|▎         | 3/81 [00:00<00:25,  3.06it/s]  5%|▍         | 4/81 [00:01<00:19,  3.86it/s]  6%|▌         | 5/81 [00:01<00:17,  4.43it/s]  9%|▊         | 7/81 [00:01<00:12,  5.83it/s] 11%|█         | 9/81 [00:01<00:09,  7.30it/s] 14%|█▎        | 11/81 [00:01<00:09,  7.12it/s] 15%|█▍        | 12/81 [00:02<00:09,  7.16it/s] 16%|█▌        | 13/81 [00:02<00:09,  7.30it/s] 19%|█▊        | 15/81 [00:02<00:07,  8.80it/s] 20%|█▉        | 16/81 [00:02<00:07,  9.03it/s] 21%|██        | 17/81 [00:02<00:07,  8.68it/s] 23%|██▎       | 19/81 [00:02<00:06,  9.47it/s] 25%|██▍       | 20/81 [00:02<00:06,  9.05it/s] 26%|██▌       | 21/81 [00:03<00:07,  7.55it/s] 27%|██▋       | 22/81 [00:03<00:07,  7.71it/s] 28%|██▊       | 23/81 [00:03<00:09,  6.24it/s] 30%|██▉       | 24/81 [00:03<00:13,  4.26it/s] 31%|███       | 25/81 [00:04<00:11,  4.82it/s] 32%|███▏      | 26/81 [00:04<00:12,  4.47it/s] 33%|███▎      | 27/81 [00:04<00:14,  3.63it/s] 35%|███▍      | 28/81 [00:04<00:12,  4.25it/s] 36%|███▌      | 29/81 [00:04<00:11,  4.66it/s] 37%|███▋      | 30/81 [00:05<00:16,  3.15it/s] 38%|███▊      | 31/81 [00:05<00:12,  3.87it/s] 40%|███▉      | 32/81 [00:05<00:10,  4.68it/s] 41%|████      | 33/81 [00:06<00:13,  3.59it/s] 42%|████▏     | 34/81 [00:06<00:10,  4.43it/s] 43%|████▎     | 35/81 [00:06<00:09,  4.92it/s] 44%|████▍     | 36/81 [00:06<00:08,  5.47it/s] 47%|████▋     | 38/81 [00:06<00:05,  7.26it/s] 49%|████▉     | 40/81 [00:06<00:05,  8.18it/s] 52%|█████▏    | 42/81 [00:07<00:04,  9.01it/s] 54%|█████▍    | 44/81 [00:07<00:03, 10.15it/s] 57%|█████▋    | 46/81 [00:07<00:04,  8.59it/s] 58%|█████▊    | 47/81 [00:07<00:04,  8.23it/s] 59%|█████▉    | 48/81 [00:08<00:06,  5.06it/s] 60%|██████    | 49/81 [00:08<00:05,  5.52it/s] 62%|██████▏   | 50/81 [00:08<00:05,  6.18it/s] 63%|██████▎   | 51/81 [00:08<00:07,  4.27it/s] 64%|██████▍   | 52/81 [00:09<00:06,  4.69it/s] 65%|██████▌   | 53/81 [00:09<00:05,  5.25it/s] 67%|██████▋   | 54/81 [00:09<00:07,  3.67it/s] 68%|██████▊   | 55/81 [00:09<00:05,  4.41it/s] 70%|███████   | 57/81 [00:09<00:03,  6.33it/s] 73%|███████▎  | 59/81 [00:10<00:03,  6.38it/s] 74%|███████▍  | 60/81 [00:10<00:03,  6.92it/s] 77%|███████▋  | 62/81 [00:10<00:03,  6.15it/s] 78%|███████▊  | 63/81 [00:10<00:02,  6.17it/s] 80%|████████  | 65/81 [00:11<00:02,  7.09it/s] 83%|████████▎ | 67/81 [00:11<00:01,  7.99it/s] 85%|████████▌ | 69/81 [00:11<00:01,  8.83it/s] 88%|████████▊ | 71/81 [00:11<00:01,  9.32it/s] 89%|████████▉ | 72/81 [00:11<00:01,  8.52it/s] 91%|█████████▏| 74/81 [00:11<00:00,  9.44it/s] 93%|█████████▎| 75/81 [00:12<00:00,  9.12it/s] 94%|█████████▍| 76/81 [00:12<00:00,  5.71it/s] 95%|█████████▌| 77/81 [00:12<00:00,  6.32it/s] 98%|█████████▊| 79/81 [00:12<00:00,  6.03it/s] 99%|█████████▉| 80/81 [00:13<00:00,  4.36it/s]100%|██████████| 81/81 [00:13<00:00,  6.01it/s]
-[01/11/2024 02:53:01 PM fastprop.fastprop_core] INFO: Cached descriptors to freesolv/cached_benchmark_data_all_1704999755.csv.
-[01/11/2024 02:53:01 PM fastprop.fastprop_core] INFO: Preprocessing data...
-[01/11/2024 02:53:01 PM fastprop.preprocessing] INFO: size after clean (drop empty, impute missing, scale 0-1): (642, 1525)
-[01/11/2024 02:53:01 PM fastprop.fastprop_core] INFO: ...done.
-[01/11/2024 02:53:01 PM fastprop.fastprop_core] INFO: Training model 1 of 5
-[01/11/2024 02:53:02 PM lightning_fabric.loggers.csv_logs] WARNING: Missing logger folder: freesolv/csv_logs
-[01/11/2024 02:53:03 PM fastprop.fastprop_core] INFO: Epoch [20/200]
-[01/11/2024 02:53:03 PM fastprop.fastprop_core] INFO: Epoch [40/200]
-[01/11/2024 02:53:03 PM fastprop.fastprop_core] INFO: Epoch [60/200]
-[01/11/2024 02:53:04 PM fastprop.fastprop_core] INFO: Epoch [80/200]
-[01/11/2024 02:53:04 PM fastprop.fastprop_core] INFO: Epoch [100/200]
-[01/11/2024 02:53:04 PM fastprop.fastprop_core] INFO: Epoch [120/200]
-[01/11/2024 02:53:05 PM fastprop.fastprop_core] INFO: Epoch [140/200]
-[01/11/2024 02:53:05 PM fastprop.fastprop_core] INFO: Epoch [160/200]
-[01/11/2024 02:53:06 PM fastprop.fastprop_core] INFO: Epoch [180/200]
-[01/11/2024 02:53:06 PM fastprop.fastprop_core] INFO: Epoch [200/200]
-[01/11/2024 02:53:06 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:00:04.651753
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     Validate metric           DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  unitful_validation_l1     0.6678497195243835
- unitful_validation_rmse    0.9650964140892029
-unitful_validation_wmape    0.1669987589120865
-   validation_mse_loss      0.06300701200962067
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:06 PM fastprop.fastprop_core] INFO: Training model 2 of 5
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-       Test metric             DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-      test_mse_loss         0.05895691737532616
-     unitful_test_l1        0.6220095753669739
-    unitful_test_rmse       0.9335630536079407
-   unitful_test_wmape       0.09795914590358734
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:07 PM fastprop.fastprop_core] INFO: Epoch [20/200]
-[01/11/2024 02:53:07 PM fastprop.fastprop_core] INFO: Epoch [40/200]
-[01/11/2024 02:53:08 PM fastprop.fastprop_core] INFO: Epoch [60/200]
-[01/11/2024 02:53:08 PM fastprop.fastprop_core] INFO: Epoch [80/200]
-[01/11/2024 02:53:08 PM fastprop.fastprop_core] INFO: Epoch [100/200]
-[01/11/2024 02:53:09 PM fastprop.fastprop_core] INFO: Epoch [120/200]
-[01/11/2024 02:53:09 PM fastprop.fastprop_core] INFO: Epoch [140/200]
-[01/11/2024 02:53:09 PM fastprop.fastprop_core] INFO: Epoch [160/200]
-[01/11/2024 02:53:10 PM fastprop.fastprop_core] INFO: Epoch [180/200]
-[01/11/2024 02:53:10 PM fastprop.fastprop_core] INFO: Epoch [200/200]
-[01/11/2024 02:53:10 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:00:03.839120
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     Validate metric           DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  unitful_validation_l1     0.27234965562820435
- unitful_validation_rmse    0.46972692012786865
-unitful_validation_wmape    0.05828367918729782
-   validation_mse_loss     0.014925826340913773
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:10 PM fastprop.fastprop_core] INFO: Training model 3 of 5
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-       Test metric             DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-      test_mse_loss         0.03251247480511665
-     unitful_test_l1        0.32697808742523193
-    unitful_test_rmse       0.6932681202888489
-   unitful_test_wmape       0.05758726969361305
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:11 PM fastprop.fastprop_core] INFO: Epoch [20/200]
-[01/11/2024 02:53:12 PM fastprop.fastprop_core] INFO: Epoch [40/200]
-[01/11/2024 02:53:12 PM fastprop.fastprop_core] INFO: Epoch [60/200]
-[01/11/2024 02:53:12 PM fastprop.fastprop_core] INFO: Epoch [80/200]
-[01/11/2024 02:53:13 PM fastprop.fastprop_core] INFO: Epoch [100/200]
-[01/11/2024 02:53:13 PM fastprop.fastprop_core] INFO: Epoch [120/200]
-[01/11/2024 02:53:13 PM fastprop.fastprop_core] INFO: Epoch [140/200]
-[01/11/2024 02:53:14 PM fastprop.fastprop_core] INFO: Epoch [160/200]
-[01/11/2024 02:53:14 PM fastprop.fastprop_core] INFO: Epoch [180/200]
-[01/11/2024 02:53:15 PM fastprop.fastprop_core] INFO: Epoch [200/200]
-[01/11/2024 02:53:15 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:00:04.249347
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     Validate metric           DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  unitful_validation_l1     0.18751497566699982
- unitful_validation_rmse    0.3353310823440552
-unitful_validation_wmape   0.051182277500629425
-   validation_mse_loss     0.0076066795736551285
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:15 PM fastprop.fastprop_core] INFO: Training model 4 of 5
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-       Test metric             DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-      test_mse_loss        0.0031966373790055513
-     unitful_test_l1        0.14784935116767883
-    unitful_test_rmse       0.21738168597221375
-   unitful_test_wmape       0.03427327796816826
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:15 PM fastprop.fastprop_core] INFO: Epoch [20/200]
-[01/11/2024 02:53:16 PM fastprop.fastprop_core] INFO: Epoch [40/200]
-[01/11/2024 02:53:17 PM fastprop.fastprop_core] INFO: Epoch [60/200]
-[01/11/2024 02:53:17 PM fastprop.fastprop_core] INFO: Epoch [80/200]
-[01/11/2024 02:53:18 PM fastprop.fastprop_core] INFO: Epoch [100/200]
-[01/11/2024 02:53:18 PM fastprop.fastprop_core] INFO: Epoch [120/200]
-[01/11/2024 02:53:19 PM fastprop.fastprop_core] INFO: Epoch [140/200]
-[01/11/2024 02:53:19 PM fastprop.fastprop_core] INFO: Epoch [160/200]
-[01/11/2024 02:53:20 PM fastprop.fastprop_core] INFO: Epoch [180/200]
-[01/11/2024 02:53:20 PM fastprop.fastprop_core] INFO: Epoch [200/200]
-[01/11/2024 02:53:20 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:00:05.046554
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     Validate metric           DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  unitful_validation_l1     0.14599654078483582
- unitful_validation_rmse    0.22779086232185364
-unitful_validation_wmape   0.029082385823130608
-   validation_mse_loss     0.003510104725137353
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:20 PM fastprop.fastprop_core] INFO: Training model 5 of 5
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-       Test metric             DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-      test_mse_loss        0.0018017200054600835
-     unitful_test_l1        0.10182182490825653
-    unitful_test_rmse       0.16319991648197174
-   unitful_test_wmape       0.02293844148516655
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:21 PM fastprop.fastprop_core] INFO: Epoch [20/200]
-[01/11/2024 02:53:21 PM fastprop.fastprop_core] INFO: Epoch [40/200]
-[01/11/2024 02:53:22 PM fastprop.fastprop_core] INFO: Epoch [60/200]
-[01/11/2024 02:53:22 PM fastprop.fastprop_core] INFO: Epoch [80/200]
-[01/11/2024 02:53:22 PM fastprop.fastprop_core] INFO: Epoch [100/200]
-[01/11/2024 02:53:23 PM fastprop.fastprop_core] INFO: Epoch [120/200]
-[01/11/2024 02:53:23 PM fastprop.fastprop_core] INFO: Epoch [140/200]
-[01/11/2024 02:53:24 PM fastprop.fastprop_core] INFO: Epoch [160/200]
-[01/11/2024 02:53:24 PM fastprop.fastprop_core] INFO: Epoch [180/200]
-[01/11/2024 02:53:24 PM fastprop.fastprop_core] INFO: Epoch [200/200]
-[01/11/2024 02:53:24 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:00:03.901049
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-     Validate metric           DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-  unitful_validation_l1     0.0686650201678276
- unitful_validation_rmse    0.09955524653196335
-unitful_validation_wmape   0.013733378611505032
-   validation_mse_loss     0.0006704645347781479
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-[01/11/2024 02:53:25 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                          count      mean       std       min       25%       50%       75%       max
-validation_mse_loss         5.0  0.017944  0.025755  0.000670  0.003510  0.007607  0.014926  0.063007
-unitful_validation_wmape    5.0  0.063856  0.060315  0.013733  0.029082  0.051182  0.058284  0.166999
-unitful_validation_l1       5.0  0.268475  0.235050  0.068665  0.145997  0.187515  0.272350  0.667850
-unitful_validation_rmse     5.0  0.419500  0.334066  0.099555  0.227791  0.335331  0.469727  0.965096
-[01/11/2024 02:53:25 PM fastprop.fastprop_core] INFO: Displaying testing results:
-                    count      mean       std       min       25%       50%       75%       max
-test_mse_loss         5.0  0.019596  0.025635  0.001514  0.001802  0.003197  0.032512  0.058957
-unitful_test_wmape    5.0  0.047351  0.031537  0.022938  0.023999  0.034273  0.057587  0.097959
-unitful_test_l1       5.0  0.258842  0.223703  0.095549  0.101822  0.147849  0.326978  0.622010
-unitful_test_rmse     5.0  0.431399  0.359826  0.149580  0.163200  0.217382  0.693268  0.933563
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-       Test metric             DataLoader 0
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-      test_mse_loss        0.0015135403955355287
-     unitful_test_l1        0.09554912894964218
-    unitful_test_rmse       0.14957991242408752
-   unitful_test_wmape      0.023999011144042015
-────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────

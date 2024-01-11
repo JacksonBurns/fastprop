@@ -371,10 +371,10 @@ def train_fastprop(
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
 
-    model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
-
     all_test_results, all_validation_results = [], []
     for i in range(number_repeats):
+        # reinitialize model
+        model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
         logger.info(f"Training model {i+1} of {number_repeats}")
         test_results, validation_results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True)
         all_test_results.append(test_results[0])

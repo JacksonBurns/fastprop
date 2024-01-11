@@ -1,0 +1,42 @@
+# The Quantum Machine 8 (QM8) Dataset, as described in:
+# https://doi.org/10.1063/1.4928757
+#
+# Download the data from DeepChem:
+# https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm8.csv
+# and rename it to benchmark_data.csv
+#
+# Note that this is not the original source for the data, which is here:
+# http://quantum-machine.org/datasets/
+# but in a more annoying format than that provided by DeepChem. Thanks DeepChem!
+#
+# Additional Comments:
+# This is one of the most well established benchmarks in the ML/QSPR world,
+# second probably only to QM9. Numerous papers report results.
+# MoleculeNet has a good summary of the best results, as seen here:
+# https://arxiv.org/pdf/1703.00564.pdf
+# fastprop approaches leading performance at an MAE of ~0.013, where
+# chemprop gets 0.011 (Table S3, in:
+# https://pubs.acs.org/doi/suppl/10.1021/acs.jcim.9b00237/suppl_file/ci9b00237_si_001.pdf)
+
+# generic
+output_directory: qm8
+input_file: qm8/benchmark_data.csv
+target_columns: E1-CC2 E2-CC2 f1-CC2 f2-CC2 E1-PBE0 E2-PBE0 f1-PBE0 f2-PBE0 E1-CAM E2-CAM f1-CAM f2-CAM
+smiles_column: smiles
+number_repeats: 5
+
+# featurization
+descriptors: all
+enable_cache: True
+precomputed: qm8/precomputed.csv
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+learning_rate: 0.0001
+random_seed: 709
+batch_size: 20384
+number_epochs: 1200
