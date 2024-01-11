@@ -20,3 +20,7 @@ descriptors: all
 # training
 number_epochs: 200
 number_repeats: 5
+random_seed: 1701
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1

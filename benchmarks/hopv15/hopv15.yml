@@ -32,12 +32,9 @@ colinear_drop: False
 
 # training
 number_repeats: 5
-fnn_layers: 2
-hidden_size: 1800
-learning_rate: 0.0001
-batch_size: 2048
-number_epochs: 100
-train_size: 0.8
-val_size: 0.05
-test_size: 0.15
+random_seed: 02141
+number_epochs: 200
+train_size: 0.4
+val_size: 0.3
+test_size: 0.3
 sampler: random

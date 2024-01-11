@@ -291,8 +291,9 @@ def train_and_test(
     t1_stop = perf_counter()
     if verbose:
         logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
+    validation_results = trainer.validate(model, datamodule, verbose=verbose)
     test_results = trainer.test(model, datamodule, verbose=verbose)
-    return test_results
+    return test_results, validation_results
 
 
 def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols):
@@ -373,12 +374,19 @@ def train_fastprop(
 
     model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
 
-    all_results = []
+    all_test_results, all_validation_results = [], []
     for i in range(number_repeats):
         logger.info(f"Training model {i+1} of {number_repeats}")
-        results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True)
-        all_results.append(results[0])
-        random_seed += 1
-    # average the results
-    results_df = pd.DataFrame.from_records(all_results)
-    logger.info("Displaying results:\n%s", results_df.describe().transpose().to_string())
+        test_results, validation_results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True)
+        all_test_results.append(test_results[0])
+        all_validation_results.append(validation_results[0])
+        # resample for repeat trials
+        if i + 1 < number_repeats:
+            random_seed += 1
+            datamodule.random_seed = random_seed
+            datamodule.setup()
+
+    validation_results_df = pd.DataFrame.from_records(all_validation_results)
+    logger.info("Displaying validation results:\n%s", validation_results_df.describe().transpose().to_string())
+    test_results_df = pd.DataFrame.from_records(all_test_results)
+    logger.info("Displaying testing results:\n%s", test_results_df.describe().transpose().to_string())
