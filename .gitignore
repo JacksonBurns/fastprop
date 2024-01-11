@@ -1,7 +1,12 @@
+# benchmarking files
+benchmark_data.csv
+benchmarks/alkanes/Alkane
+benchmarks/alkanes/alkane_dataset.tar.gz
+
+
 # run logs
 csv_logs
 tensorboard_logs
-benchmark_data.csv
 
 # cached descriptors from fastprop
 cached_*.csv
@@ -12,6 +17,9 @@ cached_*.csv
 # temporary files for debugging
 temp
 temp.py
+
+# reference studies
+chemprop
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
