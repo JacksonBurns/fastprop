@@ -261,24 +261,27 @@ def train_and_test(
     datamodule,
     model,
     verbose=True,
+    no_logs=False,
+    enable_checkpoints=True,
 ):
-    csv_logger = CSVLogger(
-        outdir,
-        "csv_logs",
-    )
-    tensorboard_logger = TensorBoardLogger(
-        outdir,
-        "tensorboard_logs",
-    )
+    if not no_logs:
+        csv_logger = CSVLogger(
+            outdir,
+            "csv_logs",
+        )
+        tensorboard_logger = TensorBoardLogger(
+            outdir,
+            "tensorboard_logs",
+        )
 
     trainer = pl.Trainer(
         max_epochs=n_epochs,
         accelerator=DEVICE,
         enable_progress_bar=False,
         enable_model_summary=verbose,
-        logger=[csv_logger, tensorboard_logger],
-        log_every_n_steps=1,
-        enable_checkpointing=True,
+        logger=False if no_logs else [csv_logger, tensorboard_logger],
+        log_every_n_steps=0 if no_logs else NUM_VALIDATION_CHECKS,
+        enable_checkpointing=enable_checkpoints,
         check_val_every_n_epoch=n_epochs // NUM_VALIDATION_CHECKS,
     )
 

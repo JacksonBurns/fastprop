@@ -18,6 +18,9 @@ input_file: /path/to/data.csv
 target_columns: lipohilicity permittivity
 # Header for column containing SMILES strings
 smiles_column: smiles
+# run hyperparameter optimization
+optimize: False # True
+# This will overwrite hidden_size and fnn_layers!
 
 # Featurization
 #

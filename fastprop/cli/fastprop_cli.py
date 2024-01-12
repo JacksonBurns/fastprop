@@ -5,7 +5,7 @@ from importlib.metadata import version
 
 import yaml
 
-from fastprop import DEFAULT_TRAINING_CONFIG, train_fastprop
+from fastprop import DEFAULT_TRAINING_CONFIG, train_fastprop, hopt_fastprop
 from fastprop.defaults import init_logger
 from fastprop.utils import validate_config
 
@@ -37,6 +37,7 @@ def main():
     train_subparser.add_argument("-cd", "--colinear-drop", type=bool, help="drop colinear descriptors (defaults to False)")
 
     # training
+    train_subparser.add_argument("-op", "--optimize", action="store_true", help="run hyperparameter optimization", default=False)
     train_subparser.add_argument("-fl", "--fnn-layers", type=int, help="number of fnn layers")
     train_subparser.add_argument("-lr", "--learning-rate", type=float, help="learning rate")
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
@@ -79,6 +80,7 @@ def main():
                 train_subparser.print_help()
                 exit(0)
 
+            optim_requested = args.pop("optimize")
             if args["config_file"] is not None:
                 if sum(map(lambda i: i is not None, args.values())) > 1:
                     raise parser.error("Cannot specify config_file with other command line arguments.")
@@ -86,14 +88,22 @@ def main():
                     cfg = yaml.safe_load(f)
                     cfg["target_columns"] = cfg["target_columns"].split(" ")
                     training_default.update(cfg)
+                    optim_requested = optim_requested or training_default.pop("optimize", False)
             else:
-                # cannot specify both precomputed and descriptors or enable/cache
                 training_default.update({k: v for k, v in args.items() if v is not None})
 
             logger.info(f"Training Parameters:\n {json.dumps(training_default, indent=4)}")
             # validate this dictionary, i.e. layer counts are positive, etc.
+            # cannot specify both precomputed and descriptors or enable/cache
             validate_config(training_default)
-            train_fastprop(**training_default)
+            if optim_requested:
+                print(training_default)
+                if any((training_default.pop("fnn_layers"), training_default.pop("hidden_size"))):
+                    logger.warning("Hidden Size/FNN Layers specified with optimize and are ignored.")
+                print(training_default)
+                hopt_fastprop(**training_default, n_parallel=-1)
+            else:
+                train_fastprop(**training_default)
         case "predict":
             if args["smiles"] is None and args["input_file"] is None:
                 raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")

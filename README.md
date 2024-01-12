@@ -60,6 +60,10 @@ There are four distinct steps in `fastprop` that define its framework:
     - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
  3. Training
     - Number of FNN layers (default 3; repeated fully connected layers of hidden size)
+    - Hidden Size: number of neurons per FNN layer
+
+    _or_
+    - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size.
 
     _generic NN training parameters_
     - Output Directory

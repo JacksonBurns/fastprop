@@ -41,7 +41,7 @@ def hopt_fastprop(
     test_size=0.1,
     sampler="random",
     random_seed=0,
-    n_trials=100,
+    n_trials=64,
     n_parallel=1,
 ):
     torch.manual_seed(random_seed)
@@ -109,35 +109,21 @@ def objective(
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     # We optimize the number of layers, hidden units in each layer and dropouts.
     fnn_layers = trial.suggest_int("n_layers", 1, 5)
-    hidden_size = trial.suggest_int("hidden_size", 128, 2048)
-
-    model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, shh=True)
+    hidden_size = trial.suggest_int("hidden_size", 128, 5096)
 
     all_results = []
-    for _ in range(number_repeats):
-        results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=False)
+    for i in range(number_repeats):
+        model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, shh=True)
+        results, _ = train_and_test(output_directory, number_epochs, datamodule, model, verbose=False, no_logs=True, enable_checkpoints=False)
         all_results.append(results[0])
         random_seed += 1
+        if i + 1 < number_repeats:
+            random_seed += 1
+            datamodule.random_seed = random_seed
+            datamodule.setup()
 
     results_df = pd.DataFrame.from_records(all_results)
     if target_scaler.n_features_in_ == 1:
         return results_df.describe().at["mean", "unitful_test_l1"]
     else:
         return results_df.describe().at["mean", "unitful_test_l1_avg"]
-
-
-if __name__ == "__main__":
-    hopt_fastprop(
-        output_directory="boiling_hopt",
-        input_file="examples/alkane_boiling.csv",
-        smiles_column="py2opsin_smiles",
-        target_columns=["boiling_point"],
-        descriptors="all",
-        number_epochs=100,
-        train_size=0.6,
-        val_size=0.2,
-        test_size=0.2,
-        number_repeats=5,
-        n_trials=48,
-        n_parallel=8,
-    )

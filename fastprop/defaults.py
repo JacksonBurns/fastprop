@@ -33,5 +33,6 @@ DEFAULT_TRAINING_CONFIG = MappingProxyType(
         sampler="random",
         random_seed=0,
         hidden_size=1800,
+        optimize=False,
     )
 )
