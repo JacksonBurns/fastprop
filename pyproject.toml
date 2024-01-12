@@ -19,7 +19,7 @@ dependencies = ["pyyaml", "lightning", "mordredcommunity", "astartes", "tensorbo
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
-hopt = ["optuna"]
+hopt = ["ray[train]", "optuna"]
 demos = ["jupyter"]
 
 [project.readme]

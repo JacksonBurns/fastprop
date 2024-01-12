@@ -22,9 +22,6 @@ TODO:
 To reduce total calculation burden, could interpolatively sample dataset to get some small percent,
 and then see which among those are transformed out, and then calc just the remaining for rest of
 dataset. Still should make calc'ing all an option.
-
-hyperparameter optimization:
-https://github.com/optuna/optuna-examples/blob/main/pytorch/pytorch_lightning_simple.py
 """
 import datetime
 import logging
@@ -42,6 +39,7 @@ import torch
 from astartes import train_val_test_split
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
@@ -72,8 +70,8 @@ warnings.filterwarnings(action="ignore", message=".*does not have many workers w
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NUM_WORKERS = 1
 
-# 5e-4 generally a good setting, lowered for qm9
-NUM_VALIDATION_CHECKS = 10
+
+NUM_VALIDATION_CHECKS = 20
 
 
 def _collate_fn(batch):
@@ -280,9 +278,10 @@ def train_and_test(
         enable_progress_bar=False,
         enable_model_summary=verbose,
         logger=False if no_logs else [csv_logger, tensorboard_logger],
-        log_every_n_steps=0 if no_logs else NUM_VALIDATION_CHECKS,
+        log_every_n_steps=0 if no_logs else 1,
         enable_checkpointing=enable_checkpoints,
-        check_val_every_n_epoch=n_epochs // NUM_VALIDATION_CHECKS,
+        check_val_every_n_epoch=1,
+        callbacks=[EarlyStopping(monitor="validation_mse_loss", mode="min", verbose=True, patience=5)],
     )
 
     t1_start = perf_counter()
@@ -360,7 +359,7 @@ def train_fastprop(
     sampler="random",
     random_seed=0,
 ):
-    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
+    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
@@ -387,6 +386,8 @@ def train_fastprop(
             random_seed += 1
             datamodule.random_seed = random_seed
             datamodule.setup()
+        # ensure that the model is re-initialized on the next iteration
+        del model
 
     validation_results_df = pd.DataFrame.from_records(all_validation_results)
     logger.info("Displaying validation results:\n%s", validation_results_df.describe().transpose().to_string())

@@ -1,8 +1,12 @@
+"""
+hopt.py
+
+This file implements parallel hyperparameter optimization for fastprop using hyperopt.
+"""
+from copy import deepcopy
 import logging
 import os
-import time
 
-import optuna
 import pandas as pd
 import torch
 
@@ -15,6 +19,13 @@ from fastprop.fastprop_core import (
 )
 from fastprop.preprocessing import preprocess
 from fastprop.utils import load_from_csv
+
+tune, OptunaSearch = None, None
+try:
+    from ray import tune
+    from ray.tune.search.optuna import OptunaSearch
+except ImportError as ie:
+    raise RuntimeError("Unable to import hyperparameter optimization dependencies, please install fastprop[hopt]. Original error: " + str(ie))
 
 logger = init_logger(__name__)
 
@@ -41,9 +52,10 @@ def hopt_fastprop(
     test_size=0.1,
     sampler="random",
     random_seed=0,
-    n_trials=64,
-    n_parallel=1,
+    n_trials=16,
+    n_parallel=4,
 ):
+    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
@@ -58,45 +70,44 @@ def hopt_fastprop(
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
 
     # driver code of optimization
-    pruner = optuna.pruners.MedianPruner()
-
-    storage = "sqlite:///fastprop_hopt_studies.db"
-    study = optuna.create_study(
-        direction="minimize",
-        pruner=pruner,
-        study_name=f"fastprop_hopt_{int(time.time())}",
-        storage=storage,
-        load_if_exists=True,
-    )
-    study.optimize(
-        lambda trial: objective(
-            trial,
-            datamodule,
-            number_epochs,
-            learning_rate,
-            X.shape[1],
-            target_scaler,
-            number_repeats,
-            output_directory,
-            random_seed,
+    search_space = {
+        "hidden_size": tune.choice(range(100, 3001, 100)),
+        "fnn_layers": tune.choice(range(1, 6, 1)),
+    }
+    algo = OptunaSearch()
+    tuner = tune.Tuner(
+        tune.with_resources(
+            lambda trial: objective(
+                trial,
+                datamodule,
+                number_epochs,
+                learning_rate,
+                X.shape[1],
+                target_scaler,
+                number_repeats,
+                output_directory,
+                random_seed,
+            ),
+            # run n_parallel models at the same time (leave 20% for system)
+            # don't specify cpus, and just let pl figure it out
+            resources={"gpu": (1 - 0.20) / n_parallel},
         ),
-        n_trials=n_trials,
-        timeout=None,
-        n_jobs=n_parallel,
-        show_progress_bar=True,
+        tune_config=tune.TuneConfig(
+            metric="loss",
+            mode="min",
+            search_alg=algo,
+            max_concurrent_trials=n_parallel,
+            num_samples=n_trials,
+        ),
+        param_space=search_space,
     )
 
-    print("Number of finished trials: {}".format(len(study.trials)))
-    print("Best trial:")
-    trial = study.best_trial
-    print("  Value: {}".format(trial.value))
-    print("  Params: ")
-    for key, value in trial.params.items():
-        print("    {}: {}".format(key, value))
+    results = tuner.fit()
+    print(results.get_best_result().config)
 
 
 def objective(
-    trial: optuna.trial.Trial,
+    trial,
     datamodule,
     number_epochs,
     learning_rate,
@@ -106,14 +117,9 @@ def objective(
     output_directory,
     random_seed,
 ) -> float:
-    logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
-    # We optimize the number of layers, hidden units in each layer and dropouts.
-    fnn_layers = trial.suggest_int("n_layers", 1, 5)
-    hidden_size = trial.suggest_int("hidden_size", 128, 5096)
-
     all_results = []
     for i in range(number_repeats):
-        model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, shh=True)
+        model = fastprop(number_features, target_scaler, number_epochs, trial["hidden_size"], learning_rate, trial["fnn_layers"], shh=True)
         results, _ = train_and_test(output_directory, number_epochs, datamodule, model, verbose=False, no_logs=True, enable_checkpoints=False)
         all_results.append(results[0])
         random_seed += 1
@@ -121,9 +127,8 @@ def objective(
             random_seed += 1
             datamodule.random_seed = random_seed
             datamodule.setup()
-
     results_df = pd.DataFrame.from_records(all_results)
     if target_scaler.n_features_in_ == 1:
-        return results_df.describe().at["mean", "unitful_test_l1"]
+        return {"loss": results_df.describe().at["mean", "unitful_test_l1"]}
     else:
-        return results_df.describe().at["mean", "unitful_test_l1_avg"]
+        return {"loss": results_df.describe().at["mean", "unitful_test_l1_avg"]}

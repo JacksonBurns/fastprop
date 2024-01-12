@@ -15,8 +15,13 @@
 
 # generic args
 output_directory: hopv15
-random_seed: 42
+random_seed: 12345
 problem_type: regression
+# run hyperparameter optimization
+optimize: True
+# optimized results
+fnn_layers: 4  # 4
+hidden_size: 2048  # 1200
 
 # featurization
 input_file: hopv15/benchmark_data.csv
@@ -31,10 +36,9 @@ zero_variance_drop: False
 colinear_drop: False
 
 # training
-number_repeats: 5
-random_seed: 02141
+number_repeats: 8
 number_epochs: 200
-train_size: 0.4
-val_size: 0.3
-test_size: 0.3
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
 sampler: random

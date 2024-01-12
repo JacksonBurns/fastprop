@@ -97,11 +97,9 @@ def main():
             # cannot specify both precomputed and descriptors or enable/cache
             validate_config(training_default)
             if optim_requested:
-                print(training_default)
                 if any((training_default.pop("fnn_layers"), training_default.pop("hidden_size"))):
                     logger.warning("Hidden Size/FNN Layers specified with optimize and are ignored.")
-                print(training_default)
-                hopt_fastprop(**training_default, n_parallel=-1)
+                hopt_fastprop(**training_default)
             else:
                 train_fastprop(**training_default)
         case "predict":

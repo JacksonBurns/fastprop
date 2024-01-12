@@ -115,7 +115,7 @@ Check each file listed for more information, as each contains additional inline 
 If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
-The `benchmarks` directory contains the scripts needed to perform the studies as well as the actual results, which are also summarized here.
+The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`) as well as the actual results, which are also summarized here.
 
 WIP!
 
