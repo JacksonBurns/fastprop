@@ -1,0 +1,628 @@
+[01/11/2024 05:45:03 PM fastprop.cli.fastprop_cli] INFO: Training Parameters:
+ {
+    "descriptors": "all",
+    "enable_cache": true,
+    "precomputed": "qm8/precomputed.csv",
+    "rescaling": true,
+    "zero_variance_drop": false,
+    "colinear_drop": false,
+    "fnn_layers": 2,
+    "learning_rate": 0.0001,
+    "batch_size": 20384,
+    "number_epochs": 1200,
+    "number_repeats": 5,
+    "problem_type": "regression",
+    "checkpoint": null,
+    "train_size": 0.8,
+    "val_size": 0.1,
+    "test_size": 0.1,
+    "sampler": "random",
+    "random_seed": 709,
+    "hidden_size": 1800,
+    "output_directory": "qm8",
+    "input_file": "qm8/benchmark_data.csv",
+    "target_columns": [
+        "E1-CC2",
+        "E2-CC2",
+        "f1-CC2",
+        "f2-CC2",
+        "E1-PBE0",
+        "E2-PBE0",
+        "f1-PBE0",
+        "f2-PBE0",
+        "E1-CAM",
+        "E2-CAM",
+        "f1-CAM",
+        "f2-CAM"
+    ],
+    "smiles_column": "smiles"
+}
+[01/11/2024 05:45:03 PM fastprop.utils.validate_config] WARNING: TODO: Input validation has not been implemented! Skipping.
+[01/11/2024 05:45:04 PM fastprop.fastprop_core] INFO: Loading precomputed descriptors from qm8/precomputed.csv.
+[01/11/2024 05:45:10 PM fastprop.fastprop_core] INFO: Preprocessing data...
+[01/11/2024 05:45:10 PM fastprop.preprocessing] INFO: size after clean (drop empty, impute missing, scale 0-1): (21786, 947)
+[01/11/2024 05:45:10 PM fastprop.fastprop_core] INFO: ...done.
+[01/11/2024 05:45:10 PM fastprop.fastprop_core] INFO: Training model 1 of 5
+[01/11/2024 05:45:52 PM fastprop.fastprop_core] INFO: Epoch [120/1200]
+[01/11/2024 05:46:31 PM fastprop.fastprop_core] INFO: Epoch [240/1200]
+[01/11/2024 05:47:10 PM fastprop.fastprop_core] INFO: Epoch [360/1200]
+[01/11/2024 05:47:49 PM fastprop.fastprop_core] INFO: Epoch [480/1200]
+[01/11/2024 05:48:28 PM fastprop.fastprop_core] INFO: Epoch [600/1200]
+[01/11/2024 05:49:08 PM fastprop.fastprop_core] INFO: Epoch [720/1200]
+[01/11/2024 05:49:47 PM fastprop.fastprop_core] INFO: Epoch [840/1200]
+[01/11/2024 05:50:26 PM fastprop.fastprop_core] INFO: Epoch [960/1200]
+[01/11/2024 05:51:05 PM fastprop.fastprop_core] INFO: Epoch [1080/1200]
+[01/11/2024 05:51:44 PM fastprop.fastprop_core] INFO: Epoch [1200/1200]
+[01/11/2024 05:51:44 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:06:33.680445
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            Validate metric                         DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       unitful_validation_l1_avg                0.012916335836052895
+  unitful_validation_l1_output_E1-CAM           0.005169971846044064
+  unitful_validation_l1_output_E1-CC2           0.005532951094210148
+ unitful_validation_l1_output_E1-PBE0            0.00549391470849514
+  unitful_validation_l1_output_E2-CAM           0.005599449388682842
+  unitful_validation_l1_output_E2-CC2            0.00642525777220726
+ unitful_validation_l1_output_E2-PBE0           0.006113938055932522
+  unitful_validation_l1_output_f1-CAM           0.013469789177179337
+  unitful_validation_l1_output_f1-CC2            0.01509167067706585
+ unitful_validation_l1_output_f1-PBE0           0.012692127376794815
+  unitful_validation_l1_output_f2-CAM           0.025953415781259537
+  unitful_validation_l1_output_f2-CC2           0.030267780646681786
+ unitful_validation_l1_output_f2-PBE0           0.023185767233371735
+     unitful_validation_mean_wmape               0.3403581976890564
+      unitful_validation_rmse_avg                0.02195013128221035
+ unitful_validation_rmse_output_E1-CAM          0.007080430630594492
+ unitful_validation_rmse_output_E1-CC2          0.007689299061894417
+unitful_validation_rmse_output_E1-PBE0          0.0074928333051502705
+ unitful_validation_rmse_output_E2-CAM          0.007533054333180189
+ unitful_validation_rmse_output_E2-CC2           0.00904112495481968
+unitful_validation_rmse_output_E2-PBE0          0.008171385154128075
+ unitful_validation_rmse_output_f1-CAM          0.028206802904605865
+ unitful_validation_rmse_output_f1-CC2           0.03001275286078453
+unitful_validation_rmse_output_f1-PBE0          0.027842415496706963
+ unitful_validation_rmse_output_f2-CAM           0.04313831403851509
+ unitful_validation_rmse_output_f2-CC2           0.04928820952773094
+unitful_validation_rmse_output_f2-PBE0          0.037904951721429825
+unitful_validation_wmape_output_E1-CAM           0.02378452941775322
+unitful_validation_wmape_output_E1-CC2           0.02508505806326866
+unitful_validation_wmape_output_E1-PBE0         0.025292014703154564
+unitful_validation_wmape_output_E2-CAM          0.022876767441630363
+unitful_validation_wmape_output_E2-CC2           0.02577206678688526
+unitful_validation_wmape_output_E2-PBE0          0.0251889880746603
+unitful_validation_wmape_output_f1-CAM            0.576586902141571
+unitful_validation_wmape_output_f1-CC2           0.6483600735664368
+unitful_validation_wmape_output_f1-PBE0          0.6068335771560669
+unitful_validation_wmape_output_f2-CAM           0.6641991138458252
+unitful_validation_wmape_output_f2-CC2           0.7173482775688171
+unitful_validation_wmape_output_f2-PBE0          0.7229709625244141
+          validation_mse_loss                    0.19578135013580322
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 05:51:45 PM fastprop.fastprop_core] INFO: Training model 2 of 5
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+           Test metric                     DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+          test_mse_loss                 0.22332744300365448
+       unitful_test_l1_avg             0.013629207387566566
+  unitful_test_l1_output_E1-CAM        0.005493856500834227
+  unitful_test_l1_output_E1-CC2        0.0058162277564406395
+ unitful_test_l1_output_E1-PBE0        0.005703647155314684
+  unitful_test_l1_output_E2-CAM        0.005370025057345629
+  unitful_test_l1_output_E2-CC2        0.0062711662612855434
+ unitful_test_l1_output_E2-PBE0        0.005838296841830015
+  unitful_test_l1_output_f1-CAM        0.013807098381221294
+  unitful_test_l1_output_f1-CC2        0.015504558570683002
+ unitful_test_l1_output_f1-PBE0        0.012685192748904228
+  unitful_test_l1_output_f2-CAM        0.027888596057891846
+  unitful_test_l1_output_f2-CC2        0.034192122519016266
+ unitful_test_l1_output_f2-PBE0         0.02497969940304756
+     unitful_test_mean_wmape            0.3368523418903351
+      unitful_test_rmse_avg             0.0232952069491148
+ unitful_test_rmse_output_E1-CAM       0.007478988729417324
+ unitful_test_rmse_output_E1-CC2       0.008059888146817684
+unitful_test_rmse_output_E1-PBE0       0.007728659547865391
+ unitful_test_rmse_output_E2-CAM       0.007213490083813667
+ unitful_test_rmse_output_E2-CC2       0.008778583258390427
+unitful_test_rmse_output_E2-PBE0       0.007768229581415653
+ unitful_test_rmse_output_f1-CAM       0.029154928401112556
+ unitful_test_rmse_output_f1-CC2        0.03214729204773903
+unitful_test_rmse_output_f1-PBE0        0.02595527470111847
+ unitful_test_rmse_output_f2-CAM        0.04573245719075203
+ unitful_test_rmse_output_f2-CC2        0.05573592334985733
+unitful_test_rmse_output_f2-PBE0       0.043788760900497437
+unitful_test_wmape_output_E1-CAM       0.025285780429840088
+unitful_test_wmape_output_E1-CC2       0.026393592357635498
+unitful_test_wmape_output_E1-PBE0      0.026261646300554276
+unitful_test_wmape_output_E2-CAM        0.02195086143910885
+unitful_test_wmape_output_E2-CC2        0.02521943673491478
+unitful_test_wmape_output_E2-PBE0       0.02406570501625538
+unitful_test_wmape_output_f1-CAM        0.5343067049980164
+unitful_test_wmape_output_f1-CC2        0.6545221209526062
+unitful_test_wmape_output_f1-PBE0       0.5932584404945374
+unitful_test_wmape_output_f2-CAM        0.6783930659294128
+unitful_test_wmape_output_f2-CC2        0.7206920385360718
+unitful_test_wmape_output_f2-PBE0       0.7118785381317139
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 05:52:25 PM fastprop.fastprop_core] INFO: Epoch [120/1200]
+[01/11/2024 05:53:05 PM fastprop.fastprop_core] INFO: Epoch [240/1200]
+[01/11/2024 05:53:45 PM fastprop.fastprop_core] INFO: Epoch [360/1200]
+[01/11/2024 05:54:25 PM fastprop.fastprop_core] INFO: Epoch [480/1200]
+[01/11/2024 05:55:04 PM fastprop.fastprop_core] INFO: Epoch [600/1200]
+[01/11/2024 05:55:44 PM fastprop.fastprop_core] INFO: Epoch [720/1200]
+[01/11/2024 05:56:24 PM fastprop.fastprop_core] INFO: Epoch [840/1200]
+[01/11/2024 05:57:04 PM fastprop.fastprop_core] INFO: Epoch [960/1200]
+[01/11/2024 05:57:44 PM fastprop.fastprop_core] INFO: Epoch [1080/1200]
+[01/11/2024 05:58:24 PM fastprop.fastprop_core] INFO: Epoch [1200/1200]
+[01/11/2024 05:58:24 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:06:39.374393
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            Validate metric                         DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       unitful_validation_l1_avg                0.012885533273220062
+  unitful_validation_l1_output_E1-CAM           0.005359790753573179
+  unitful_validation_l1_output_E1-CC2           0.005812020972371101
+ unitful_validation_l1_output_E1-PBE0           0.005733373574912548
+  unitful_validation_l1_output_E2-CAM           0.005422588437795639
+  unitful_validation_l1_output_E2-CC2           0.006433187518268824
+ unitful_validation_l1_output_E2-PBE0           0.0058381701819598675
+  unitful_validation_l1_output_f1-CAM           0.013259696774184704
+  unitful_validation_l1_output_f1-CC2            0.01464820746332407
+ unitful_validation_l1_output_f1-PBE0           0.012415183708071709
+  unitful_validation_l1_output_f2-CAM            0.02593109756708145
+  unitful_validation_l1_output_f2-CC2           0.030696913599967957
+ unitful_validation_l1_output_f2-PBE0           0.023076171055436134
+     unitful_validation_mean_wmape               0.3397866189479828
+      unitful_validation_rmse_avg               0.021406330168247223
+ unitful_validation_rmse_output_E1-CAM          0.007246583700180054
+ unitful_validation_rmse_output_E1-CC2          0.008146388456225395
+unitful_validation_rmse_output_E1-PBE0           0.00782973226159811
+ unitful_validation_rmse_output_E2-CAM          0.007294095121324062
+ unitful_validation_rmse_output_E2-CC2          0.008877224288880825
+unitful_validation_rmse_output_E2-PBE0          0.007805603556334972
+ unitful_validation_rmse_output_f1-CAM          0.026959091424942017
+ unitful_validation_rmse_output_f1-CC2          0.028450820595026016
+unitful_validation_rmse_output_f1-PBE0           0.02548561617732048
+ unitful_validation_rmse_output_f2-CAM          0.041544053703546524
+ unitful_validation_rmse_output_f2-CC2           0.04911579564213753
+unitful_validation_rmse_output_f2-PBE0          0.038120947778224945
+unitful_validation_wmape_output_E1-CAM           0.02471034601330757
+unitful_validation_wmape_output_E1-CC2          0.026418469846248627
+unitful_validation_wmape_output_E1-PBE0          0.02643525041639805
+unitful_validation_wmape_output_E2-CAM           0.02217605710029602
+unitful_validation_wmape_output_E2-CC2           0.0258785467594862
+unitful_validation_wmape_output_E2-PBE0          0.02410944737493992
+unitful_validation_wmape_output_f1-CAM           0.5868529081344604
+unitful_validation_wmape_output_f1-CC2           0.6385717988014221
+unitful_validation_wmape_output_f1-PBE0          0.6052987575531006
+unitful_validation_wmape_output_f2-CAM           0.6498319506645203
+unitful_validation_wmape_output_f2-CC2           0.7518166899681091
+unitful_validation_wmape_output_f2-PBE0          0.6953392624855042
+          validation_mse_loss                    0.18486769497394562
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 05:58:24 PM fastprop.fastprop_core] INFO: Training model 3 of 5
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+           Test metric                     DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+          test_mse_loss                 0.20640969276428223
+       unitful_test_l1_avg             0.013120915740728378
+  unitful_test_l1_output_E1-CAM        0.005068901460617781
+  unitful_test_l1_output_E1-CC2        0.005570948123931885
+ unitful_test_l1_output_E1-PBE0        0.005459382198750973
+  unitful_test_l1_output_E2-CAM        0.005330350250005722
+  unitful_test_l1_output_E2-CC2         0.00611258577555418
+ unitful_test_l1_output_E2-PBE0         0.00564352935180068
+  unitful_test_l1_output_f1-CAM         0.01377483643591404
+  unitful_test_l1_output_f1-CC2        0.014978076331317425
+ unitful_test_l1_output_f1-PBE0        0.012771906331181526
+  unitful_test_l1_output_f2-CAM        0.026144351810216904
+  unitful_test_l1_output_f2-CC2        0.032078396528959274
+ unitful_test_l1_output_f2-PBE0          0.024517722427845
+     unitful_test_mean_wmape            0.33319929242134094
+      unitful_test_rmse_avg            0.022448435425758362
+ unitful_test_rmse_output_E1-CAM       0.007169921416789293
+ unitful_test_rmse_output_E1-CC2       0.007832284085452557
+unitful_test_rmse_output_E1-PBE0       0.007508867420256138
+ unitful_test_rmse_output_E2-CAM       0.0071091922000050545
+ unitful_test_rmse_output_E2-CC2       0.008461535908281803
+unitful_test_rmse_output_E2-PBE0       0.007552791852504015
+ unitful_test_rmse_output_f1-CAM       0.030142974108457565
+ unitful_test_rmse_output_f1-CC2        0.03134988620877266
+unitful_test_rmse_output_f1-PBE0       0.026285622268915176
+ unitful_test_rmse_output_f2-CAM        0.04287488013505936
+ unitful_test_rmse_output_f2-CC2       0.052365511655807495
+unitful_test_rmse_output_f2-PBE0        0.04072776436805725
+unitful_test_wmape_output_E1-CAM        0.02343192882835865
+unitful_test_wmape_output_E1-CC2        0.02535463310778141
+unitful_test_wmape_output_E1-PBE0      0.025223080068826675
+unitful_test_wmape_output_E2-CAM        0.02181123197078705
+unitful_test_wmape_output_E2-CC2        0.0245739184319973
+unitful_test_wmape_output_E2-PBE0      0.023315398022532463
+unitful_test_wmape_output_f1-CAM        0.5536897778511047
+unitful_test_wmape_output_f1-CC2        0.6097931861877441
+unitful_test_wmape_output_f1-PBE0       0.5731361508369446
+unitful_test_wmape_output_f2-CAM        0.6471858024597168
+unitful_test_wmape_output_f2-CC2        0.7421264052391052
+unitful_test_wmape_output_f2-PBE0       0.7287501096725464
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 05:59:00 PM fastprop.fastprop_core] INFO: Epoch [120/1200]
+[01/11/2024 05:59:36 PM fastprop.fastprop_core] INFO: Epoch [240/1200]
+[01/11/2024 06:00:11 PM fastprop.fastprop_core] INFO: Epoch [360/1200]
+[01/11/2024 06:00:48 PM fastprop.fastprop_core] INFO: Epoch [480/1200]
+[01/11/2024 06:01:23 PM fastprop.fastprop_core] INFO: Epoch [600/1200]
+[01/11/2024 06:01:59 PM fastprop.fastprop_core] INFO: Epoch [720/1200]
+[01/11/2024 06:02:34 PM fastprop.fastprop_core] INFO: Epoch [840/1200]
+[01/11/2024 06:03:10 PM fastprop.fastprop_core] INFO: Epoch [960/1200]
+[01/11/2024 06:03:46 PM fastprop.fastprop_core] INFO: Epoch [1080/1200]
+[01/11/2024 06:04:21 PM fastprop.fastprop_core] INFO: Epoch [1200/1200]
+[01/11/2024 06:04:21 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:05:56.954482
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            Validate metric                         DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       unitful_validation_l1_avg                0.012894348241388798
+  unitful_validation_l1_output_E1-CAM           0.005173653829842806
+  unitful_validation_l1_output_E1-CC2           0.005698779597878456
+ unitful_validation_l1_output_E1-PBE0           0.005506001878529787
+  unitful_validation_l1_output_E2-CAM           0.005488703027367592
+  unitful_validation_l1_output_E2-CC2           0.006668471731245518
+ unitful_validation_l1_output_E2-PBE0            0.00597150344401598
+  unitful_validation_l1_output_f1-CAM           0.013274644501507282
+  unitful_validation_l1_output_f1-CC2           0.015003640204668045
+ unitful_validation_l1_output_f1-PBE0           0.012234269641339779
+  unitful_validation_l1_output_f2-CAM           0.025781601667404175
+  unitful_validation_l1_output_f2-CC2            0.03034208156168461
+ unitful_validation_l1_output_f2-PBE0            0.02358882687985897
+     unitful_validation_mean_wmape               0.33533570170402527
+      unitful_validation_rmse_avg               0.021955935284495354
+ unitful_validation_rmse_output_E1-CAM          0.007077297195792198
+ unitful_validation_rmse_output_E1-CC2          0.008238764479756355
+unitful_validation_rmse_output_E1-PBE0          0.007436763029545546
+ unitful_validation_rmse_output_E2-CAM          0.007354906294494867
+ unitful_validation_rmse_output_E2-CC2          0.009274588897824287
+unitful_validation_rmse_output_E2-PBE0           0.0078884894028306
+ unitful_validation_rmse_output_f1-CAM          0.028386330232024193
+ unitful_validation_rmse_output_f1-CC2          0.029936010017991066
+unitful_validation_rmse_output_f1-PBE0          0.025488879531621933
+ unitful_validation_rmse_output_f2-CAM          0.042965859174728394
+ unitful_validation_rmse_output_f2-CC2          0.049276597797870636
+unitful_validation_rmse_output_f2-PBE0          0.040146730840206146
+unitful_validation_wmape_output_E1-CAM           0.0239018015563488
+unitful_validation_wmape_output_E1-CC2          0.025910820811986923
+unitful_validation_wmape_output_E1-PBE0         0.025447368621826172
+unitful_validation_wmape_output_E2-CAM          0.022401154041290283
+unitful_validation_wmape_output_E2-CC2           0.02672002464532852
+unitful_validation_wmape_output_E2-PBE0         0.024616241455078125
+unitful_validation_wmape_output_f1-CAM           0.5823948383331299
+unitful_validation_wmape_output_f1-CC2           0.6327934265136719
+unitful_validation_wmape_output_f1-PBE0          0.6225960850715637
+unitful_validation_wmape_output_f2-CAM           0.6423150897026062
+unitful_validation_wmape_output_f2-CC2           0.6917751431465149
+unitful_validation_wmape_output_f2-PBE0          0.7031565308570862
+          validation_mse_loss                    0.19586366415023804
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 06:04:22 PM fastprop.fastprop_core] INFO: Training model 4 of 5
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+           Test metric                     DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+          test_mse_loss                 0.18715699017047882
+       unitful_test_l1_avg             0.012826697900891304
+  unitful_test_l1_output_E1-CAM        0.005381557159125805
+  unitful_test_l1_output_E1-CC2        0.005666434299200773
+ unitful_test_l1_output_E1-PBE0        0.005742226727306843
+  unitful_test_l1_output_E2-CAM        0.005649873521178961
+  unitful_test_l1_output_E2-CC2        0.006488367449492216
+ unitful_test_l1_output_E2-PBE0        0.006079638376832008
+  unitful_test_l1_output_f1-CAM        0.013044028542935848
+  unitful_test_l1_output_f1-CC2         0.01456692535430193
+ unitful_test_l1_output_f1-PBE0        0.012221424840390682
+  unitful_test_l1_output_f2-CAM        0.025418125092983246
+  unitful_test_l1_output_f2-CC2        0.029922030866146088
+ unitful_test_l1_output_f2-PBE0         0.02373974397778511
+     unitful_test_mean_wmape            0.3342009484767914
+      unitful_test_rmse_avg            0.021653346717357635
+ unitful_test_rmse_output_E1-CAM       0.008047862909734249
+ unitful_test_rmse_output_E1-CC2       0.008492736145853996
+unitful_test_rmse_output_E1-PBE0       0.008646591566503048
+ unitful_test_rmse_output_E2-CAM        0.00801058579236269
+ unitful_test_rmse_output_E2-CC2       0.009248485788702965
+unitful_test_rmse_output_E2-PBE0       0.008534391410648823
+ unitful_test_rmse_output_f1-CAM       0.025564642623066902
+ unitful_test_rmse_output_f1-CC2        0.02853580191731453
+unitful_test_rmse_output_f1-PBE0        0.0244616586714983
+ unitful_test_rmse_output_f2-CAM        0.04253458231687546
+ unitful_test_rmse_output_f2-CC2       0.048785530030727386
+unitful_test_rmse_output_f2-PBE0       0.038977302610874176
+unitful_test_wmape_output_E1-CAM        0.02474747970700264
+unitful_test_wmape_output_E1-CC2       0.025666002184152603
+unitful_test_wmape_output_E1-PBE0      0.026425324380397797
+unitful_test_wmape_output_E2-CAM       0.023047972470521927
+unitful_test_wmape_output_E2-CC2       0.025995535776019096
+unitful_test_wmape_output_E2-PBE0       0.02505411021411419
+unitful_test_wmape_output_f1-CAM        0.5471435785293579
+unitful_test_wmape_output_f1-CC2        0.6052688956260681
+unitful_test_wmape_output_f1-PBE0       0.5619592666625977
+unitful_test_wmape_output_f2-CAM        0.6514761447906494
+unitful_test_wmape_output_f2-CC2         0.727419376373291
+unitful_test_wmape_output_f2-PBE0       0.7662076950073242
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 06:05:02 PM fastprop.fastprop_core] INFO: Epoch [120/1200]
+[01/11/2024 06:05:41 PM fastprop.fastprop_core] INFO: Epoch [240/1200]
+[01/11/2024 06:06:20 PM fastprop.fastprop_core] INFO: Epoch [360/1200]
+[01/11/2024 06:06:59 PM fastprop.fastprop_core] INFO: Epoch [480/1200]
+[01/11/2024 06:07:39 PM fastprop.fastprop_core] INFO: Epoch [600/1200]
+[01/11/2024 06:08:18 PM fastprop.fastprop_core] INFO: Epoch [720/1200]
+[01/11/2024 06:08:57 PM fastprop.fastprop_core] INFO: Epoch [840/1200]
+[01/11/2024 06:09:37 PM fastprop.fastprop_core] INFO: Epoch [960/1200]
+[01/11/2024 06:10:16 PM fastprop.fastprop_core] INFO: Epoch [1080/1200]
+[01/11/2024 06:10:55 PM fastprop.fastprop_core] INFO: Epoch [1200/1200]
+[01/11/2024 06:10:56 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:06:33.645524
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            Validate metric                         DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       unitful_validation_l1_avg                0.013073841109871864
+  unitful_validation_l1_output_E1-CAM           0.005166348535567522
+  unitful_validation_l1_output_E1-CC2           0.005443232599645853
+ unitful_validation_l1_output_E1-PBE0           0.0054429396986961365
+  unitful_validation_l1_output_E2-CAM           0.005560422316193581
+  unitful_validation_l1_output_E2-CC2           0.006460641976445913
+ unitful_validation_l1_output_E2-PBE0           0.005915609188377857
+  unitful_validation_l1_output_f1-CAM           0.013863813132047653
+  unitful_validation_l1_output_f1-CC2           0.015263467095792294
+ unitful_validation_l1_output_f1-PBE0           0.013116658665239811
+  unitful_validation_l1_output_f2-CAM           0.025628499686717987
+  unitful_validation_l1_output_f2-CC2            0.03073350340127945
+ unitful_validation_l1_output_f2-PBE0           0.024290958419442177
+     unitful_validation_mean_wmape               0.3304852843284607
+      unitful_validation_rmse_avg               0.021653518080711365
+ unitful_validation_rmse_output_E1-CAM          0.0069370148703455925
+ unitful_validation_rmse_output_E1-CC2          0.0073274788446724415
+unitful_validation_rmse_output_E1-PBE0          0.007303949911147356
+ unitful_validation_rmse_output_E2-CAM          0.007449322380125523
+ unitful_validation_rmse_output_E2-CC2           0.00899463426321745
+unitful_validation_rmse_output_E2-PBE0          0.007981129921972752
+ unitful_validation_rmse_output_f1-CAM          0.028194567188620567
+ unitful_validation_rmse_output_f1-CC2          0.029086152091622353
+unitful_validation_rmse_output_f1-PBE0          0.026651786640286446
+ unitful_validation_rmse_output_f2-CAM          0.041592810302972794
+ unitful_validation_rmse_output_f2-CC2           0.04925580322742462
+unitful_validation_rmse_output_f2-PBE0           0.03906756639480591
+unitful_validation_wmape_output_E1-CAM          0.023769961670041084
+unitful_validation_wmape_output_E1-CC2           0.02467307634651661
+unitful_validation_wmape_output_E1-PBE0         0.025049423798918724
+unitful_validation_wmape_output_E2-CAM          0.022710656747221947
+unitful_validation_wmape_output_E2-CC2          0.025919951498508453
+unitful_validation_wmape_output_E2-PBE0          0.02437639608979225
+unitful_validation_wmape_output_f1-CAM           0.5360768437385559
+unitful_validation_wmape_output_f1-CC2           0.6169623136520386
+unitful_validation_wmape_output_f1-PBE0          0.5708100199699402
+unitful_validation_wmape_output_f2-CAM           0.6485827565193176
+unitful_validation_wmape_output_f2-CC2           0.7025567293167114
+unitful_validation_wmape_output_f2-PBE0          0.7443350553512573
+          validation_mse_loss                    0.1909450888633728
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 06:10:56 PM fastprop.fastprop_core] INFO: Training model 5 of 5
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+           Test metric                     DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+          test_mse_loss                 0.19575925171375275
+       unitful_test_l1_avg             0.012991522438824177
+  unitful_test_l1_output_E1-CAM        0.005382354371249676
+  unitful_test_l1_output_E1-CC2        0.005747334100306034
+ unitful_test_l1_output_E1-PBE0        0.005740826949477196
+  unitful_test_l1_output_E2-CAM        0.005669707432389259
+  unitful_test_l1_output_E2-CC2        0.006552921608090401
+ unitful_test_l1_output_E2-PBE0        0.005828305147588253
+  unitful_test_l1_output_f1-CAM        0.012746304273605347
+  unitful_test_l1_output_f1-CC2        0.014589386992156506
+ unitful_test_l1_output_f1-PBE0        0.012450702488422394
+  unitful_test_l1_output_f2-CAM        0.025795958936214447
+  unitful_test_l1_output_f2-CC2         0.03113538771867752
+ unitful_test_l1_output_f2-PBE0         0.02425907924771309
+     unitful_test_mean_wmape            0.36250022053718567
+      unitful_test_rmse_avg            0.022077983245253563
+ unitful_test_rmse_output_E1-CAM        0.00814004335552454
+ unitful_test_rmse_output_E1-CC2       0.008734717965126038
+unitful_test_rmse_output_E1-PBE0       0.008349061943590641
+ unitful_test_rmse_output_E2-CAM       0.007830833084881306
+ unitful_test_rmse_output_E2-CC2       0.009548822417855263
+unitful_test_rmse_output_E2-PBE0       0.008001606911420822
+ unitful_test_rmse_output_f1-CAM       0.026022695004940033
+ unitful_test_rmse_output_f1-CC2       0.027965180575847626
+unitful_test_rmse_output_f1-PBE0       0.026452016085386276
+ unitful_test_rmse_output_f2-CAM       0.043400634080171585
+ unitful_test_rmse_output_f2-CC2        0.05036081373691559
+unitful_test_rmse_output_f2-PBE0       0.040129367262125015
+unitful_test_wmape_output_E1-CAM       0.024780267849564552
+unitful_test_wmape_output_E1-CC2       0.026099275797605515
+unitful_test_wmape_output_E1-PBE0       0.02644970268011093
+unitful_test_wmape_output_E2-CAM        0.02317032404243946
+unitful_test_wmape_output_E2-CC2       0.026341576129198074
+unitful_test_wmape_output_E2-PBE0      0.024037513881921768
+unitful_test_wmape_output_f1-CAM        0.6292033791542053
+unitful_test_wmape_output_f1-CC2        0.7086803317070007
+unitful_test_wmape_output_f1-PBE0       0.6843971014022827
+unitful_test_wmape_output_f2-CAM        0.6704753041267395
+unitful_test_wmape_output_f2-CC2        0.7488961219787598
+unitful_test_wmape_output_f2-PBE0       0.7574716210365295
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 06:11:35 PM fastprop.fastprop_core] INFO: Epoch [120/1200]
+[01/11/2024 06:12:14 PM fastprop.fastprop_core] INFO: Epoch [240/1200]
+[01/11/2024 06:12:53 PM fastprop.fastprop_core] INFO: Epoch [360/1200]
+[01/11/2024 06:13:31 PM fastprop.fastprop_core] INFO: Epoch [480/1200]
+[01/11/2024 06:14:10 PM fastprop.fastprop_core] INFO: Epoch [600/1200]
+[01/11/2024 06:14:49 PM fastprop.fastprop_core] INFO: Epoch [720/1200]
+[01/11/2024 06:15:28 PM fastprop.fastprop_core] INFO: Epoch [840/1200]
+[01/11/2024 06:16:07 PM fastprop.fastprop_core] INFO: Epoch [960/1200]
+[01/11/2024 06:16:45 PM fastprop.fastprop_core] INFO: Epoch [1080/1200]
+[01/11/2024 06:17:24 PM fastprop.fastprop_core] INFO: Epoch [1200/1200]
+[01/11/2024 06:17:24 PM fastprop.fastprop_core] INFO: Elapsed time during training: 0:06:28.423751
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+            Validate metric                         DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+       unitful_validation_l1_avg                0.012951025739312172
+  unitful_validation_l1_output_E1-CAM           0.005510795395821333
+  unitful_validation_l1_output_E1-CC2           0.005892385728657246
+ unitful_validation_l1_output_E1-PBE0           0.005763913970440626
+  unitful_validation_l1_output_E2-CAM           0.005665576085448265
+  unitful_validation_l1_output_E2-CC2           0.006795750930905342
+ unitful_validation_l1_output_E2-PBE0           0.006155538838356733
+  unitful_validation_l1_output_f1-CAM           0.013098178431391716
+  unitful_validation_l1_output_f1-CC2            0.01466420479118824
+ unitful_validation_l1_output_f1-PBE0           0.012723374180495739
+  unitful_validation_l1_output_f2-CAM           0.025070134550333023
+  unitful_validation_l1_output_f2-CC2           0.030143165960907936
+ unitful_validation_l1_output_f2-PBE0           0.023929284885525703
+     unitful_validation_mean_wmape               0.3392419219017029
+      unitful_validation_rmse_avg                0.02160489372909069
+ unitful_validation_rmse_output_E1-CAM           0.00742311542853713
+ unitful_validation_rmse_output_E1-CC2          0.008164199069142342
+unitful_validation_rmse_output_E1-PBE0          0.007827307097613811
+ unitful_validation_rmse_output_E2-CAM          0.007541680242866278
+ unitful_validation_rmse_output_E2-CC2           0.00934608094394207
+unitful_validation_rmse_output_E2-PBE0          0.008200565353035927
+ unitful_validation_rmse_output_f1-CAM          0.026783641427755356
+ unitful_validation_rmse_output_f1-CC2          0.028805021196603775
+unitful_validation_rmse_output_f1-PBE0           0.02678275853395462
+ unitful_validation_rmse_output_f2-CAM          0.040451355278491974
+ unitful_validation_rmse_output_f2-CC2          0.048628732562065125
+unitful_validation_rmse_output_f2-PBE0          0.039304256439208984
+unitful_validation_wmape_output_E1-CAM          0.025653837248682976
+unitful_validation_wmape_output_E1-CC2          0.026991836726665497
+unitful_validation_wmape_output_E1-PBE0          0.02683442085981369
+unitful_validation_wmape_output_E2-CAM          0.023222634568810463
+unitful_validation_wmape_output_E2-CC2           0.02736789919435978
+unitful_validation_wmape_output_E2-PBE0         0.025495370849967003
+unitful_validation_wmape_output_f1-CAM           0.5636931657791138
+unitful_validation_wmape_output_f1-CC2           0.6605929136276245
+unitful_validation_wmape_output_f1-PBE0          0.6216596364974976
+unitful_validation_wmape_output_f2-CAM           0.6360327005386353
+unitful_validation_wmape_output_f2-CC2           0.7023735642433167
+unitful_validation_wmape_output_f2-PBE0          0.7309849858283997
+          validation_mse_loss                    0.18835090100765228
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[01/11/2024 06:17:25 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                                         count      mean       std       min       25%       50%       75%       max
+validation_mse_loss                        5.0  0.191162  0.004770  0.184868  0.188351  0.190945  0.195781  0.195864
+unitful_validation_mean_wmape              5.0  0.337042  0.004161  0.330485  0.335336  0.339242  0.339787  0.340358
+unitful_validation_wmape_output_E1-CC2     5.0  0.025816  0.000948  0.024673  0.025085  0.025911  0.026418  0.026992
+unitful_validation_wmape_output_E2-CC2     5.0  0.026332  0.000691  0.025772  0.025879  0.025920  0.026720  0.027368
+unitful_validation_wmape_output_f1-CC2     5.0  0.639456  0.016410  0.616962  0.632793  0.638572  0.648360  0.660593
+unitful_validation_wmape_output_f2-CC2     5.0  0.713174  0.023441  0.691775  0.702374  0.702557  0.717348  0.751817
+unitful_validation_wmape_output_E1-PBE0    5.0  0.025812  0.000778  0.025049  0.025292  0.025447  0.026435  0.026834
+unitful_validation_wmape_output_E2-PBE0    5.0  0.024757  0.000574  0.024109  0.024376  0.024616  0.025189  0.025495
+unitful_validation_wmape_output_f1-PBE0    5.0  0.605440  0.020968  0.570810  0.605299  0.606834  0.621660  0.622596
+unitful_validation_wmape_output_f2-PBE0    5.0  0.719357  0.020072  0.695339  0.703157  0.722971  0.730985  0.744335
+unitful_validation_wmape_output_E1-CAM     5.0  0.024364  0.000819  0.023770  0.023785  0.023902  0.024710  0.025654
+unitful_validation_wmape_output_E2-CAM     5.0  0.022677  0.000408  0.022176  0.022401  0.022711  0.022877  0.023223
+unitful_validation_wmape_output_f1-CAM     5.0  0.569121  0.020419  0.536077  0.563693  0.576587  0.582395  0.586853
+unitful_validation_wmape_output_f2-CAM     5.0  0.648192  0.010505  0.636033  0.642315  0.648583  0.649832  0.664199
+unitful_validation_l1_avg                  5.0  0.012944  0.000077  0.012886  0.012894  0.012916  0.012951  0.013074
+unitful_validation_l1_output_E1-CC2        5.0  0.005676  0.000187  0.005443  0.005533  0.005699  0.005812  0.005892
+unitful_validation_l1_output_E2-CC2        5.0  0.006557  0.000167  0.006425  0.006433  0.006461  0.006668  0.006796
+unitful_validation_l1_output_f1-CC2        5.0  0.014934  0.000271  0.014648  0.014664  0.015004  0.015092  0.015263
+unitful_validation_l1_output_f2-CC2        5.0  0.030437  0.000264  0.030143  0.030268  0.030342  0.030697  0.030734
+unitful_validation_l1_output_E1-PBE0       5.0  0.005588  0.000149  0.005443  0.005494  0.005506  0.005733  0.005764
+unitful_validation_l1_output_E2-PBE0       5.0  0.005999  0.000134  0.005838  0.005916  0.005972  0.006114  0.006156
+unitful_validation_l1_output_f1-PBE0       5.0  0.012636  0.000336  0.012234  0.012415  0.012692  0.012723  0.013117
+unitful_validation_l1_output_f2-PBE0       5.0  0.023614  0.000508  0.023076  0.023186  0.023589  0.023929  0.024291
+unitful_validation_l1_output_E1-CAM        5.0  0.005276  0.000155  0.005166  0.005170  0.005174  0.005360  0.005511
+unitful_validation_l1_output_E2-CAM        5.0  0.005547  0.000095  0.005423  0.005489  0.005560  0.005599  0.005666
+unitful_validation_l1_output_f1-CAM        5.0  0.013393  0.000294  0.013098  0.013260  0.013275  0.013470  0.013864
+unitful_validation_l1_output_f2-CAM        5.0  0.025673  0.000361  0.025070  0.025628  0.025782  0.025931  0.025953
+unitful_validation_rmse_avg                5.0  0.021714  0.000237  0.021406  0.021605  0.021654  0.021950  0.021956
+unitful_validation_rmse_output_E1-CC2      5.0  0.007913  0.000393  0.007327  0.007689  0.008146  0.008164  0.008239
+unitful_validation_rmse_output_E2-CC2      5.0  0.009107  0.000197  0.008877  0.008995  0.009041  0.009275  0.009346
+unitful_validation_rmse_output_f1-CC2      5.0  0.029258  0.000692  0.028451  0.028805  0.029086  0.029936  0.030013
+unitful_validation_rmse_output_f2-CC2      5.0  0.049113  0.000279  0.048629  0.049116  0.049256  0.049277  0.049288
+unitful_validation_rmse_output_E1-PBE0     5.0  0.007578  0.000239  0.007304  0.007437  0.007493  0.007827  0.007830
+unitful_validation_rmse_output_E2-PBE0     5.0  0.008009  0.000173  0.007806  0.007888  0.007981  0.008171  0.008201
+unitful_validation_rmse_output_f1-PBE0     5.0  0.026450  0.000993  0.025486  0.025489  0.026652  0.026783  0.027842
+unitful_validation_rmse_output_f2-PBE0     5.0  0.038909  0.000914  0.037905  0.038121  0.039068  0.039304  0.040147
+unitful_validation_rmse_output_E1-CAM      5.0  0.007153  0.000187  0.006937  0.007077  0.007080  0.007247  0.007423
+unitful_validation_rmse_output_E2-CAM      5.0  0.007435  0.000109  0.007294  0.007355  0.007449  0.007533  0.007542
+unitful_validation_rmse_output_f1-CAM      5.0  0.027706  0.000768  0.026784  0.026959  0.028195  0.028207  0.028386
+unitful_validation_rmse_output_f2-CAM      5.0  0.041938  0.001116  0.040451  0.041544  0.041593  0.042966  0.043138
+[01/11/2024 06:17:25 PM fastprop.fastprop_core] INFO: Displaying testing results:
+                                   count      mean       std       min       25%       50%       75%       max
+test_mse_loss                        5.0  0.202465  0.013582  0.187157  0.195759  0.199670  0.206410  0.223327
+unitful_test_mean_wmape              5.0  0.340413  0.012421  0.333199  0.334201  0.335314  0.336852  0.362500
+unitful_test_wmape_output_E1-CC2     5.0  0.025917  0.000407  0.025355  0.025666  0.026072  0.026099  0.026394
+unitful_test_wmape_output_E2-CC2     5.0  0.025788  0.000893  0.024574  0.025219  0.025996  0.026342  0.026810
+unitful_test_wmape_output_f1-CC2     5.0  0.651253  0.044321  0.605269  0.609793  0.654522  0.678001  0.708680
+unitful_test_wmape_output_f2-CC2     5.0  0.730785  0.014367  0.714790  0.720692  0.727419  0.742126  0.748896
+unitful_test_wmape_output_E1-PBE0    5.0  0.026007  0.000539  0.025223  0.025674  0.026262  0.026425  0.026450
+unitful_test_wmape_output_E2-PBE0    5.0  0.024421  0.000917  0.023315  0.024038  0.024066  0.025054  0.025631
+unitful_test_wmape_output_f1-PBE0    5.0  0.602928  0.048213  0.561959  0.573136  0.593258  0.601887  0.684397
+unitful_test_wmape_output_f2-PBE0    5.0  0.730530  0.032131  0.688343  0.711879  0.728750  0.757472  0.766208
+unitful_test_wmape_output_E1-CAM     5.0  0.024499  0.000700  0.023432  0.024248  0.024747  0.024780  0.025286
+unitful_test_wmape_output_E2-CAM     5.0  0.022795  0.000911  0.021811  0.021951  0.023048  0.023170  0.023993
+unitful_test_wmape_output_f1-CAM     5.0  0.569056  0.037692  0.534307  0.547144  0.553690  0.580937  0.629203
+unitful_test_wmape_output_f2-CAM     5.0  0.650983  0.027599  0.607384  0.647186  0.651476  0.670475  0.678393
+unitful_test_l1_avg                  5.0  0.013165  0.000304  0.012827  0.012992  0.013121  0.013257  0.013629
+unitful_test_l1_output_E1-CC2        5.0  0.005713  0.000096  0.005571  0.005666  0.005747  0.005766  0.005816
+unitful_test_l1_output_E2-CC2        5.0  0.006425  0.000233  0.006113  0.006271  0.006488  0.006553  0.006700
+unitful_test_l1_output_f1-CC2        5.0  0.014962  0.000398  0.014567  0.014589  0.014978  0.015173  0.015505
+unitful_test_l1_output_f2-CC2        5.0  0.032053  0.001639  0.029922  0.031135  0.032078  0.032937  0.034192
+unitful_test_l1_output_E1-PBE0       5.0  0.005646  0.000123  0.005459  0.005582  0.005704  0.005741  0.005742
+unitful_test_l1_output_E2-PBE0       5.0  0.005925  0.000233  0.005644  0.005828  0.005838  0.006080  0.006237
+unitful_test_l1_output_f1-PBE0       5.0  0.012435  0.000306  0.012046  0.012221  0.012451  0.012685  0.012772
+unitful_test_l1_output_f2-PBE0       5.0  0.024326  0.000461  0.023740  0.024136  0.024259  0.024518  0.024980
+unitful_test_l1_output_E1-CAM        5.0  0.005320  0.000160  0.005069  0.005275  0.005382  0.005382  0.005494
+unitful_test_l1_output_E2-CAM        5.0  0.005582  0.000232  0.005330  0.005370  0.005650  0.005670  0.005890
+unitful_test_l1_output_f1-CAM        5.0  0.013311  0.000466  0.012746  0.013044  0.013184  0.013775  0.013807
+unitful_test_l1_output_f2-CAM        5.0  0.026282  0.000948  0.025418  0.025796  0.026144  0.026164  0.027889
+unitful_test_rmse_avg                5.0  0.022355  0.000605  0.021653  0.022078  0.022300  0.022448  0.023295
+unitful_test_rmse_output_E1-CC2      5.0  0.008356  0.000393  0.007832  0.008060  0.008493  0.008660  0.008735
+unitful_test_rmse_output_E2-CC2      5.0  0.009126  0.000493  0.008462  0.008779  0.009248  0.009549  0.009591
+unitful_test_rmse_output_f1-CC2      5.0  0.029820  0.001828  0.027965  0.028536  0.029104  0.031350  0.032147
+unitful_test_rmse_output_f2-CC2      5.0  0.052073  0.002662  0.048786  0.050361  0.052366  0.053119  0.055736
+unitful_test_rmse_output_E1-PBE0     5.0  0.008056  0.000459  0.007509  0.007729  0.008047  0.008349  0.008647
+unitful_test_rmse_output_E2-PBE0     5.0  0.008190  0.000623  0.007553  0.007768  0.008002  0.008534  0.009093
+unitful_test_rmse_output_f1-PBE0     5.0  0.025584  0.000911  0.024462  0.024763  0.025955  0.026286  0.026452
+unitful_test_rmse_output_f2-PBE0     5.0  0.040774  0.001804  0.038977  0.040129  0.040248  0.040728  0.043789
+unitful_test_rmse_output_E1-CAM      5.0  0.007708  0.000401  0.007170  0.007479  0.007702  0.008048  0.008140
+unitful_test_rmse_output_E2-CAM      5.0  0.007787  0.000672  0.007109  0.007213  0.007831  0.008011  0.008769
+unitful_test_rmse_output_f1-CAM      5.0  0.027332  0.002150  0.025565  0.025774  0.026023  0.029155  0.030143
+unitful_test_rmse_output_f2-CAM      5.0  0.043454  0.001314  0.042535  0.042727  0.042875  0.043401  0.045732
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+           Test metric                     DataLoader 0
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+          test_mse_loss                 0.19966988265514374
+       unitful_test_l1_avg             0.013257406651973724
+  unitful_test_l1_output_E1-CAM        0.005274614319205284
+  unitful_test_l1_output_E1-CC2        0.0057658664882183075
+ unitful_test_l1_output_E1-PBE0        0.005581546574831009
+  unitful_test_l1_output_E2-CAM        0.005889896769076586
+  unitful_test_l1_output_E2-CC2        0.006700498517602682
+ unitful_test_l1_output_E2-PBE0        0.006236502900719643
+  unitful_test_l1_output_f1-CAM        0.013184290379285812
+  unitful_test_l1_output_f1-CC2        0.015173322521150112
+ unitful_test_l1_output_f1-PBE0         0.01204574853181839
+  unitful_test_l1_output_f2-CAM        0.026163948699831963
+  unitful_test_l1_output_f2-CC2         0.03293679654598236
+ unitful_test_l1_output_f2-PBE0        0.024135850369930267
+     unitful_test_mean_wmape            0.3353142738342285
+      unitful_test_rmse_avg            0.022299770265817642
+ unitful_test_rmse_output_E1-CAM       0.007702211383730173
+ unitful_test_rmse_output_E1-CC2       0.008659766055643559
+unitful_test_rmse_output_E1-PBE0        0.00804680772125721
+ unitful_test_rmse_output_E2-CAM        0.00876897294074297
+ unitful_test_rmse_output_E2-CC2        0.00959052611142397
+unitful_test_rmse_output_E2-PBE0       0.009093239903450012
+ unitful_test_rmse_output_f1-CAM        0.02577417530119419
+ unitful_test_rmse_output_f1-CC2       0.029103940352797508
+unitful_test_rmse_output_f1-PBE0       0.024763353168964386
+ unitful_test_rmse_output_f2-CAM        0.04272709786891937
+ unitful_test_rmse_output_f2-CC2       0.053119003772735596
+unitful_test_rmse_output_f2-PBE0       0.040248140692710876
+unitful_test_wmape_output_E1-CAM        0.02424815110862255
+unitful_test_wmape_output_E1-CC2       0.026072412729263306
+unitful_test_wmape_output_E1-PBE0      0.025674305856227875
+unitful_test_wmape_output_E2-CAM       0.023992814123630524
+unitful_test_wmape_output_E2-CC2       0.026809806004166603
+unitful_test_wmape_output_E2-PBE0       0.02563079260289669
+unitful_test_wmape_output_f1-CAM        0.5809372663497925
+unitful_test_wmape_output_f1-CC2        0.6780012249946594
+unitful_test_wmape_output_f1-PBE0       0.6018872261047363
+unitful_test_wmape_output_f2-CAM        0.6073841452598572
+unitful_test_wmape_output_f2-CC2        0.7147899270057678
+unitful_test_wmape_output_f2-PBE0       0.6883432269096375
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
