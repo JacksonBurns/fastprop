@@ -1,0 +1,7 @@
+# number of models to run concurrently during hyperparameter optimization
+# by default set to 4, which will allow each model to use 20% of the GPU
+# try and set this as high as possible without causing a crash
+models_per_gpu: 4
+# total number of optimization trials - generally the default of 64 is
+# enough to improve the model a lot, but will be time-consuming
+num_hopt_trials: 64
