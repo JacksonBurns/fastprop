@@ -7,20 +7,25 @@
 # to prepare the data for fastprop.
 #
 # Additional Comments:
-# Goal is ~1 kcal/mol accuracy.
+# Goal is ~1 kcal/mol RMSE.
 
 output_directory: freesolv
 problem_type: regression
 input_file: freesolv/benchmark_data.csv
 target_columns: exp  # calc
 smiles_column: SMILES
-
 descriptors: all
+
+# optimize: True
+# results after optimization
+fnn_layers: 5
+hidden_size: 100
 
 # training
 number_epochs: 200
-number_repeats: 5
+number_repeats: 8
 random_seed: 1701
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1
+sampler: random
