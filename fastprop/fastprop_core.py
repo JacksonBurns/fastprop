@@ -112,14 +112,14 @@ class ArbitraryDataModule(LightningDataModule):
             self.targets = torch.tensor(self.targets, dtype=torch.float32)
 
     def setup(self, stage=None):
-        # partition data randomly
         (
             *_,
             self.train_idxs,
             self.val_idxs,
             self.test_idxs,
         ) = train_val_test_split(
-            np.array(self.targets),
+            np.array(self.data),
+            np.array(self.targets).flatten(),
             train_size=self.train_size,
             val_size=self.val_size,
             test_size=self.test_size,

@@ -3,7 +3,6 @@ hopt.py
 
 This file implements parallel hyperparameter optimization for fastprop using hyperopt.
 """
-from copy import deepcopy
 import logging
 import os
 
