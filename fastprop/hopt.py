@@ -31,12 +31,12 @@ logger = init_logger(__name__)
 
 
 CONFIG_FNAME = ".fastpropconfig"
-MODELS_PER_GPU = NUM_HOPT_TRIALS = None
+MODELS_PER_GPU, NUM_HOPT_TRIALS = 4, 64
 if os.path.exists(CONFIG_FNAME):
     with open(CONFIG_FNAME) as file:
         cfg = yaml.safe_load(file)
-        MODELS_PER_GPU = cfg.get("models_per_gpu", 4)
-        NUM_HOPT_TRIALS = cfg.get("num_hopt_trials", 64)
+        MODELS_PER_GPU = cfg.get("models_per_gpu", MODELS_PER_GPU)
+        NUM_HOPT_TRIALS = cfg.get("num_hopt_trials", NUM_HOPT_TRIALS)
 
 
 def hopt_fastprop(

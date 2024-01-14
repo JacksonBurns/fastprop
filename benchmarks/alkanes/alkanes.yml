@@ -10,23 +10,34 @@
 # Additional Comments:
 # According to the source website, the best model has an MAE of 1.4 but using
 # more training data.
+#
+# From a source install, set the patience on the early stopping to 10
 
+# optimize: True
+# best for random
+sampler: random
+fnn_layers: 6
+hidden_size: 2800
+# best for spxy
+# sampler: spxy
+# fnn_layers: 4
+# hidden_size: 2000
+
+number_repeats: 2
 output_directory: alkanes
 input_file: alkanes/benchmark_data.csv
+problem_type: regression
 target_columns: boiling_point
 smiles_column: py2opsin_smiles
-descriptors: all
 enable_cache: True
+
+descriptors: all
 rescaling: True
 zero_variance_drop: False
 colinear_drop: False
-fnn_layers: 2
+
 number_epochs: 100
-problem_type: regression
-train_size: 0.5
+train_size: 0.8
 val_size: 0.1
-test_size: 0.4
-sampler: random
-number_repeats: 5
+test_size: 0.1
 random_seed: 42
-hidden_size: 1800
