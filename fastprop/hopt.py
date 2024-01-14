@@ -8,6 +8,7 @@ import os
 
 import pandas as pd
 import torch
+import yaml
 
 from fastprop.defaults import init_logger
 from fastprop.fastprop_core import (
@@ -27,6 +28,15 @@ except ImportError as ie:
     raise RuntimeError("Unable to import hyperparameter optimization dependencies, please install fastprop[hopt]. Original error: " + str(ie))
 
 logger = init_logger(__name__)
+
+
+CONFIG_FNAME = ".fastpropconfig"
+MODELS_PER_GPU = NUM_HOPT_TRIALS = None
+if os.path.exists(CONFIG_FNAME):
+    with open(CONFIG_FNAME) as file:
+        cfg = yaml.safe_load(file)
+        MODELS_PER_GPU = cfg.get("models_per_gpu", 4)
+        NUM_HOPT_TRIALS = cfg.get("num_hopt_trials", 64)
 
 
 def hopt_fastprop(
@@ -51,8 +61,8 @@ def hopt_fastprop(
     test_size=0.1,
     sampler="random",
     random_seed=0,
-    n_trials=16,
-    n_parallel=4,
+    n_trials=NUM_HOPT_TRIALS,
+    n_parallel=MODELS_PER_GPU,
 ):
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     torch.manual_seed(random_seed)
@@ -71,7 +81,7 @@ def hopt_fastprop(
     # driver code of optimization
     search_space = {
         "hidden_size": tune.choice(range(100, 3001, 100)),
-        "fnn_layers": tune.choice(range(1, 6, 1)),
+        "fnn_layers": tune.choice(range(1, 8, 1)),
     }
     algo = OptunaSearch()
     tuner = tune.Tuner(
@@ -128,6 +138,6 @@ def objective(
             datamodule.setup()
     results_df = pd.DataFrame.from_records(all_results)
     if target_scaler.n_features_in_ == 1:
-        return {"loss": results_df.describe().at["mean", "unitful_test_l1"]}
+        return {"loss": results_df.describe().at["mean", "unitful_test_rmse"]}
     else:
-        return {"loss": results_df.describe().at["mean", "unitful_test_l1_avg"]}
+        return {"loss": results_df.describe().at["mean", "unitful_test_rmse_avg"]}

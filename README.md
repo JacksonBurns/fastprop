@@ -79,6 +79,7 @@ There are four distinct steps in `fastprop` that define its framework:
 # Using `fastprop`
 `fastprop` can be run from the command line or as a Python module.
 Regardless of the method of use the parameters described in [Configurable Parameters](#configurable-parameters) can be modified.
+Some system-specific configuration options can be specified in a `.fastpropconfig` file - see the [example file](https://github.com/JacksonBurns/fastprop/blob/main/.fastpropconfig).
 
 ## Command Line
 After installation, `fastprop` is accessible from the command line via `fastprop`.
