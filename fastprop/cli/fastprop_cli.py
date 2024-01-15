@@ -49,6 +49,7 @@ def main():
     train_subparser.add_argument("-ts", "--test-size", help="test size")
     train_subparser.add_argument("-s", "--sampler", help="choice of sampler, i.e. random, kmeans, etc.")
     train_subparser.add_argument("-rs", "--random-seed", help="random seed for sampling and pytorch seed")
+    train_subparser.add_argument("-pc", "--patience", help="number of epochs to wait before early stopping")
 
     predict_subparser = subparsers.add_parser("predict")
     predict_subparser.add_argument("-c", "--checkpoint", required=True, help="checkpoint file for predictions")

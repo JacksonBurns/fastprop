@@ -119,7 +119,8 @@ class ArbitraryDataModule(LightningDataModule):
             self.test_idxs,
         ) = train_val_test_split(
             np.array(self.data),
-            np.array(self.targets).flatten(),
+            # flatten 1D targets
+            np.array(self.targets).flatten() if self.targets.size()[1] == 1 else np.array(self.targets),
             train_size=self.train_size,
             val_size=self.val_size,
             test_size=self.test_size,
@@ -258,6 +259,7 @@ def train_and_test(
     n_epochs,
     datamodule,
     model,
+    patience=5,
     verbose=True,
     no_logs=False,
     enable_checkpoints=True,
@@ -281,7 +283,14 @@ def train_and_test(
         log_every_n_steps=0 if no_logs else 1,
         enable_checkpointing=enable_checkpoints,
         check_val_every_n_epoch=1,
-        callbacks=[EarlyStopping(monitor="validation_mse_loss", mode="min", verbose=True, patience=5)],
+        callbacks=[
+            EarlyStopping(
+                monitor="validation_mse_loss",
+                mode="min",
+                verbose=True,
+                patience=patience,
+            )
+        ],
     )
 
     t1_start = perf_counter()
@@ -358,6 +367,7 @@ def train_fastprop(
     test_size=0.1,
     sampler="random",
     random_seed=0,
+    patience=5,
 ):
     logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
     torch.manual_seed(random_seed)
@@ -373,12 +383,13 @@ def train_fastprop(
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
 
+    # TODO: abstract this loop into a separate function
     all_test_results, all_validation_results = [], []
     for i in range(number_repeats):
         # reinitialize model
         model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
         logger.info(f"Training model {i+1} of {number_repeats}")
-        test_results, validation_results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True)
+        test_results, validation_results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True, patience=patience)
         all_test_results.append(test_results[0])
         all_validation_results.append(validation_results[0])
         # resample for repeat trials

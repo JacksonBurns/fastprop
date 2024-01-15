@@ -10,8 +10,6 @@
 # Additional Comments:
 # According to the source website, the best model has an MAE of 1.4 but using
 # more training data.
-#
-# From a source install, set the patience on the early stopping to 10
 
 # optimize: True
 # best for random
@@ -41,3 +39,4 @@ train_size: 0.8
 val_size: 0.1
 test_size: 0.1
 random_seed: 42
+patience: 10

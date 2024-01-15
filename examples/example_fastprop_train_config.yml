@@ -64,3 +64,5 @@ checkpoint: /path/to/checkpoint.ckpt
 # Algorithm for data sampling, i.e. random, see all available samplers
 # here: https://github.com/JacksonBurns/astartes?tab=readme-ov-file#implemented-sampling-algorithms
 sampler: random
+# number of epochs to wait before stopping early - avoid overfitting
+patience: 5
