@@ -40,6 +40,7 @@ from astartes import train_val_test_split
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
@@ -404,3 +405,11 @@ def train_fastprop(
     logger.info("Displaying validation results:\n%s", validation_results_df.describe().transpose().to_string())
     test_results_df = pd.DataFrame.from_records(all_test_results)
     logger.info("Displaying testing results:\n%s", test_results_df.describe().transpose().to_string())
+    ttest_result = ttest_ind(test_results_df["unitful_test_l1"].to_numpy(), validation_results_df["unitful_validation_l1"].to_numpy())
+    if (p := ttest_result.pvalue) < 0.05:
+        logger.warn(
+            "Detected possible over/underfitting! 2-sided T-test between validation and testing"
+            f" L1 yielded p value of {p=:.3f}<0.05. Consider changing patience."
+        )
+    else:
+        logger.info(f"2-sided T-test between validation and testing L1 yielded p value of {p=:.3f}>0.05.")

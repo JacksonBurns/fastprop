@@ -38,4 +38,4 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["fastprop*"]
-exclude = ["docs*", "examples*", "test*"]
+exclude = ["benchmarks*", "examples*", "test*"]

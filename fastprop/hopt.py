@@ -155,6 +155,6 @@ def objective(
             datamodule.setup()
     results_df = pd.DataFrame.from_records(all_results)
     if target_scaler.n_features_in_ == 1:
-        return {"loss": results_df.describe().at["mean", "unitful_test_l1"]}
+        return {"loss": results_df.describe().at["mean", "unitful_test_rmse"]}
     else:
-        return {"loss": results_df.describe().at["mean", "unitful_test_l1_avg"]}
+        return {"loss": results_df.describe().at["mean", "unitful_test_rmse_avg"]}

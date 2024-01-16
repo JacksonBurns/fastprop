@@ -1,0 +1,50 @@
+# The Estimated SOLubility (ESOL) Dataset, as described in:
+# https://doi.org/10.1021/ci034243x
+#
+# Download the data from the here:
+# https://raw.githubusercontent.com/deepchem/deepchem/master/datasets/delaney-processed.csv
+# and rename it to benchmark_data.csv
+# i.e. do this on bash:
+# wget -O benchmark_data.csv  https://raw.githubusercontent.com/deepchem/deepchem/master/datasets/delaney-processed.csv
+#
+# Finally, in the first of benchmark_data.csv, change 
+# measured log solubility in mols per litre
+# to
+# measured_log_solubility_in_mols_per_litre
+# i.e. replace the spaces with underscores
+#
+# Additional Comments:
+# https://dl.acm.org/doi/10.5555/3491440.3491832 achieved 0.55 RMSE
+# OOB fastprop gets 0.6 RMSE, with modest optimization achieves 0.56
+
+
+# generic args
+output_directory: esol
+random_seed: 8675309
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 4
+hidden_size: 3000
+
+# featurization
+input_file: esol/benchmark_data.csv
+target_columns: measured_log_solubility_in_mols_per_litre
+smiles_column: smiles
+descriptors: all
+enable_cache: True
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 2
+number_epochs: 200
+patience: 10
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random
