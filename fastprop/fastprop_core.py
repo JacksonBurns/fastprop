@@ -243,7 +243,7 @@ class fastprop(pl.LightningModule):
         y_hat = self.forward(x)
         if self.problem_type == "regression":
             loss = torch.nn.functional.mse_loss(y_hat, y, reduction=reduction)
-        if self.problem_type in {"multilabel", "binary"}:
+        elif self.problem_type in {"multilabel", "binary"}:
             loss = torch.nn.functional.binary_cross_entropy_with_logits(y_hat, y, reduction=reduction)
         else:
             loss = torch.nn.functional.cross_entropy(y_hat, y, reduction=reduction)
