@@ -3,6 +3,7 @@ from typing import Literal
 
 import numpy as np
 from mordred import Calculator
+import psutil
 
 
 # mordred tried to avoid instantiating multiple Calculator classes, which makes
@@ -32,5 +33,5 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
     else:
         # mordred parallelism
         mordred_calc = Calculator(descriptors, ignore_3D=True)
-        mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=n_procs, quiet=False)))
+        mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=psutil.cpu_count(logical=True), quiet=False)))
     return mordred_descs

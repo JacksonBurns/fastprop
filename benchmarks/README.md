@@ -5,3 +5,7 @@ Each subdirectory contains instructions to retrieve the input data (and possibly
 
 The input files are intended to be executed from this directory, i.e. `fastprop train hopv15/hopv15.yml` (or rather, `fastprop train hopv15/hopv15.yml > hopv15/run_log.txt 2>&1` to save the output for later).
 If you're running from bash, you can execute the `run_all.sh` script in this directory - it will take a while!
+
+## Usage Note
+Each of the subdirectories' configuration files instructs you to store the data in a file called `benchmark_data.csv`.
+This is _not_ a requirement to run `fastprop`, but is done for convenience to better operate with GitHub.

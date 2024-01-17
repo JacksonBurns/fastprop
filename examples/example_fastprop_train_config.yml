@@ -10,7 +10,7 @@
 output_directory: /path/to/output/dir
 # Random seed to control torch as well as data sampling
 random_seed: 42
-# Type of problem (either regression of classification)
+# Type of problem (can be regression or one of these classification types: binary, multiclass, multilabel)
 problem_type: regression
 # Source of data
 input_file: /path/to/data.csv

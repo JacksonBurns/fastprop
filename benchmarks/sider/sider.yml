@@ -1,0 +1,51 @@
+# The Side Effect Resource (SIDER) database, as described in:
+# https://doi.org/10.1093/nar/gkv1075
+#
+# This specific dataset is the one prepared in:
+# https://doi.org/10.1039%2Fc7sc02664a
+# following the procedure in:
+# https://doi.org/10.48550/arXiv.1611.03199
+#
+# Download the data from deepchem:
+# https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/sider.csv.gz
+# and decompress it. Rename sider.csv to benchmark_data.csv
+#
+# Fastprop prints the per-target performance, and the targets in this dataset
+# have long (and gross) names, so replace the header line with this:
+# smiles,se1,se2,se3,se4,se5,se6,se7,se8,se9,se10,se11,se12,se13,se14,se15,se16,se17,se18,se19,se20,se21,se22,se23,se24,se25,se26,se27
+#
+# From here, you can either run fastprop as-is, or you can run the calculation
+# of descriptors separately (done here as a demonstration).
+# To do so, use a tool like csvtool (or just excel) and copy the SMILES_str
+# column into a file on its own (no header). Then run:
+# python -m mordred -o precomputed.csv -t smi benchmark_smiles.smi
+#
+# Additional Comments:
+# Very established benchmark; many points of comparison.
+# CMPNN managed AUROC of 0.67 in https://github.com/SY575/CMPNN?tab=readme-ov-file#overview
+
+# generic args
+output_directory: sider
+random_seed: 19716
+problem_type: multilabel
+
+# featurization
+input_file: sider/benchmark_data.csv
+target_columns: se1 se2 se3 se4 se5 se6 se7 se8 se9 se10 se11 se12 se13 se14 se15 se16 se17 se18 se19 se20 se21 se22 se23 se24 se25 se26 se27
+smiles_column: smiles
+precomputed: sider/precomputed.csv
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 4
+number_epochs: 150
+batch_size: 2048
+patience: 15
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

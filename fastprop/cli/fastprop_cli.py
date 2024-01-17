@@ -43,7 +43,7 @@ def main():
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
     train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")
     train_subparser.add_argument("-nr", "--number-repeats", type=int, help="number of repeats")
-    train_subparser.add_argument("-pt", "--problem-type", help="problem type (regression, classification)")
+    train_subparser.add_argument("-pt", "--problem-type", help="problem type (regression or a type of classification)")
     train_subparser.add_argument("-ns", "--train-size", help="train size")
     train_subparser.add_argument("-vs", "--val-size", help="val size")
     train_subparser.add_argument("-ts", "--test-size", help="test size")
@@ -75,30 +75,30 @@ def main():
     match subcommand:
         case "train":
             training_default = dict(DEFAULT_TRAINING_CONFIG)
-
             # exit with help if no args given
             if not sum(map(lambda i: i is not None, args.values())):
                 train_subparser.print_help()
                 exit(0)
-
             optim_requested = args.pop("optimize")
             if args["config_file"] is not None:
                 if sum(map(lambda i: i is not None, args.values())) > 1:
-                    raise parser.error("Cannot specify config_file with other command line arguments.")
+                    raise parser.error("Cannot specify config_file with other command line arguments (except --optimize).")
                 with open(args["config_file"], "r") as f:
                     cfg = yaml.safe_load(f)
                     cfg["target_columns"] = cfg["target_columns"].split(" ")
                     training_default.update(cfg)
-                    optim_requested = optim_requested or training_default.pop("optimize", False)
             else:
                 training_default.update({k: v for k, v in args.items() if v is not None})
 
+            optim_requested = training_default.pop("optimize") or optim_requested
             logger.info(f"Training Parameters:\n {json.dumps(training_default, indent=4)}")
             # validate this dictionary, i.e. layer counts are positive, etc.
             # cannot specify both precomputed and descriptors or enable/cache
             validate_config(training_default)
             if optim_requested:
-                if any((training_default.pop("fnn_layers"), training_default.pop("hidden_size"))):
+                training_default.pop("fnn_layers")
+                training_default.pop("hidden_size")
+                if any((args.get("fnn_layers") is not None, args.get("hidden_size") is not None)):
                     logger.warning("Hidden Size/FNN Layers specified with optimize and are ignored.")
                 hopt_fastprop(**training_default)
             else:

@@ -70,7 +70,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Learning rate
     - Batch size
     - Checkpoint file to resume from (optional)
-    - Problem type (one of: regression, classification)
+    - Problem type (one of: regression, binary, multiclass, multilabel)
  4. Prediction
     - Input SMILES: either a single SMILES or a CSV file
     - Output format: either a filepath to write the results, defaults to stdout

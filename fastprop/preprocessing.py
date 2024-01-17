@@ -2,6 +2,7 @@
 # retrieve the data as numpy arrays
 
 import warnings
+from types import SimpleNamespace
 
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
@@ -13,9 +14,13 @@ from .defaults import init_logger
 logger = init_logger(__name__)
 
 
-def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, colinear_drop=False):
-    target_scaler = StandardScaler()
-    y = target_scaler.fit_transform(targets)
+def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, colinear_drop=False, problem_type="regression"):
+    # mock the scaler object for classification tasks
+    target_scaler = SimpleNamespace(feature_names_in_=None, n_features_in_=targets.shape[1])
+    y = targets
+    if problem_type == "regression":
+        target_scaler = StandardScaler()
+        y = target_scaler.fit_transform(targets)
 
     # make it optional to either drop columns with any missing or do this
     imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")

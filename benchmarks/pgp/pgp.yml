@@ -1,0 +1,43 @@
+# The P-glycoprotein (Pgp) Inhibition Dataset, as described in:
+# https://pubs.acs.org/doi/full/10.1021/jm101421d
+#
+# Download the excel file from figshare:
+# https://figshare.com/ndownloader/files/4341289
+# and using sheets, excel, ssconvert, etc. extract the 
+# sheet with the dataset to a csv file. On bash this looks like
+# ssconvert jm101421d_si_001.xls benchmark_data.csv -S
+# mv benchmark_data.csv.0 > benchmark_data.csv
+#
+# Additional Comments:
+# The literature precedent is to do a 70/10/20 scaffold-based
+# split using code similar to that in chemprop. In chempropv2
+# this splitting is done with astartes, which is also the
+# backend for fastprop.
+
+# generic args
+output_directory: pgp
+random_seed: 0575077166
+problem_type: binary
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 2
+hidden_size: 2400
+
+# featurization
+input_file: pgp/benchmark_data.csv
+target_columns: Activity
+smiles_column: SMILES
+descriptors: all
+
+# training
+number_repeats: 4
+number_epochs: 150
+batch_size: 2048
+patience: 15
+
+# dataset splitting
+train_size: 0.7
+val_size: 0.1
+test_size: 0.2
+sampler: scaffold

@@ -6,7 +6,6 @@ This file implements parallel hyperparameter optimization for fastprop using hyp
 import logging
 import os
 
-import pandas as pd
 import ray
 import torch
 import yaml
@@ -14,9 +13,9 @@ import yaml
 from fastprop.defaults import init_logger
 from fastprop.fastprop_core import (
     ArbitraryDataModule,
-    _get_descs,
     fastprop,
-    train_and_test,
+    _get_descs,
+    _training_loop,
 )
 from fastprop.preprocessing import preprocess
 from fastprop.utils import load_from_csv
@@ -71,17 +70,19 @@ def hopt_fastprop(
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
-    targets, mols = load_from_csv(input_file, smiles_column, target_columns)
+    targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
     descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
 
     logger.info("Preprocessing data...")
-    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop)
+    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
     number_features = X.shape[1]
 
-    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
+    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     datamodule_ref = ray.put(datamodule)
+
+    _, metric = fastprop.get_metrics(problem_type)
 
     # driver code of optimization
     search_space = {
@@ -102,14 +103,15 @@ def hopt_fastprop(
                 output_directory,
                 random_seed,
                 patience,
+                problem_type,
             ),
             # run n_parallel models at the same time (leave 20% for system)
             # don't specify cpus, and just let pl figure it out
             resources={"gpu": (1 - 0.20) / n_parallel},
         ),
         tune_config=tune.TuneConfig(
-            metric="loss",
-            mode="min",
+            metric=metric,
+            mode="min" if problem_type == "regression" else "max",
             search_alg=algo,
             max_concurrent_trials=n_parallel,
             num_samples=n_trials,
@@ -132,29 +134,26 @@ def objective(
     output_directory,
     random_seed,
     patience,
+    problem_type,
 ) -> float:
     datamodule = ray.get(datamodule_ref)
-    all_results = []
-    for i in range(number_repeats):
-        model = fastprop(number_features, target_scaler, number_epochs, trial["hidden_size"], learning_rate, trial["fnn_layers"], shh=True)
-        results, _ = train_and_test(
-            output_directory,
-            number_epochs,
-            datamodule,
-            model,
-            verbose=False,
-            no_logs=True,
-            enable_checkpoints=False,
-            patience=patience,
-        )
-        all_results.append(results[0])
-        random_seed += 1
-        if i + 1 < number_repeats:
-            random_seed += 1
-            datamodule.random_seed = random_seed
-            datamodule.setup()
-    results_df = pd.DataFrame.from_records(all_results)
-    if target_scaler.n_features_in_ == 1:
-        return {"loss": results_df.describe().at["mean", "unitful_test_rmse"]}
+    results_df, _ = _training_loop(
+        number_repeats,
+        number_features,
+        target_scaler,
+        number_epochs,
+        trial["hidden_size"],
+        learning_rate,
+        trial["fnn_layers"],
+        output_directory,
+        datamodule,
+        patience,
+        random_seed,
+        problem_type,
+        hopt=True,
+    )
+    _, metric = fastprop.get_metrics(problem_type)
+    if target_scaler.n_features_in_ == 1 or problem_type != "regression":
+        return {metric: results_df.describe().at["mean", f"test_{metric}"]}
     else:
-        return {"loss": results_df.describe().at["mean", "unitful_test_rmse_avg"]}
+        return {metric: results_df.describe().at["mean", f"test_{metric}_avg"]}

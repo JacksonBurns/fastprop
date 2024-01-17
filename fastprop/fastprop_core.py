@@ -37,6 +37,7 @@ import psutil
 import pytorch_lightning as pl
 import torch
 from astartes import train_val_test_split
+from astartes.molecules import train_val_test_split_molecules
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
@@ -44,6 +45,7 @@ from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
+from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc
 
 # choose the descriptor set absed on the args
 from fastprop.utils import (
@@ -95,13 +97,14 @@ class ArbitraryDataset(TorchDataset):
 
 
 class ArbitraryDataModule(LightningDataModule):
-    def __init__(self, cleaned_data, targets, batch_size, random_seed, train_size, val_size, test_size, sampler):
+    def __init__(self, cleaned_data, targets, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=None):
         super().__init__()
         self.data = cleaned_data
         self.targets = targets
         self.batch_size = batch_size
         self.train_size, self.val_size, self.test_size = train_size, val_size, test_size
         self.sampler = sampler
+        self.smiles = smiles
         self.train_idxs, self.val_idxs, self.test_idxs = None, None, None
         self.random_seed = random_seed
 
@@ -113,22 +116,38 @@ class ArbitraryDataModule(LightningDataModule):
             self.targets = torch.tensor(self.targets, dtype=torch.float32)
 
     def setup(self, stage=None):
-        (
-            *_,
-            self.train_idxs,
-            self.val_idxs,
-            self.test_idxs,
-        ) = train_val_test_split(
-            np.array(self.data),
-            # flatten 1D targets
-            np.array(self.targets).flatten() if self.targets.size()[1] == 1 else np.array(self.targets),
-            train_size=self.train_size,
-            val_size=self.val_size,
-            test_size=self.test_size,
-            sampler=self.sampler,
-            random_state=self.random_seed,
-            return_indices=True,
-        )
+        if self.sampler != "scaffold":
+            (
+                *_,
+                self.train_idxs,
+                self.val_idxs,
+                self.test_idxs,
+            ) = train_val_test_split(
+                np.array(self.data),
+                # flatten 1D targets
+                np.array(self.targets).flatten() if self.targets.size()[1] == 1 else np.array(self.targets),
+                train_size=self.train_size,
+                val_size=self.val_size,
+                test_size=self.test_size,
+                sampler=self.sampler,
+                random_state=self.random_seed,
+                return_indices=True,
+            )
+        else:
+            (
+                *_,
+                self.train_idxs,
+                self.val_idxs,
+                self.test_idxs,
+            ) = train_val_test_split_molecules(
+                self.smiles,
+                train_size=self.train_size,
+                val_size=self.val_size,
+                test_size=self.test_size,
+                sampler=self.sampler,
+                random_state=self.random_seed,
+                return_indices=True,
+            )
 
     def _init_dataloader(self, shuffle, idxs):
         return torch.utils.data.DataLoader(
@@ -154,8 +173,11 @@ class ArbitraryDataModule(LightningDataModule):
 
 
 class fastprop(pl.LightningModule):
-    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers, shh=False):
+    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers, problem_type, shh=False):
         super().__init__()
+        self.problem_type = problem_type
+        self.training_metric, self.overfitting_metric = fastprop.get_metrics(problem_type)
+
         # for saving human-readable accuracy metrics and predicting
         self.target_scaler = target_scaler
 
@@ -179,6 +201,17 @@ class fastprop(pl.LightningModule):
         self.fnn = torch.nn.Sequential(layers)
         self.readout = torch.nn.Linear(hidden_size, self.target_scaler.n_features_in_)
 
+    def get_metrics(problem_type):
+        match problem_type:
+            case "regression":
+                return "mse", "rmse"
+            case "multilabel":
+                return "bce", "auroc"
+            case "multiclass":
+                return "ce", "f1"
+            case "binary":
+                return "bce", "auroc"
+
     def forward(self, x):
         x = self.fnn.forward(x)
         x = self.readout(x)
@@ -189,65 +222,87 @@ class fastprop(pl.LightningModule):
         return {"optimizer": optimizer}
 
     def training_step(self, batch, batch_idx):
-        loss = self._machine_loss(batch, reduction="sum")
-        self.log("train_mse_loss", loss)
+        loss = self._machine_loss(batch, reduction="mean")
+        self.log(f"train_{self.training_metric}_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
-        self.log("validation_mse_loss", loss, on_step=False, on_epoch=True)
+        self.log(f"validation_{self.training_metric}_loss", loss, on_step=False, on_epoch=True)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "validation")
         return loss
 
     def test_step(self, batch, batch_idx):
         loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
-        self.log("test_mse_loss", loss, on_step=False, on_epoch=True)
+        self.log(f"test_{self.training_metric}_loss", loss, on_step=False, on_epoch=True)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "test")
         return loss
 
     def _machine_loss(self, batch, reduction="mean", return_all=False):
         x, y = batch
         y_hat = self.forward(x)
-        loss = torch.nn.functional.mse_loss(y_hat, y, reduction=reduction)
+        if self.problem_type == "regression":
+            loss = torch.nn.functional.mse_loss(y_hat, y, reduction=reduction)
+        if self.problem_type in {"multilabel", "binary"}:
+            loss = torch.nn.functional.binary_cross_entropy_with_logits(y_hat, y, reduction=reduction)
+        else:
+            loss = torch.nn.functional.cross_entropy(y_hat, y, reduction=reduction)
         if not return_all:
             return loss
         else:
             return loss, x, y, y_hat
 
     def _human_loss(self, pred, real, name):
+        n_tasks = len(self.target_scaler.feature_names_in_)
         # outputs the performance in more human-interpretable manner
         # expensive so we don't do this during training
-        rescaled_pred = self.target_scaler.inverse_transform(pred)
-        rescaled_truth = self.target_scaler.inverse_transform(real)
-        # mean absolute percentage error
-        # sklearn asks for an array of weights, but it actually just passes through to np.average which
-        # accepts weights of the same shape as the inputs
-        per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
-        if len(self.target_scaler.feature_names_in_) == 1:
-            self.log(f"unitful_{name}_wmape", np.mean(per_task_mape))
-        else:
-            self.log(f"unitful_{name}_mean_wmape", np.mean(per_task_mape))
-            for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
-                self.log(f"unitful_{name}_wmape_output_{target}", value)
+        if self.problem_type == "regression":
+            rescaled_pred = self.target_scaler.inverse_transform(pred)
+            rescaled_truth = self.target_scaler.inverse_transform(real)
+            # mean absolute percentage error
+            # sklearn asks for an array of weights, but it actually just passes through to np.average which
+            # accepts weights of the same shape as the inputs
+            per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
+            if n_tasks == 1:
+                self.log(f"{name}_wmape", np.mean(per_task_mape))
+            else:
+                self.log(f"{name}_mean_wmape", np.mean(per_task_mape))
+                for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
+                    self.log(f"{name}_wmape_output_{target}", value)
 
-        # mean absolute error
-        all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction="none")
-        per_task_loss = all_loss.numpy().mean(axis=0)
-        if len(self.target_scaler.feature_names_in_) == 1:
-            self.log(f"unitful_{name}_l1", np.mean(per_task_loss))
-        else:
-            self.log(f"unitful_{name}_l1_avg", np.mean(per_task_loss))
-            for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
-                self.log(f"unitful_{name}_l1_output_{target}", value)
+            # mean absolute error
+            all_loss = torch.nn.functional.l1_loss(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth), reduction="none")
+            per_task_loss = all_loss.numpy().mean(axis=0)
+            if n_tasks == 1:
+                self.log(f"{name}_l1", np.mean(per_task_loss))
+            else:
+                self.log(f"{name}_l1_avg", np.mean(per_task_loss))
+                for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
+                    self.log(f"{name}_l1_output_{target}", value)
 
-        # rmse
-        per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values", squared=False)
-        if len(self.target_scaler.feature_names_in_) == 1:
-            self.log(f"unitful_{name}_rmse", np.mean(per_task_loss))
+            # rmse
+            per_task_loss = l2_error(rescaled_truth, rescaled_pred, multioutput="raw_values", squared=False)
+            if n_tasks == 1:
+                self.log(f"{name}_rmse", np.mean(per_task_loss))
+            else:
+                self.log(f"{name}_rmse_avg", np.mean(per_task_loss))
+                for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
+                    self.log(f"{name}_rmse_output_{target}", value)
         else:
-            self.log(f"unitful_{name}_rmse_avg", np.mean(per_task_loss))
-            for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):
-                self.log(f"unitful_{name}_rmse_output_{target}", value)
+            if self.problem_type == "multilabel":
+                pred_prob = torch.sigmoid(pred)
+                auroc_score = multilabel_auroc(pred_prob, real.int(), n_tasks, "macro")
+                self.log(f"{name}_auroc", auroc_score)
+            elif self.problem_type == "multiclass":
+                pred_prob = torch.nn.functional.softmax(pred)
+                f1 = f1_score(pred_prob, real, "multiclass")
+                self.log(f"{name}_f1", f1)
+            elif self.problem_type == "binary":
+                pred_prob = torch.sigmoid(pred)
+                f1 = f1_score(pred_prob, real, "binary")
+                self.log(f"{name}_f1", f1)
+                auroc_score = auroc(pred_prob, real.int(), task="binary")
+                self.log(f"{name}_auroc", auroc_score)
 
     def on_train_epoch_end(self) -> None:
         if (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
@@ -286,7 +341,7 @@ def train_and_test(
         check_val_every_n_epoch=1,
         callbacks=[
             EarlyStopping(
-                monitor="validation_mse_loss",
+                monitor=f"validation_{model.training_metric}_loss",
                 mode="min",
                 verbose=True,
                 patience=patience,
@@ -344,6 +399,68 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
     return descs
 
 
+def _training_loop(
+    number_repeats,
+    number_features,
+    target_scaler,
+    number_epochs,
+    hidden_size,
+    learning_rate,
+    fnn_layers,
+    output_directory,
+    datamodule,
+    patience,
+    random_seed,
+    problem_type,
+    hopt=False,
+):
+    # hopt disables some printing from fastprop, as well as the training loop, disables logging, and disables writing checkpoints
+    all_test_results, all_validation_results = [], []
+    for i in range(number_repeats):
+        # reinitialize model
+        model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, problem_type, shh=hopt)
+        logger.info(f"Training model {i+1} of {number_repeats}")
+        test_results, validation_results = train_and_test(
+            output_directory,
+            number_epochs,
+            datamodule,
+            model,
+            patience=patience,
+            verbose=not hopt,
+            no_logs=hopt,
+            enable_checkpoints=not hopt,
+        )
+        all_test_results.append(test_results[0])
+        all_validation_results.append(validation_results[0])
+        # resample for repeat trials
+        if i + 1 < number_repeats:
+            random_seed += 1
+            datamodule.random_seed = random_seed
+            datamodule.setup()
+            # ensure that the model is re-initialized on the next iteration
+            del model
+
+    validation_results_df = pd.DataFrame.from_records(all_validation_results)
+    logger.info("Displaying validation results:\n%s", validation_results_df.describe().transpose().to_string())
+    test_results_df = pd.DataFrame.from_records(all_test_results)
+    logger.info("Displaying testing results:\n%s", test_results_df.describe().transpose().to_string())
+    if number_repeats > 1:
+        ttest_result = ttest_ind(
+            test_results_df[f"test_{model.overfitting_metric}"].to_numpy(),
+            validation_results_df[f"validation_{model.overfitting_metric}"].to_numpy(),
+        )
+        if (p := ttest_result.pvalue) < 0.05:
+            logger.warn(
+                "Detected possible over/underfitting! 2-sided T-test between validation and testing"
+                f" {model.overfitting_metric} yielded {p=:.3f}<0.05. Consider changing patience."
+            )
+        else:
+            logger.info(f"2-sided T-test between validation and testing {model.overfitting_metric} yielded p value of {p=:.3f}>0.05.")
+    else:
+        logger.info("fastprop is unable to generate statistics to check for overfitting, consider increasing 'num_repeats' to at least 2.")
+    return test_results_df, validation_results_df
+
+
 def train_fastprop(
     output_directory,
     input_file,
@@ -355,11 +472,11 @@ def train_fastprop(
     rescaling=True,
     zero_variance_drop=False,
     colinear_drop=False,
-    fnn_layers=3,
-    hidden_size=512,
+    fnn_layers=2,
+    hidden_size=1800,
     learning_rate=0.0001,
     batch_size=2048,
-    number_epochs=1000,
+    number_epochs=100,
     number_repeats=1,
     problem_type="regression",
     checkpoint=None,
@@ -374,42 +491,26 @@ def train_fastprop(
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
-    targets, mols = load_from_csv(input_file, smiles_column, target_columns)
+    targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
     descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
 
     logger.info("Preprocessing data...")
-    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop)
+    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
     target_scaler.feature_names_in_ = target_columns
     logger.info("...done.")
-
-    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler)
-
-    # TODO: abstract this loop into a separate function
-    all_test_results, all_validation_results = [], []
-    for i in range(number_repeats):
-        # reinitialize model
-        model = fastprop(X.shape[1], target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers)
-        logger.info(f"Training model {i+1} of {number_repeats}")
-        test_results, validation_results = train_and_test(output_directory, number_epochs, datamodule, model, verbose=True, patience=patience)
-        all_test_results.append(test_results[0])
-        all_validation_results.append(validation_results[0])
-        # resample for repeat trials
-        if i + 1 < number_repeats:
-            random_seed += 1
-            datamodule.random_seed = random_seed
-            datamodule.setup()
-        # ensure that the model is re-initialized on the next iteration
-        del model
-
-    validation_results_df = pd.DataFrame.from_records(all_validation_results)
-    logger.info("Displaying validation results:\n%s", validation_results_df.describe().transpose().to_string())
-    test_results_df = pd.DataFrame.from_records(all_test_results)
-    logger.info("Displaying testing results:\n%s", test_results_df.describe().transpose().to_string())
-    ttest_result = ttest_ind(test_results_df["unitful_test_l1"].to_numpy(), validation_results_df["unitful_validation_l1"].to_numpy())
-    if (p := ttest_result.pvalue) < 0.05:
-        logger.warn(
-            "Detected possible over/underfitting! 2-sided T-test between validation and testing"
-            f" L1 yielded p value of {p=:.3f}<0.05. Consider changing patience."
-        )
-    else:
-        logger.info(f"2-sided T-test between validation and testing L1 yielded p value of {p=:.3f}>0.05.")
+    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
+    number_features = X.shape[1]
+    _training_loop(
+        number_repeats,
+        number_features,
+        target_scaler,
+        number_epochs,
+        hidden_size,
+        learning_rate,
+        fnn_layers,
+        output_directory,
+        datamodule,
+        patience,
+        random_seed,
+        problem_type,
+    )
