@@ -1,0 +1,12 @@
+# .fastpropconfig_template - template file for fastprop configuration
+#
+# copy this file in the same directory you found it and name it .fastpropconfig_template
+# i.e. drop the _template part and fastprop will read it when running
+#
+# number of models to run concurrently during hyperparameter optimization
+# by default set to 4, which will allow each model to use 20% of the GPU
+# try and set this as high as possible without causing a crash
+models_per_gpu: 4
+# total number of optimization trials - generally the default of 64 is
+# enough to improve the model; more will be time-consuming
+num_hopt_trials: 64

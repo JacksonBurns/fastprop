@@ -1,4 +1,4 @@
-fastprop train alkanes/alkanes.yml > alkanes/run_log.txt 2>&1
-fastprop train freesolv/freesolv.yml > freesolv/run_log.txt 2>&1
-fastprop train hopv15/hopv15.yml > hopv15/run_log.txt 2>&1
-fastprop train qm8/qm8.yml > qm8/run_log.txt 2>&1
+for benchmark in alkanes cepdb_subset esol freesolv hopv15 pgp qm8 qm9 sider
+do
+    fastprop train $benchmark/$benchmark.yml >> $benchmark/run_log.txt 2>&1
+done

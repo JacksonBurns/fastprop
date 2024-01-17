@@ -1,4 +1,5 @@
 # benchmarking files
+run_log.txt
 benchmark_data.csv
 benchmark_smiles.smi
 precomputed.csv
@@ -19,6 +20,9 @@ cached_*.csv
 
 # database from hyperparameter optimization
 *.db
+
+# machine-specific configuration file
+.fastpropconfig
 
 # temporary files for debugging
 temp
