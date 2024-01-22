@@ -26,10 +26,10 @@ def load_from_csv(fpath, smiles_column, target_columns):
         )
     if len(error_mols_idxs) > 0:
         # specify axis=0 to avoid changing dimensions (flattening)
+        logger.warn(f"Removed {len(error_mols_idxs)} entries from the dataset ({100*len(error_mols_idxs)/len(rdkit_mols):.2f}% of the data).")
         targets = np.delete(targets, error_mols_idxs, axis=0)
         rdkit_mols = np.delete(rdkit_mols, error_mols_idxs, axis=0)
         smiles = np.delete(smiles, error_mols_idxs)
-        logger.warn(f"Removed {len(error_mols_idxs)} entries from the dataset ({100*len(error_mols_idxs)/len(rdkit_mols):.2f}% of the data).")
     return targets, rdkit_mols, smiles
 
 

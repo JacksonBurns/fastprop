@@ -76,10 +76,43 @@ def hopt_fastprop(
     logger.info("Preprocessing data...")
     X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
     target_scaler.feature_names_in_ = target_columns
+    num_classes = y.shape[1] if problem_type == "multiclass" else None
     logger.info("...done.")
     number_features = X.shape[1]
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
+    return _hopt_loop(
+        datamodule,
+        problem_type,
+        number_epochs,
+        learning_rate,
+        number_features,
+        target_scaler,
+        number_repeats,
+        output_directory,
+        random_seed,
+        patience,
+        num_classes,
+        n_parallel,
+        n_trials,
+    )
+
+
+def _hopt_loop(
+    datamodule,
+    problem_type,
+    number_epochs,
+    learning_rate,
+    number_features,
+    target_scaler,
+    number_repeats,
+    output_directory,
+    random_seed,
+    patience,
+    num_classes,
+    n_parallel,
+    n_trials,
+):
     datamodule_ref = ray.put(datamodule)
 
     _, metric = fastprop.get_metrics(problem_type)
@@ -101,9 +134,9 @@ def hopt_fastprop(
                 target_scaler,
                 number_repeats,
                 output_directory,
-                random_seed,
                 patience,
                 problem_type,
+                num_classes,
             ),
             # run n_parallel models at the same time (leave 20% for system)
             # don't specify cpus, and just let pl figure it out
@@ -120,7 +153,7 @@ def hopt_fastprop(
     )
 
     results = tuner.fit()
-    print(results.get_best_result().config)
+    return results.get_best_result().config
 
 
 def objective(
@@ -132,9 +165,9 @@ def objective(
     target_scaler,
     number_repeats,
     output_directory,
-    random_seed,
     patience,
     problem_type,
+    num_classes,
 ) -> float:
     datamodule = ray.get(datamodule_ref)
     results_df, _ = _training_loop(
@@ -148,8 +181,8 @@ def objective(
         output_directory,
         datamodule,
         patience,
-        random_seed,
         problem_type,
+        num_classes,
         hopt=True,
     )
     _, metric = fastprop.get_metrics(problem_type)

@@ -45,7 +45,7 @@ from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
-from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc
+from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy
 
 # choose the descriptor set absed on the args
 from fastprop.utils import (
@@ -106,7 +106,9 @@ class ArbitraryDataModule(LightningDataModule):
         self.sampler = sampler
         self.smiles = smiles
         self.train_idxs, self.val_idxs, self.test_idxs = None, None, None
+        # either using folds or random sampling, both of these will be incremented by the training loop
         self.random_seed = random_seed
+        self.fold_number = 0
 
     def prepare_data(self):
         # cast input numpy data to a tensor
@@ -116,6 +118,8 @@ class ArbitraryDataModule(LightningDataModule):
             self.targets = torch.tensor(self.targets, dtype=torch.float32)
 
     def setup(self, stage=None):
+        # see `benchmarks/quantumscents/quantumscents.py` for an example of overriding this method
+        # to implement multiple folds
         if self.sampler != "scaffold":
             (
                 *_,
@@ -173,7 +177,7 @@ class ArbitraryDataModule(LightningDataModule):
 
 
 class fastprop(pl.LightningModule):
-    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers, problem_type, shh=False):
+    def __init__(self, number_features, target_scaler, num_epochs, hidden_size, learning_rate, fnn_layers, problem_type, shh=False, num_classes=None):
         super().__init__()
         self.problem_type = problem_type
         self.training_metric, self.overfitting_metric = fastprop.get_metrics(problem_type)
@@ -199,7 +203,9 @@ class fastprop(pl.LightningModule):
             layers[f"lin{i+2}"] = torch.nn.Linear(hidden_size, hidden_size)
             layers[f"act{i+2}"] = torch.nn.ReLU()
         self.fnn = torch.nn.Sequential(layers)
-        self.readout = torch.nn.Linear(hidden_size, self.target_scaler.n_features_in_)
+        self.num_classes = num_classes
+        readout_size = num_classes if num_classes else self.target_scaler.n_features_in_
+        self.readout = torch.nn.Linear(hidden_size, readout_size)
 
     def get_metrics(problem_type):
         match problem_type:
@@ -208,9 +214,11 @@ class fastprop(pl.LightningModule):
             case "multilabel":
                 return "bce", "auroc"
             case "multiclass":
-                return "ce", "f1"
+                return "kldiv", "auroc"
             case "binary":
-                return "bce", "auroc"
+                return "bce", "accuracy"
+            case _:
+                raise RuntimeError(f"Unsupported problem type '{problem_type}'!")
 
     def forward(self, x):
         x = self.fnn.forward(x)
@@ -228,13 +236,13 @@ class fastprop(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
-        self.log(f"validation_{self.training_metric}_loss", loss, on_step=False, on_epoch=True)
+        self.log(f"validation_{self.training_metric}_loss", loss)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "validation")
         return loss
 
     def test_step(self, batch, batch_idx):
         loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
-        self.log(f"test_{self.training_metric}_loss", loss, on_step=False, on_epoch=True)
+        self.log(f"test_{self.training_metric}_loss", loss)
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "test")
         return loss
 
@@ -246,7 +254,8 @@ class fastprop(pl.LightningModule):
         elif self.problem_type in {"multilabel", "binary"}:
             loss = torch.nn.functional.binary_cross_entropy_with_logits(y_hat, y, reduction=reduction)
         else:
-            loss = torch.nn.functional.cross_entropy(y_hat, y, reduction=reduction)
+            y_pred = torch.softmax(y_hat, dim=1)
+            loss = torch.nn.functional.kl_div(y_pred.log(), y, reduction="batchmean")
         if not return_all:
             return loss
         else:
@@ -294,18 +303,22 @@ class fastprop(pl.LightningModule):
                 auroc_score = multilabel_auroc(pred_prob, real.int(), n_tasks, "macro")
                 self.log(f"{name}_auroc", auroc_score)
             elif self.problem_type == "multiclass":
-                pred_prob = torch.nn.functional.softmax(pred)
-                f1 = f1_score(pred_prob, real, "multiclass")
-                self.log(f"{name}_f1", f1)
+                pred_prob = torch.nn.functional.softmax(pred, dim=1)
+                real_class = torch.tensor(self.target_scaler.inverse_transform(real.int()), dtype=torch.long).squeeze()
+                score = multiclass_auroc(pred, real_class, self.num_classes)
+                self.log(f"{name}_auroc", score)
             elif self.problem_type == "binary":
                 pred_prob = torch.sigmoid(pred)
+                acc = binary_accuracy(pred_prob, real)
+                self.log(f"{name}_accuracy", acc)
                 f1 = f1_score(pred_prob, real, "binary")
                 self.log(f"{name}_f1", f1)
                 auroc_score = auroc(pred_prob, real.int(), task="binary")
                 self.log(f"{name}_auroc", auroc_score)
 
     def on_train_epoch_end(self) -> None:
-        if (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
+        # print progress every NUM_VALIDATION_CHECKS epochs, unless the total number of epochs is tiny (<NUM_VALIDATION_CHECKS)
+        if self.trainer.max_epochs > NUM_VALIDATION_CHECKS and (self.trainer.current_epoch + 1) % (self.num_epochs // NUM_VALIDATION_CHECKS) == 0:
             if not self.shh:
                 logger.info(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
 
@@ -343,7 +356,7 @@ def train_and_test(
             EarlyStopping(
                 monitor=f"validation_{model.training_metric}_loss",
                 mode="min",
-                verbose=True,
+                verbose=False,
                 patience=patience,
             )
         ],
@@ -410,15 +423,25 @@ def _training_loop(
     output_directory,
     datamodule,
     patience,
-    random_seed,
     problem_type,
+    num_classes,
     hopt=False,
 ):
     # hopt disables some printing from fastprop, as well as the training loop, disables logging, and disables writing checkpoints
     all_test_results, all_validation_results = [], []
     for i in range(number_repeats):
         # reinitialize model
-        model = fastprop(number_features, target_scaler, number_epochs, hidden_size, learning_rate, fnn_layers, problem_type, shh=hopt)
+        model = fastprop(
+            number_features,
+            target_scaler,
+            number_epochs,
+            hidden_size,
+            learning_rate,
+            fnn_layers,
+            problem_type,
+            shh=hopt,
+            num_classes=num_classes,
+        )
         logger.info(f"Training model {i+1} of {number_repeats}")
         test_results, validation_results = train_and_test(
             output_directory,
@@ -434,8 +457,8 @@ def _training_loop(
         all_validation_results.append(validation_results[0])
         # resample for repeat trials
         if i + 1 < number_repeats:
-            random_seed += 1
-            datamodule.random_seed = random_seed
+            datamodule.random_seed += 1
+            datamodule.fold_number += 1
             datamodule.setup()
             # ensure that the model is re-initialized on the next iteration
             del model
@@ -445,9 +468,13 @@ def _training_loop(
     test_results_df = pd.DataFrame.from_records(all_test_results)
     logger.info("Displaying testing results:\n%s", test_results_df.describe().transpose().to_string())
     if number_repeats > 1:
+        # regression results are reported per-task, so we might need to average a differently-named
+        # column
+        n_tasks = len(model.target_scaler.feature_names_in_)
+        addendum = "_avg" if (problem_type == "regression" and n_tasks > 1) else ""
         ttest_result = ttest_ind(
-            test_results_df[f"test_{model.overfitting_metric}"].to_numpy(),
-            validation_results_df[f"validation_{model.overfitting_metric}"].to_numpy(),
+            test_results_df[f"test_{model.overfitting_metric}" + addendum].to_numpy(),
+            validation_results_df[f"validation_{model.overfitting_metric}" + addendum].to_numpy(),
         )
         if (p := ttest_result.pvalue) < 0.05:
             logger.warn(
@@ -497,7 +524,9 @@ def train_fastprop(
     logger.info("Preprocessing data...")
     X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
     target_scaler.feature_names_in_ = target_columns
+    num_classes = y.shape[1] if problem_type == "multiclass" else None
     logger.info("...done.")
+
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     number_features = X.shape[1]
     _training_loop(
@@ -511,6 +540,6 @@ def train_fastprop(
         output_directory,
         datamodule,
         patience,
-        random_seed,
         problem_type,
+        num_classes,
     )

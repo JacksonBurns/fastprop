@@ -8,6 +8,9 @@
 #
 # Additional Comments:
 # Goal is ~1 kcal/mol RMSE.
+#
+# Chemprop split randomly, because they also did in this paper:
+# https://pubs.rsc.org/en/content/articlepdf/2018/sc/c7sc02664a
 
 output_directory: freesolv
 problem_type: regression

@@ -1,0 +1,41 @@
+# The QuantumScents Dataset, as described in:
+# https://doi.org/10.1021/acs.jcim.3c01338
+#
+# Download the data from Zenodo:
+# https://zenodo.org/doi/10.5281/zenodo.8239853
+# and decompress it.
+# QuantumScents includes some nice data loading utilities  which
+# are shown in parse.py - to prepare the dataset for fastprop run:
+# python parse.py 
+#
+# Additional Comments:
+# Best results in the source paper are a ROC-AUC of around 89.
+#
+# This file just demonstrates how to use fastprop using the config file -
+# as explained in the cited paper, we need to use a different splitting method
+# for this data. See quantumscents.py !
+#
+# Full Disclosure:
+# I (Jackson Burns) am lead author on the QuantumScents paper.
+
+output_directory: quantumscents
+random_seed: 60221023
+problem_type: multilabel
+input_file: quantumscents/benchmark_data.csv
+smiles_column: smiles
+target_columns: alcoholic aldehydic alliaceous almond animal anisic apple apricot aromatic balsamic banana beefy berry black_currant brandy bread brothy burnt buttery cabbage camphoreous caramellic catty chamomile cheesy cherry chicken chocolate cinnamon citrus cocoa coconut coffee cognac coumarinic creamy cucumber dairy dry earthy ethereal fatty fermented fishy floral fresh fruity garlic gasoline grape grapefruit grassy green hay hazelnut herbal honey horseradish jasmine ketonic leafy leathery lemon malty meaty medicinal melon metallic milky mint mushroom musk musty nutty odorless oily onion orange orris peach pear phenolic pine pineapple plum popcorn potato pungent radish ripe roasted rose rum savory sharp smoky solvent sour spicy strawberry sulfurous sweet tea tobacco tomato tropical vanilla vegetable violet warm waxy winey woody
+
+# featurization
+descriptors: all
+
+# training
+number_repeats: 2
+number_epochs: 200
+batch_size: 4096
+patience: 10
+
+# dataset splitting
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

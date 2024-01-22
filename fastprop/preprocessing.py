@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
 
 from .defaults import init_logger
 
@@ -20,6 +20,10 @@ def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=True, co
     y = targets
     if problem_type == "regression":
         target_scaler = StandardScaler()
+        y = target_scaler.fit_transform(targets)
+    elif problem_type == "multiclass":
+        logger.info("One-hot encoding target values.")
+        target_scaler = OneHotEncoder(sparse_output=False)
         y = target_scaler.fit_transform(targets)
 
     # make it optional to either drop columns with any missing or do this

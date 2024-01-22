@@ -14,8 +14,9 @@
 # optimize: True
 # best for random
 sampler: random
-fnn_layers: 6
-hidden_size: 2800
+random_seed: 42
+# fnn_layers: 6
+# hidden_size: 2800
 # best for spxy
 # sampler: spxy
 # fnn_layers: 4
@@ -38,5 +39,4 @@ number_epochs: 100
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1
-random_seed: 42
 patience: 10

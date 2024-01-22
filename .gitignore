@@ -10,6 +10,20 @@ benchmarks/cepdb_subset/download.zip
 benchmarks/cepdb_subset/HOPV_15_revised_2_processed_homo_5fold.csv
 benchmarks/cepdb_subset/cepdb_subset.smi
 benchmarks/pgp/jm101421d_si_001.xls
+benchmarks/hiv/HIV.csv
+benchmarks/quantumscents/dataset
+benchmarks/quantumscents/models
+benchmarks/quantumscents/LICENSE
+benchmarks/quantumscents/quantumscents.zip
+benchmarks/quantumscents/setup.py
+benchmarks/quantumscents/README.md
+
+# todo's
+benchmarks/tox21
+benchmarks/ace
+benchmarks/chiral
+paper
+.github/workflows/paper.yml
 
 # run logs
 csv_logs

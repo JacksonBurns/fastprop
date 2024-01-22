@@ -1,0 +1,53 @@
+# The HIV Inhibitors Dataset (HIV), as described in:
+# https://wiki.nci.nih.gov/display/NCIDTPdata/AIDS+Antiviral+Screen+Data
+#
+# Download the excel file from deepchem:
+# https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/HIV.csv
+# run:
+# python parse.py > benchmark_data.csv
+#
+# You can either run fastprop using this directly or (recommended)
+# precompute the descriptors by running:
+# python parse.py smiles > benchmark_smiles.smi
+# python -m mordred -o precomputed.csv -t smi benchmark_smiles.smi
+#
+# Additional Comments:
+# unimol achieved 81% auroc:
+# https://doi.org/10.26434/chemrxiv-2022-jjm0j-v4
+# also has a paper-with-code page for scaffold sampling
+# https://paperswithcode.com/sota/molecular-property-prediction-on-hiv-dataset
+# and random sampling:
+# https://paperswithcode.com/sota/drug-discovery-on-hiv-dataset
+#
+# The original HIV dataset had three labels, and can be trained like this:
+# problem_type: multiclass
+# target_columns: ternary_activity
+# the modern version usually instead treats it as binary, like this:
+problem_type: binary
+target_columns: binary_activity
+
+# generic args
+output_directory: hiv
+random_seed: 765309408
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+# fnn_layers: 2
+# hidden_size: 2400
+
+# featurization
+input_file: hiv/benchmark_data.csv
+smiles_column: smiles
+precomputed: hiv/precomputed.csv
+
+# training
+number_repeats: 2
+number_epochs: 200
+batch_size: 40768
+patience: 10
+
+# dataset splitting
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: scaffold

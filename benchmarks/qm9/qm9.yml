@@ -1,0 +1,55 @@
+# The Quantum Machine 9 (QM9) Dataset, as described in:
+# https://doi.org/10.1038/sdata.2014.22
+#
+# Download the dataset from DeepChem:
+# https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/qm9.csv
+# and rename it to benchmark_data.csv
+#
+# The original dataset is on figshare:
+# https://doi.org/10.6084/m9.figshare.c.978904.v5
+# or use this direct link to data file:
+# https://springernature.figshare.com/ndownloader/files/3195389
+# but in an unhelpful format (100,000 xyz files).
+#
+# From here, you can either run fastprop as-is, or you can run the calculation
+# of descriptors separately (suggested for this size dataset).
+# To do so, use a tool like csvtool (or just excel) and copy the smiles
+# column into a file on its own (no header). Then run:
+# python -m mordred -o precomputed.csv -t smi benchmark_smiles.smi
+#
+# Additional Comments:
+# Most well established molecular property prediction benchmark.
+# This paper:
+# https://doi.org/10.26434/chemrxiv-2022-jjm0j-v4
+# has a great summary of performance for various architectures and will
+# be the target. On HOMO, LUMO, and Gap they achieved an MAE
+# of 0.00467 using scaffold 80/10/10
+#
+# papers-with-code also has a nice summary page:
+# https://paperswithcode.com/sota/molecular-property-prediction-on-qm9
+
+# architecture
+# optimize: True
+hidden_size: 1900
+fnn_layers: 3
+# generic
+output_directory: qm9
+input_file: qm9/benchmark_data.csv
+target_columns: homo lumo gap
+smiles_column: smiles
+number_repeats: 2
+
+# featurization
+precomputed: qm9/precomputed.csv
+
+# training
+random_seed: 27
+batch_size: 163072
+number_epochs: 600
+patience: 30
+
+# data splitting
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: scaffold
