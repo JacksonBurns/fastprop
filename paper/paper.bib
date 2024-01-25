@@ -1,17 +1,124 @@
 @article{quantumscents,
-author = {Burns, Jackson W. and Rogers, David M.},
-title = {QuantumScents: Quantum-Mechanical Properties for 3.5k Olfactory Molecules},
-journal = {Journal of Chemical Information and Modeling},
-volume = {63},
-number = {23},
-pages = {7330-7337},
-year = {2023},
-doi = {10.1021/acs.jcim.3c01338},
-    note ={PMID: 37988325},
-URL = { 
-        https://doi.org/10.1021/acs.jcim.3c01338
-},
-eprint = { 
-        https://doi.org/10.1021/acs.jcim.3c01338
+        author = {Burns, Jackson W. and Rogers, David M.},
+        title = {QuantumScents: Quantum-Mechanical Properties for 3.5k Olfactory Molecules},
+        journal = {Journal of Chemical Information and Modeling},
+        volume = {63},
+        number = {23},
+        pages = {7330-7337},
+        year = {2023},
+        doi = {10.1021/acs.jcim.3c01338},
+        note ={PMID: 37988325},
+        URL = { 
+                https://doi.org/10.1021/acs.jcim.3c01338
+        },
+        eprint = { 
+                https://doi.org/10.1021/acs.jcim.3c01338
+        }
 }
+
+@inproceedings{unimol,
+        title={Uni-Mol: A Universal 3D Molecular Representation Learning Framework},
+        author={Gengmo Zhou and Zhifeng Gao and Qiankun Ding and Hang Zheng and Hongteng Xu and Zhewei Wei and Linfeng Zhang and Guolin Ke},
+        booktitle={The Eleventh International Conference on Learning Representations },
+        year={2023},
+        url={https://openreview.net/forum?id=6K2RM6wVqKu}
+}
+
+@inproceedings{cmpnn,
+        author = {Song, Ying and Zheng, Shuangjia and Niu, Zhangming and Fu, Zhang-Hua and Lu, Yutong and Yang, Yuedong},
+        title = {Communicative representation learning on attributed molecular graphs},
+        year = {2021},
+        isbn = {9780999241165},
+        abstract = {Constructing proper representations of molecules lies at the core of numerous tasks such as molecular property prediction and drug design. Graph neural networks, especially message passing neural network (MPNN) and its variants, have recently made remarkable achievements in molecular graph modeling. Albeit powerful, the one-sided focuses on atom (node) or bond (edge) information of existing MPNN methods lead to the insufficient representations of the attributed molecular graphs. Herein, we propose a Communicative Message Passing Neural Network (CMPNN) to improve the molecular embedding by strengthening the message interactions between nodes and edges through a communicative kernel. In addition, the message generation process is enriched by introducing a new message booster module. Extensive experiments demonstrated that the proposed model obtained superior performances against state-of-the-art baselines on six chemical property datasets. Further visualization also showed better representation capacity of our model.},
+        booktitle = {Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence},
+        articleno = {392},
+        numpages = {8},
+        location = {Yokohama, Yokohama, Japan},
+        series = {IJCAI'20}
+}
+
+@article{chemprop_theory,
+        author = {Yang, Kevin and Swanson, Kyle and Jin, Wengong and Coley, Connor and Eiden, Philipp and Gao, Hua and Guzman-Perez, Angel and Hopper, Timothy and Kelley, Brian and Mathea, Miriam and Palmer, Andrew and Settels, Volker and Jaakkola, Tommi and Jensen, Klavs and Barzilay, Regina},
+        title = {Analyzing Learned Molecular Representations for Property Prediction},
+        journal = {Journal of Chemical Information and Modeling},
+        volume = {59},
+        number = {8},
+        pages = {3370-3388},
+        year = {2019},
+        doi = {10.1021/acs.jcim.9b00237},
+        note ={PMID: 31361484},
+        URL = { 
+                https://doi.org/10.1021/acs.jcim.9b00237
+        },
+        eprint = { 
+                https://doi.org/10.1021/acs.jcim.9b00237
+        }
+}
+
+@article{chemprop_software,
+        author = {Heid, Esther and Greenman, Kevin P. and Chung, Yunsie and Li, Shih-Cheng and Graff, David E. and Vermeire, Florence H. and Wu, Haoyang and Green, William H. and McGill, Charles J.},
+        title = {Chemprop: A Machine Learning Package for Chemical Property Prediction},
+        journal = {Journal of Chemical Information and Modeling},
+        volume = {64},
+        number = {1},
+        pages = {9-17},
+        year = {2024},
+        doi = {10.1021/acs.jcim.3c01250},
+        note ={PMID: 38147829},
+        URL = { 
+                https://doi.org/10.1021/acs.jcim.3c01250
+        },
+        eprint = { 
+                https://doi.org/10.1021/acs.jcim.3c01250
+        }
+}
+
+@article{fuels_qsar_method,
+        title = {A systematic method for selecting molecular descriptors as features when training models for predicting physiochemical properties},
+        journal = {Fuel},
+        volume = {321},
+        pages = {123836},
+        year = {2022},
+        issn = {0016-2361},
+        doi = {https://doi.org/10.1016/j.fuel.2022.123836},
+        url = {https://www.sciencedirect.com/science/article/pii/S0016236122006950},
+        author = {Ana E. Comesana and Tyler T. Huntington and Corinne D. Scown and Kyle E. Niemeyer and Vi H. Rapp},
+        keywords = {Chemical descriptors, Machine learning, Biofuel, TPOT},
+        abstract = {Machine learning has proven to be a powerful tool for accelerating biofuel development. Although numerous models are available to predict a range of properties using chemical descriptors, there is a trade-off between interpretability and performance. Neural networks provide predictive models with high accuracy at the expense of some interpretability, while simpler models such as linear regression often lack in accuracy. In addition to model architecture, feature selection is also critical for developing interpretable and accurate predictive models. We present a method for systematically selecting molecular descriptor features and developing interpretable machine learning models without sacrificing accuracy. Our method simplifies the process of selecting features by reducing feature multicollinearity and enables discoveries of new relationships between global properties and molecular descriptors. To demonstrate our approach, we developed models for predicting melting point, boiling point, flash point, yield sooting index, and net heat of combustion with the help of the Tree-based Pipeline Optimization Tool (TPOT). For training, we used publicly available experimental data for up to 8351 molecules. Our models accurately predict various molecular properties for organic molecules (mean absolute percent error (MAPE) ranges from 3.3% to 10.5%) and provide a set of features that are well-correlated to the property. This method enables researchers to explore sets of features that significantly contribute to the prediction of the property, offering new scientific insights. To help accelerate early stage biofuel research and development, we also integrated the data and models into a open-source, interactive web tool.}
+}
+
+@article{fubrain,
+        author = {Esaki, Tsuyoshi and Ohashi, Rikiya and Watanabe, Reiko and Natsume-Kitatani, Yayoi and Kawashima, Hitoshi and Nagao, Chioko and Mizuguchi, Kenji},
+        title = {Computational Model To Predict the Fraction of Unbound Drug in the Brain},
+        journal = {Journal of Chemical Information and Modeling},
+        volume = {59},
+        number = {7},
+        pages = {3251-3261},
+        year = {2019},
+        doi = {10.1021/acs.jcim.9b00180},
+        note ={PMID: 31260629},
+        URL = { 
+                https://doi.org/10.1021/acs.jcim.9b00180
+        },
+        eprint = { 
+                https://doi.org/10.1021/acs.jcim.9b00180
+        }
+}
+
+@article{ma_deep_qsar,
+        author = {Ma, Junshui and Sheridan, Robert P. and Liaw, Andy and Dahl, George E. and Svetnik, Vladimir},
+        title = {Deep Neural Nets as a Method for Quantitative Structure–Activity Relationships},
+        journal = {Journal of Chemical Information and Modeling},
+        volume = {55},
+        number = {2},
+        pages = {263-274},
+        year = {2015},
+        doi = {10.1021/ci500747n},
+        note ={PMID: 25635324},
+        URL = { 
+                https://doi.org/10.1021/ci500747n
+        },
+        eprint = { 
+                https://doi.org/10.1021/ci500747n
+        }
 }
