@@ -23,12 +23,16 @@ benchmarks/flash/ef200795j_si_001.xls
 benchmarks/flash/chemprop_data.csv
 benchmarks/h2s/1-s2.0-S0167732217350985-mmc1.xlsx
 
+# paper build files
+!paper/paper.md
+!paper/paper.bib
+paper
+
 # todo's
 benchmarks/tox21
 benchmarks/ace
 benchmarks/chiral
 benchmarks/cepdb_subset
-paper/paper.pdf
 
 # run logs
 csv_logs

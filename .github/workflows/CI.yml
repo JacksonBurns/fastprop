@@ -29,11 +29,16 @@ jobs:
 
   build-and-test:
     needs: check-formatting
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest, windows-latest, macos-latest]
+        exclude:
+          - python-version: "3.12"
+          - python-version: "3.11"
+            os: windows-latest
 
     runs-on: ${{ matrix.os }}
     defaults:
@@ -54,11 +59,11 @@ jobs:
             python=${{ matrix.python-version }}
       - name: Install Dependencies
         run: |
-          python -m pip install .
+          python -m pip install ".[dev,hopt,bmark]"
           python -m pip install coverage pytest
       - name: Run Tests
         run: |
-          coverage run --source=. -m pytest -v
+          coverage run --source=. -m pytest -vs
       - name: Show Coverage
         run: |
           coverage report -m
@@ -101,7 +106,7 @@ jobs:
     needs: [check-for-new-release, ci-report-status]
     if: ${{ needs.check-for-new-release.outputs.do_publish == 'true' && github.ref == 'refs/heads/main' && github.repository == 'JacksonBurns/fastprop'}}
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:

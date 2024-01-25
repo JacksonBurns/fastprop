@@ -11,7 +11,8 @@
 </p>
 
 # Installing `fastprop`
-`fastprop` supports OSX, Windows, and Linux on Python versions 3.8 and newer.
+`fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.11 (except 3.11 on Windows).
+As dependencies gradually begin to support Python 3.12 it will be added.
 Installing from `pip` or `conda` is the best way to get `fastprop`, but if you need to check out a specific GitHub branch or you want to contribute to `fastprop` a source installation is recommended.
 
 ## `pip` [recommended]
