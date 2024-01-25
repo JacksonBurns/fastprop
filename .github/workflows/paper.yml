@@ -21,12 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Install Pandoc and Build
+      - uses: r-lib/actions/setup-pandoc@v2
+      - name: Build
         run: |
-          sudo apt-get update
-          sudo apt-get install pandoc pandoc-citeproc texlive-latex-extra
           cd paper
-          pandoc --citeproc --bibliography=paper.bib --variable geometry:margin=1in --variable papersize=a4paper -s paper.md -o paper.pdf
+          pandoc --citeproc --bibliography=paper.bib -s paper.md -o paper.pdf
       - uses: actions/upload-artifact@v1
         with:
           name: paper

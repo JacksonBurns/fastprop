@@ -101,7 +101,7 @@ jobs:
     needs: [check-for-new-release, ci-report-status]
     if: ${{ needs.check-for-new-release.outputs.do_publish == 'true' && github.ref == 'refs/heads/main' && github.repository == 'JacksonBurns/fastprop'}}
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v3
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
       with:
