@@ -1,0 +1,29 @@
+# .github/workflows/paper.yml
+
+name: Convert Paper to PDF
+# This workflow is triggered manually or on pushes to the repository.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    # Paths can be used to only trigger actions when you have edited certain files, such as a file within the /docs directory
+    paths:
+      - 'paper/**'
+      - 'paper/images/**'
+
+jobs:
+  converttopdf:
+    name: Build PDF
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Pandoc and Build
+        run: |
+          sudo apt-get install pandoc pandoc-citeproc texlive-latex-extra
+          cd paper
+          pandoc --citeproc --bibliography=paper.bib --variable geometry:margin=1in --variable papersize=a4paper -s paper.md -o paper.pdf
+      - uses: actions/upload-artifact@v1
+        with:
+          name: paper
+          path: paper/paper.pdf

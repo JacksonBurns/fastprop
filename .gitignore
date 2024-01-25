@@ -28,8 +28,7 @@ benchmarks/tox21
 benchmarks/ace
 benchmarks/chiral
 benchmarks/cepdb_subset
-paper
-.github/workflows/paper.yml
+paper/paper.pdf
 
 # run logs
 csv_logs
