@@ -3,12 +3,11 @@ run_log.txt
 benchmark_data.csv
 benchmark_smiles.smi
 precomputed.csv
+chemprop_features.csv
+chemprop_*_logs
 benchmarks/alkanes/Alkane
 benchmarks/alkanes/alkane_dataset.tar.gz
 benchmarks/freesolv/database.txt
-benchmarks/cepdb_subset/download.zip
-benchmarks/cepdb_subset/HOPV_15_revised_2_processed_homo_5fold.csv
-benchmarks/cepdb_subset/cepdb_subset.smi
 benchmarks/pgp/jm101421d_si_001.xls
 benchmarks/hiv/HIV.csv
 benchmarks/quantumscents/dataset
@@ -17,11 +16,18 @@ benchmarks/quantumscents/LICENSE
 benchmarks/quantumscents/quantumscents.zip
 benchmarks/quantumscents/setup.py
 benchmarks/quantumscents/README.md
+benchmarks/hopv15_subset/CEPDB_25000.csv
+benchmarks/hopv15_subset/OSCML_Data.zip
+benchmarks/fubrain/ci9b00180_si_002.xlsx
+benchmarks/flash/ef200795j_si_001.xls
+benchmarks/flash/chemprop_data.csv
+benchmarks/h2s/1-s2.0-S0167732217350985-mmc1.xlsx
 
 # todo's
 benchmarks/tox21
 benchmarks/ace
 benchmarks/chiral
+benchmarks/cepdb_subset
 paper
 .github/workflows/paper.yml
 

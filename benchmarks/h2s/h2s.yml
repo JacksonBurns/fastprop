@@ -1,0 +1,49 @@
+# The Hydrogen Sulfide Solubility (h2s) Dataset, as described in:
+# https://doi.org/10.1016/j.molliq.2018.06.113
+#
+# Download the data from the journal:
+# https://ars.els-cdn.com/content/image/1-s2.0-S0167732217350985-mmc1.xlsx
+#
+# Then, run 'python parse.py'
+#
+# Additional Comments:
+# Reference study achieved an AARD (which is just MAPE) of about 5-6%
+# using QM-derived descriptors and an Extreme Learning Machine (ELM).
+# RMSE was 0.0198-0.0316 (they had two models).
+# Unfortunately the reference study did not hold out any data, but we
+# will here. They did an 80/20 train/test split, so the reported
+# results are probably overly optimistic.
+
+
+# generic args
+output_directory: h2s
+random_seed: 62
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 2
+hidden_size: 3000
+
+# featurization
+input_file: h2s/benchmark_data.csv
+target_columns: solubility
+# since we have precomputed our descriptors, the smiles_column isn't actually used
+smiles_column: cation_smiles
+precomputed: h2s/precomputed.csv
+
+# preprocessing
+rescaling: True
+zero_variance_drop: True
+colinear_drop: False
+
+# training
+number_repeats: 2
+number_epochs: 500
+learning_rate: 0.0001
+batch_size: 1024
+patience: 10_000
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

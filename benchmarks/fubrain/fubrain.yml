@@ -1,0 +1,49 @@
+# The Fraction Unbound in the Brain (Fubrain) Dataset, as described in:
+# https://doi.org/10.1021/acs.jcim.9b00180
+#
+# Download the data from ACS:
+# https://pubs.acs.org/doi/suppl/10.1021/acs.jcim.9b00180/suppl_file/ci9b00180_si_002.xlsx
+# Then uncompress it, renaming HOPV_15_revised_2_processed_homo_5fold.csv
+# to benchmark_data.csv
+#
+# Additional Comments:
+# Original study achieved an accuracy of 0.44 RMSE. DeepDelta 0.830 ± 0.023 RMSE so we will compare
+# to the original study instead.
+#
+# Original used the two external sets as test, 46 + 25 = 73 total in test set.
+# The overall data is 253 points, leaving 180 for training/validation.
+# With 10-fold cross validation this equates to 162 (90% of 180) in training
+# with the balance in validation, which overall is a 0.64/0.07/0.29 train/val/test split.
+
+
+# generic args
+output_directory: fubrain
+random_seed: 12345
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+# fnn_layers: 3
+# hidden_size: 900
+
+# featurization
+input_file: fubrain/benchmark_data.csv
+target_columns: fraction
+smiles_column: SMILES
+descriptors: all
+enable_cache: True
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 4
+number_epochs: 20
+batch_size: 256
+patience: 2
+train_size: 0.64
+val_size: 0.07
+test_size: 0.29
+sampler: random

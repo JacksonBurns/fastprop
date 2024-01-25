@@ -118,7 +118,29 @@ If you wish to extend the CLI, check the inline documentation there.
 # Benchmarks
 The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`) as well as the actual results, which are also summarized here.
 
-WIP!
+NBA = next best alternative, see either `benchmarks` or the `paper` for additional details for each benchmark.
+
+## Regression
+
+| Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
+|:---:|:---:|:---:|:---:|:---:|
+| QM9 | ~130 | L1 | 0.0047  [ref: unimol] | 0.0063 | 0.0081 [ref: unimol] |  |
+| QM8 | ~22 | L1 | 0.016 [ref: unimol]  | 0.016 | 0.019 [ref: unimol] |  |
+| ESOL | ~1.1 | L2 | 0.55 [ref: cmpnn] | 0.57 | 0.67 [ref: cmpnn] |  |
+| FreeSolv | ~0.6 | L2 | 1.29 [ref: DeepDelta] | 1.06 | 1.37 [ref: DeepDelta] |  |
+| HOPV15 Subset | ~0.3 | L1 | 1.32 [ref: the kraft paper] | 1.44 | WIP |  |
+| Fubrain | ~0.3 | L2 | 0.44 [ref: fubrain paper] | 0.19 | 0.22 [ref: this repo] | 5m11s/54s |
+
+## Classification
+
+| Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
+|:---:|:---:|:---:|:---:|:---:|
+| HIV (binary) | ~41 | AUROC | 0.81 [ref: unimol] | 0.81 | 0.77 [ref: unimol] |  |
+| HIV (ternary) | ~41 | AUROC |  | 0.83 | WIP |  |
+| QuantumScents | ~3.5 | AUROC | 0.88 [ref: quantumscents] | 0.91 | 0.85 [ref: quantumscents] |  |
+| SIDER | ~1.4 | AUROC | 0.67 [ref: cmpnn] | 0.66 | 0.57 [ref: cmpnn] |  |
+| Pgp | ~1.3 | AUROC | WIP | 0.93 | WIP |  |
+| ARA | ~0.8 | Acc./AUROC | 0.91/0.95 [ref: ara paper] | 0.88/0.95 | 0.82/0.90 [ref: this repo] | 16m54s/2m7s |
 
 # Developing `fastprop`
 `fastprop` is built around PyTorch lightning, which defines a rigid API for implementing models, link to their documentation.

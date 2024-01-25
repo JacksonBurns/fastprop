@@ -153,7 +153,9 @@ def _hopt_loop(
     )
 
     results = tuner.fit()
-    return results.get_best_result().config
+    best = results.get_best_result().config
+    logger.info(f"Best hyperparameters identified: {', '.join([key + ': ' + str(val) for key, val in best.items()])}")
+    return best
 
 
 def objective(

@@ -1,0 +1,46 @@
+# The Flash Point (flash) Dataset, as described in:
+# https://pubs.acs.org/doi/10.1021/ef200795j
+#
+# Download the data from acs:
+# https://pubs.acs.org/doi/suppl/10.1021/ef200795j/suppl_file/ef200795j_si_001.xls
+# pull out the SMILES and Flash Point columns (rename to smiles and flash) using your favorite spreadsheet
+# editor, and save it as a csv file called 'benchmark_data.csv'
+#
+# Additional Comments:
+# The dataset also includes the cetane number, but it is missing in most
+# of the entries so it is ignored here.
+#
+# The reference study achieves an RMSE of 13.2, MAE of 8.4, and MAPE of 2.5
+# with a 70/20/10 split (random).
+
+
+# generic args
+output_directory: flash
+random_seed: 195091191
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 2
+hidden_size: 2800
+
+# featurization
+input_file: flash/benchmark_data.csv
+target_columns: flash
+smiles_column: smiles
+descriptors: all
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 4
+number_epochs: 100
+batch_size: 1024
+patience: 15
+train_size: 0.7
+val_size: 0.2
+test_size: 0.1
+sampler: random

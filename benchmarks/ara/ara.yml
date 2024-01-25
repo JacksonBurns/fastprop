@@ -1,0 +1,43 @@
+# The Androgen Receptor Antagonist (ARA) Dataset, as described in:
+# https://doi.org/10.1186/s13321-023-00721-z
+#
+# To reproduce the complete data workflow, do this:
+# Download the csv file from the author's GitHub:
+# https://raw.githubusercontent.com/plenoi/DeepAR/main/dataset/AR.csv
+# find-and-replace activate/inactive with 1/0,
+# and rename it to benchmark_data.csv.
+#
+# Additional Comments:
+# Reference paper at the top achieved an accuracy of 0.911 and an AUC
+# of 0.945 via a complex modeling strategy.
+#
+# for comparison to Chemprop, see chemprop_ara.sh
+# the data for Chemprop was prepared using csvtool (you could also use excel)
+
+# generic args
+output_directory: ara
+random_seed: 1989
+problem_type: binary
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+# fnn_layers: 2
+# hidden_size: 256
+
+# featurization
+input_file: ara/benchmark_data.csv
+target_columns: Activity
+smiles_column: Smiles
+descriptors: all
+
+# training
+number_epochs: 40
+batch_size: 1024
+patience: 3
+
+# dataset splitting
+number_repeats: 4
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

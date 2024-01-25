@@ -46,6 +46,7 @@ from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy
+from torchmetrics.functional.regression import r2_score
 
 # choose the descriptor set absed on the args
 from fastprop.utils import (
@@ -268,15 +269,28 @@ class fastprop(pl.LightningModule):
         if self.problem_type == "regression":
             rescaled_pred = self.target_scaler.inverse_transform(pred)
             rescaled_truth = self.target_scaler.inverse_transform(real)
+            # report r2
+            if n_tasks == 1:
+                r2 = r2_score(torch.tensor(rescaled_pred), torch.tensor(rescaled_truth))
+                self.log(f"{name}_r2", r2)
+
             # mean absolute percentage error
+            per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values")
+            if n_tasks == 1:
+                self.log(f"{name}_mape", np.mean(per_task_mape))
+            else:
+                self.log(f"{name}_mean_mape", np.mean(per_task_mape))
+                for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
+                    self.log(f"{name}_mape_output_{target}", value)
+            # same, but weighted
             # sklearn asks for an array of weights, but it actually just passes through to np.average which
             # accepts weights of the same shape as the inputs
-            per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
+            per_task_wmape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
             if n_tasks == 1:
-                self.log(f"{name}_wmape", np.mean(per_task_mape))
+                self.log(f"{name}_wmape", np.mean(per_task_wmape))
             else:
-                self.log(f"{name}_mean_wmape", np.mean(per_task_mape))
-                for target, value in zip(self.target_scaler.feature_names_in_, per_task_mape):
+                self.log(f"{name}_mean_wmape", np.mean(per_task_wmape))
+                for target, value in zip(self.target_scaler.feature_names_in_, per_task_wmape):
                     self.log(f"{name}_wmape_output_{target}", value)
 
             # mean absolute error
@@ -284,6 +298,7 @@ class fastprop(pl.LightningModule):
             per_task_loss = all_loss.numpy().mean(axis=0)
             if n_tasks == 1:
                 self.log(f"{name}_l1", np.mean(per_task_loss))
+                self.log(f"{name}_mdae", np.median(all_loss))
             else:
                 self.log(f"{name}_l1_avg", np.mean(per_task_loss))
                 for target, value in zip(self.target_scaler.feature_names_in_, per_task_loss):

@@ -1,0 +1,42 @@
+# The Polycyclic Aromatic Hydrocarbon (PAH) Dataset, as described in:
+# https://doi.org/10.1080/1062936X.2023.2239149
+#
+# The reference study did not include a digitized version of their dataset,
+# so I have included one here that I curated manually. All that was done
+# was to look up the SMILES strings for the PAHs, using either OPSIN (via
+# py22opsin), PubChem, or ChemSpider.
+#
+# Additional Comments:
+# 
+
+
+# generic args
+output_directory: pah
+random_seed: 55
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 4
+hidden_size: 1200
+
+# featurization
+input_file: pah/arockiaraj_pah_data.csv
+target_columns: log_p
+smiles_column: smiles
+descriptors: all
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 4
+number_epochs: 100
+batch_size: 64
+patience: 15
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

@@ -1,0 +1,51 @@
+# The Harvard Organic PhotoVoltaics (HOPV15) Dataset, as first described in:
+# https://doi.org/10.1038/sdata.2016.86
+# and then down-sampled in:
+# https://doi.org/10.1021/acsomega.1c02156
+#
+# Download the data from the cambridge data repo:
+# https://www.repository.cam.ac.uk/bitstreams/3ada0f48-1a1a-4a73-a9ed-6f5843355bad/download
+# Then uncompress it, renaming HOPV_15_revised_2_processed_homo_5fold.csv
+# to benchmark_data.csv
+#
+# Additional Comments:
+# This paper (which used the entire dataset):
+# https://pubs.acs.org/doi/epdf/10.1021/acs.iecr.0c03880
+# achieved 1.25 L1 with their architecture, 2.00 with one using mordred,
+# by first pre-training on CEPDB.
+#
+# This paper got about 1.4 on a subset matching some special criteria:
+# https://api.repository.cam.ac.uk/server/api/core/bitstreams/92606fbe-978e-4366-9bdb-892028e79294/content
+# which is the subset we are using.
+
+
+# generic args
+output_directory: hopv15_subset
+random_seed: 12345
+problem_type: regression
+# run hyperparameter optimization
+# optimize: True
+# optimized results
+fnn_layers: 3
+hidden_size: 900
+
+# featurization
+input_file: hopv15_subset/benchmark_data.csv
+target_columns: pce
+smiles_column: smiles
+descriptors: all
+enable_cache: True
+
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+number_repeats: 5
+number_epochs: 10
+patience: 2
+train_size: 0.6
+val_size: 0.2
+test_size: 0.2
+sampler: random
