@@ -21,8 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Setup PDF Engine
+        run: |
+          sudo apt-get update
+          sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
       - uses: r-lib/actions/setup-pandoc@v2
-      - uses: zauguin/install-texlive@v3
       - name: Build
         run: |
           cd paper
