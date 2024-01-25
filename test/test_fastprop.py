@@ -27,7 +27,7 @@ class Test_fastprop(unittest.TestCase):
             fastprop_args["output_directory"] = self.temp_dirname
             fastprop_args["input_file"] = os.path.join(self.benchmark_dir, "pah", "arockiaraj_pah_data.csv")
             res, _ = train_fastprop(**fastprop_args)
-            assert res.describe()["mean"]["test_r2_avg"] > 0.95
+            assert res.describe().loc["mean", "test_r2"] > 0.95
 
     @classmethod
     def tearDownClass(cls):
