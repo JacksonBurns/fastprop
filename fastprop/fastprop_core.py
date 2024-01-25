@@ -211,11 +211,11 @@ class fastprop(pl.LightningModule):
     def get_metrics(problem_type):
         if problem_type == "regression":
             return "mse", "rmse"
-        elif  problem_type == "multilabel":
+        elif problem_type == "multilabel":
             return "bce", "auroc"
-        elif  problem_type == "multiclass":
+        elif problem_type == "multiclass":
             return "kldiv", "auroc"
-        elif  problem_type == "binary":
+        elif problem_type == "binary":
             return "bce", "accuracy"
         else:
             raise RuntimeError(f"Unsupported problem type '{problem_type}'!")
