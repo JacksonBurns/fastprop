@@ -58,7 +58,7 @@ jobs:
           python -m pip install coverage pytest
       - name: Run Tests
         run: |
-          coverage run --source=. -m pytest -v
+          coverage run --source=. -m pytest -vs
       - name: Show Coverage
         run: |
           coverage report -m

@@ -544,7 +544,7 @@ def train_fastprop(
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     number_features = X.shape[1]
-    _training_loop(
+    return _training_loop(
         number_repeats,
         number_features,
         target_scaler,

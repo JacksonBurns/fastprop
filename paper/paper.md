@@ -6,13 +6,6 @@ geometry: margin=1in
 note: Compile this paper with "pandoc --citeproc --bibliography=paper.bib -s paper.md -o paper.pdf"
 ---
 
-
-<!-- 
-I wish I could see this paper: https://www.tandfonline.com/doi/abs/10.1080/1062936X.2023.2239149
-They make a derivative of some of the descriptors in mordred for a qsar study, could be a great point of comparison.
- -->
-
-
 # Outline
 
 Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).

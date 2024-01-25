@@ -4,6 +4,9 @@ name: Convert Paper to PDF
 # This workflow is triggered manually or on pushes to the repository.
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -20,6 +23,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install Pandoc and Build
         run: |
+          sudo apt-get update
           sudo apt-get install pandoc pandoc-citeproc texlive-latex-extra
           cd paper
           pandoc --citeproc --bibliography=paper.bib --variable geometry:margin=1in --variable papersize=a4paper -s paper.md -o paper.pdf
