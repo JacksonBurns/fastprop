@@ -21,6 +21,7 @@ dependencies = ["pyyaml", "lightning", "mordredcommunity", "astartes[molecules]"
 dev = ["black", "isort", "pytest"]
 hopt = ["ray[train]", "optuna"]
 bmark = ["py2opsin"]
+all = [dev, hopt, bmark]
 
 [project.readme]
 file = "README.md"

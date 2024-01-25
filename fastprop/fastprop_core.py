@@ -209,17 +209,16 @@ class fastprop(pl.LightningModule):
         self.readout = torch.nn.Linear(hidden_size, readout_size)
 
     def get_metrics(problem_type):
-        match problem_type:
-            case "regression":
-                return "mse", "rmse"
-            case "multilabel":
-                return "bce", "auroc"
-            case "multiclass":
-                return "kldiv", "auroc"
-            case "binary":
-                return "bce", "accuracy"
-            case _:
-                raise RuntimeError(f"Unsupported problem type '{problem_type}'!")
+        if problem_type == "regression":
+            return "mse", "rmse"
+        elif  problem_type == "multilabel":
+            return "bce", "auroc"
+        elif  problem_type == "multiclass":
+            return "kldiv", "auroc"
+        elif  problem_type == "binary":
+            return "bce", "accuracy"
+        else:
+            raise RuntimeError(f"Unsupported problem type '{problem_type}'!")
 
     def forward(self, x):
         x = self.fnn.forward(x)
