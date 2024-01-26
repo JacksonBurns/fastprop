@@ -1,6 +1,6 @@
 ---
 title: " One Model to Rule Them All: Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`"
-date: "Januray 2024"
+date: "January 2024"
 author: "Jackson Burns, MIT CCSE"
 geometry: margin=1in
 note: Compile this paper with "pandoc --citeproc --bibliography=paper.bib -s paper.md -o paper.pdf"
@@ -28,8 +28,16 @@ note: Compile this paper with "pandoc --citeproc --bibliography=paper.bib -s pap
 ## Shift to Learned Representations
  - open with talking about how DL on molecular descriptors failed
 
+
+Mention UniMol, Chemprop, CMPNN, and this(https://arxiv.org/pdf/2312.16855.pdf) and this (https://arxiv.org/pdf/2401.03369.pdf).
+And also MHNN: https://github.com/schwallergroup/mhnn
+
 ## Previous Deep-QSPR and the `fastprop` Approach
- - as we moved toward learned representations, we lost interpretablity, sacrificed speed, and **lost the ability to correlate small datasets with a target**
+ - as we moved toward learned representations, we lost interpretablity, sacrificed speed, and **lost the ability to correlate small datasets with a target** **because we are starting from near-zero everytime**
+
+This review talks about wanting to fit on low data and the advanced ML techinques needed to do it when using these more involved models.
+https://chemrxiv.org/engage/chemrxiv/article-details/65b154a166c13817292fad82 they want low data DL, here it is! None of this involved stuff
+**by starting from such an informed initialization (100 years of descriptor design) we circumvent the need for advanced training techniques and progressively slower, complex, and uninterpretable models**
 
 `fastprop` is simply the `mordred` molecular descriptor calculator connected to an FNN with research software engineering best practices applied at the same level as the best alternative in the literature Chemprop [@chemprop_software].
 See the `fastprop` logo in Figure \ref{logo}.
@@ -83,12 +91,13 @@ The solution is to either _nest_ cross validation (i.e. repeat cross validation 
  - At that point it is asserted that a reasonable approximation of the accuracy as a function of the holdout set has been achieved.
 
 ### Choice of Evaluation Metric
-The evluation metric used in each of these metrics (L1, L2, AUROC, etc.) are presented here because that is what the reference papers (and the literature at large) use.
+The evluation metric used in each of these metrics (L1, L2, AUROC, etc.) are presented here because that is what the reference papers (and the literature at large) use, especially the metrics established in moleculenet.
 It is my opinion that this choice of metric 'buries the lede' by requiring the reader to understand the relative magnitude of the target variables (for regression) or understand the nuances of classification quantification (ARUOC).
 On the HOPV15 subset, for example, an MAE of 1.1 seems exceptional in the literature, except that the WMAPE is nearly N%.
 That's right - when weighted by their magnitude, the best performing model is still usually off by about N%.
 For classification, especially multilabel, AUROC scores near one are impressive despite accuracy being low.
 
+The best metrics to use are those that are actually interpretable: accuracy for classification, and mape (or wmape) for regression.
 Pertinent Metrics are included on a per-study basis to emphasize when a 'good looking' scale-dependent metric is also intuitively good.
 
 ### Timing Results
@@ -629,6 +638,13 @@ real    7m18.991s
 user    6m40.047s
 sys     0m43.251s
 
+## OCELOTv1
+The MHNN paper specializes in this, and they have comparisons to a lot of other models.
+https://doi.org/10.1039/D2SC04676H
+download from their website (after making a free account): https://oscar.as.uky.edu/datasets/
+
+The MHNN paper reports accuracy on 3 repetitions!!! YAY!!! They used 70/10/20 train/val/test
+
 
 ## YSI
 chemprop:
@@ -850,18 +866,24 @@ Maximum	0.9438888888888888
 Sum	3.592470129096031
 Count	4
 
-# Limitations
+# Limitations and Future Work
+## Combination with Learned Representations
+This seems like an intuitive next step, but we shouldn't do it.
+_Not_ just slamming all the mordred features into Chemprop, which would definitely give good results but would take out the `fast` part (FNN would also have to be increased in size).
+`fastprop` is good enough on its own.
 
 ## Stereochemical Descriptors
 In its current state, the underlying `mordredcommunity` featurization engine does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
 While some of the 3D descriptors it implements will inherently reflects these differences somewhat, more explicit descriptors like the Stero Signature Molecular Descriptor (see https://doi.org/10.1021/ci300584r) may prove helpful in the future.
 
+This is really just one named domain - any domain where there are bespoke descriptors could be added to `mordredcommunity`.
+
 ## Inference Time
 Slow on inference, especially on virtual libaries which may number in the millions of compounds.
 Thankfully descriptor calclulation is embarassingly parallel, and in practice the number of descriptors needed to be calculated can be reduced once those which are relevant to the neural network are selected based on their weights.
 
-# Next Steps
-_Not_ just slamming all the mordred features into Chemprop, which would definitely give good results but would take out the `fast` part (FNN would also have to be increased in size).
+## Incoporating 3D Descriptors
+ - already supported by `mordredcommunity` just need to find a good way to ingest 3D data or embed 3D conformers (cite some lit. like quantumscents for the latter point)
 
 # Using `fastprop`
 `fastprop` is open source under the terms of a permissive license (MIT) and hosted on GitHub.
