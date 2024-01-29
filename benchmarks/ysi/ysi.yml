@@ -6,7 +6,7 @@
 # and rename it to benchmark_data.csv
 #
 # Additional Comments:
-# Reference study did leave-one-out CV (boo!) and divided the dataset into
+# Reference study did leave-one-out CV and divided the dataset into
 # high-YSI and low-YSI subsets, with a Median Absolute Deviation of 2.35 and 28.6
 #
 # Note that the YSI in this study has been re-scaled by the authors (read the

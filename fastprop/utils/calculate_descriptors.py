@@ -20,7 +20,7 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
         raise RuntimeError(f"Strategy {strategy} not supported, only 'fast' and 'low-memory'.")
 
     mordred_descs = None
-    if strategy == "fast" and len(rdkit_mols) < 10_000:
+    if strategy == "fast":
         # higher level parallelism - uses more memory
         # TODO: subdivide batches further to avoid large communication bottleneck after all descriptors are calculated
         batches = np.array_split(rdkit_mols, n_procs)

@@ -22,6 +22,9 @@ benchmarks/fubrain/ci9b00180_si_002.xlsx
 benchmarks/flash/ef200795j_si_001.xls
 benchmarks/flash/chemprop_data.csv
 benchmarks/h2s/1-s2.0-S0167732217350985-mmc1.xlsx
+benchmarks/ocelot/174705_1_supplements.zip
+benchmarks/ocelot/ocelot_chromophore_v1.zip
+benchmarks/ocelot/ocelot_chromophore_v1/readme.txt
 
 # paper build files
 !paper/paper.md
@@ -33,6 +36,7 @@ benchmarks/tox21
 benchmarks/ace
 benchmarks/chiral
 benchmarks/cepdb_subset
+benchmarks/h2s
 
 # run logs
 csv_logs

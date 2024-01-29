@@ -14,6 +14,8 @@
 # second probably only to QM9. Numerous papers report results.
 # MoleculeNet has a good summary of the best results, as seen here:
 # https://arxiv.org/pdf/1703.00564.pdf
+#
+# on a random split:
 # fastprop approaches leading performance at an MAE of ~0.013, where
 # chemprop gets 0.011 (Table S3, in:
 # https://pubs.acs.org/doi/suppl/10.1021/acs.jcim.9b00237/suppl_file/ci9b00237_si_001.pdf)
@@ -29,7 +31,7 @@ output_directory: qm8
 input_file: qm8/benchmark_data.csv
 target_columns: E1-CC2 E2-CC2 f1-CC2 f2-CC2 E1-PBE0 E2-PBE0 f1-PBE0 f2-PBE0 E1-CAM E2-CAM f1-CAM f2-CAM
 smiles_column: smiles
-number_repeats: 2
+number_repeats: 3
 sampler: scaffold
 
 # featurization

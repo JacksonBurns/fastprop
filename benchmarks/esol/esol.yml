@@ -41,7 +41,7 @@ zero_variance_drop: False
 colinear_drop: False
 
 # training
-number_repeats: 2
+number_repeats: 3
 number_epochs: 200
 patience: 10
 train_size: 0.8
