@@ -26,6 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
       - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          # the default.latex file used in the paper directory is only suitable for this version
+          pandoc-version: '3.1.6'
       - name: Build
         run: |
           cd paper

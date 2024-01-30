@@ -12,7 +12,6 @@
 # of 0.945 via a complex modeling strategy.
 #
 # for comparison to Chemprop, see chemprop_ara.sh
-# the data for Chemprop was prepared using csvtool (you could also use excel)
 
 # generic args
 output_directory: ara

@@ -45,7 +45,7 @@ from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from torch.utils.data import Dataset as TorchDataset
-from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy
+from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy, multiclass_accuracy
 from torchmetrics.functional.regression import r2_score
 
 # choose the descriptor set absed on the args
@@ -119,6 +119,7 @@ class ArbitraryDataModule(LightningDataModule):
             self.targets = torch.tensor(self.targets, dtype=torch.float32)
 
     def setup(self, stage=None):
+        logger.info(f"Sampling dataset with {self.sampler} sampler.")
         # see `benchmarks/quantumscents/quantumscents.py` for an example of overriding this method
         # to implement multiple folds
         if self.sampler != "scaffold":
@@ -321,6 +322,8 @@ class fastprop(pl.LightningModule):
                 real_class = torch.tensor(self.target_scaler.inverse_transform(real.int()), dtype=torch.long).squeeze()
                 score = multiclass_auroc(pred, real_class, self.num_classes)
                 self.log(f"{name}_auroc", score)
+                score = multiclass_accuracy(pred, real_class, self.num_classes)
+                self.log(f"{name}_accuracy", score)
             elif self.problem_type == "binary":
                 pred_prob = torch.sigmoid(pred)
                 acc = binary_accuracy(pred_prob, real)
@@ -473,7 +476,9 @@ def _training_loop(
         if i + 1 < number_repeats:
             datamodule.random_seed += 1
             datamodule.fold_number += 1
-            datamodule.setup()
+            # ensure that the dataset is re-sampled with this new random seed
+            # by removing the previously set indices
+            datamodule.train_idxs = datamodule.test_idxs = datamodule.val_idxs = None
             # ensure that the model is re-initialized on the next iteration
             del model
 

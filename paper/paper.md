@@ -1,17 +1,44 @@
 ---
-title: " One Model to Rule Them All: Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`"
-date: "January 2024"
-author: "Jackson Burns, MIT CCSE"
+title: "One Model to Rule Them All: Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`"
+author: 
+  - name: Jackson W. Burns \orcidlink{0000-0002-0657-9426}
+    affil-id: 1
+  - name: William H. Green \orcidlink{0000-0003-2603-9694}
+    affil-id: 1,*
+affiliations:
+  - id: 1
+    name: Massachusetts Institute of Technology, Cambridge, MA
+  - id: "*"
+    name: "Corresponding: whgreen@mit.edu"
+date: January 31, 2024
 geometry: margin=1in
-note: Compile this paper with "pandoc --citeproc --bibliography=paper.bib -s paper.md -o paper.pdf"
+bibliography: paper.bib
+citation-style: journal-of-cheminformatics
+note: |
+ This paper can be compiled to other formats (pdf, word, etc.) using pandoc.
+
+ To show the affiliations and ORCIDs, a special setup has been used. To recreate it locally,
+ checkout this StackOverflow answer: https://stackoverflow.com/a/76630771 (this will require you
+ to download a new default.latex and edit it as described in the post) _or_
+ make sure that the version of pandoc you have installed is _exactly_ 3.1.6
+
+ You can then compile this paper with:
+   pandoc --citeproc -s paper.md -o paper.pdf --template default.latex
+ from the paper directory in fastprop.
 ---
 
-# Current Project Status:
- - `fastprop` has all of the training features that it needs; the prediction side still needs be written
- - all but one of the benchmarks I want to run with `fastprop` have been run, though running some more comparison studies with chemprop might be worthwhile (the other benchmark is a 'shrinking training size' benchmark for QM8)
- - the paper is in bullets with a good overall structure, results needed for writing are included in this document inline
+<!--
+Current Project Status:
+ - fastprop has all of the training features that it needs; the prediction side still needs be written, as well as the intepretability
+ - need to run a 'diminishing training size' experiment on a large dataset where Chemprop and fastprop have similar peak (80% training) performance - probably QM8
+ - the paper is in bullets with a good overall structure; need to fill out the sentence transitions
+-->
 
-# Outline
+<!-- Graphical Abstract Goes Here -->
+
+
+
+# Abstract
  - **Problem**: Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
  - **Historical Approach**: Historically this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI (see the sub-field of transition metal-mediated cross-coupling reactions, where molecular descriptors specific to ligands such as cone angle, sterimol parameters, and buried volume are used).
  - This continued for years and culminated in packages like (sort these chronologically) DRAGON, Mordred, PaDEL-descriptor, E-DRAGON, etc. Other packages like molfeat and AIMSim aggregate these other descriptor generation tools
@@ -20,7 +47,18 @@ note: Compile this paper with "pandoc --citeproc --bibliography=paper.bib -s pap
  - The logical combination of bulk molecular-level descriptors with deep learning as a regression technique (as stated in the chemprop paper) has not seen the same success as learned representations, like UniMol [@unimol], Communicative Message Passing Neural Networks [@cmpnn], and especially Chemprop [@chemprop_theory; @chemprop_software].
  - Despite past failures, this paper establishes that by combining a cogent set of molecular descriptors with deep learning, generalizable deep-QSPR is realized.
 
-# QSPR and `fastprop`
+## Scientific Contribution
+<!-- use a maximum of 3 sentences to specifically highlight the scientific contributions that advance the field and what differentiates your contribution from prior work on this topic. -->
+ - `fastprop` is significantly faster than existing learned representations and more generalizable than typical QSPR approaches.
+ - Use of molecular descriptors also enables effective modeling on datasets of miniscule size for typical generalizable approaches.
+
+# Keywords
+ - QSPR
+ - Learned Representations
+ - Deep Learning
+ - Molecular Descriptors
+
+# Introduction
  - in the same pattern as the outline in subsections, establish the idea of QSPR, the historical focus on linear methods with bespoke descriptors, the failure of these methods to work generally (I claim because the descriptor sets were not sufficient and the regression techniques could not learn the complex functions, i.e. non-linearity), the move into learned representations to counter this, and then the idea that modern software finally has good enough sets of descriptors to facilitate the previous approach and by going back and not 'starting' from zero we can go faster more interpretably and on smaller datasets
 
 ## Historical Approaches
@@ -42,7 +80,7 @@ https://chemrxiv.org/engage/chemrxiv/article-details/65b154a166c13817292fad82 th
 See the `fastprop` logo in Figure \ref{logo}.
 This contradicts the leading review on deep-QSPR [@ma_deep_qsar] which says that these are ineffective, and that fingerprints should be used instead.
 
-![fastprop logo.\label{logo}](../fastprop_logo.png){ width=2in }
+![`fastprop` logo.\label{logo}](../fastprop_logo.png){ width=2in }
 
 This is a simple idea, here are some that have tried it before and failed:
  - In the Fuel property prediction world, this review by Comesana and coauthors [@fuels_qsar_method] establishes that (1) methods using huge numbers of descriptors are not the most successful (2) instead introduces a method to downsample
@@ -56,7 +94,50 @@ But of course, `fastprop` stands on the shoulder of giants, see this next sectio
  - part of the failure of this method may be the lack of descriptor generation software with a sufficient collection of descriptors, which `mordred` isThis continued for - expand on the line form the intro: DRAGON, Mordred, PaDEL-descriptor, E-DRAGON, etc. Other packages like molfeat and AIMSim aggregate these other descriptor generation tools
  - from here forward `mordred` will be referred to as such, though the actual implementation of `fastprop` uses a community-maintained fork of the original (which is no longer maintained) aptly named `mordredcommunity` (cite the Zenodo)
 
-# Benchmarks
+# Implementation
+ - PyTorch lightning FNN with a nice wrapper around `mordredcommunity` for the automatic generation and caching of molecular descriptors.
+ - `fastprop` is open source under the terms of a permissive license (MIT) and hosted on GitHub. Detailed instructions for various installation methods can be found at the repository, as well as an issue tracker, etc.
+
+## Example Usage
+As an example, this is what the input file looks like for running QM9 with `fastprop` (see https://github.com/JacksonBurns/fastprop/blob/main/benchmarks/qm9/qm9.yml for more):
+```
+# qm9.yml
+
+# architecture
+# optimize: True
+hidden_size: 1900
+fnn_layers: 3
+
+# generic
+output_directory: qm9
+input_file: qm9/benchmark_data.csv
+target_columns: homo lumo gap
+smiles_column: smiles
+number_repeats: 2
+
+# featurization
+precomputed: qm9/precomputed.csv
+
+# training
+random_seed: 27
+batch_size: 163072
+number_epochs: 600
+patience: 30
+
+# data splitting
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: scaffold
+```
+
+## Choice of Descriptors
+ - multiple descriptor generation tools were tried, none of which yielded the same performance as `mordred`
+ - users can walk up with their own descriptors, and as shown in the reference code for the QuantumScents benchmark do so either programmatically or through the command line interface
+ - on-th-fly descriptor generation can be pared down to only those which are often highly weighted, which would speed up inference and training time
+
+
+# Results & Discussion
 Start by establishing difference between small and large datasets:
  - There are a number of established molecular property prediction benchmarks in the cheminfomatics community, especially those standardized by MoleculeNet.
  - Some of these, namely QM8/9, are perceived as the 'gold standard' for property prediction.
@@ -76,7 +157,7 @@ All of these `fastprop` benchmarks are reproducible, and complete instructions f
 
 **TODO: re-run all of these (with timing, too) for a first complete draft**
 
-## Methods
+## Benchmark Methods
 All of these use 80% of the dataset for training (selected randomly, unless otherwise stated), 10% for validation, and holdout the remaining 10% for testing (unless otherwise stated).
 Sampling is performed using the `astartes` package [@astartes], which implements a variety of sampling algorithms and is highly reproducible.
 
@@ -114,6 +195,7 @@ also TODO: break out and specifically mention the time to generate features for 
 ## Regression Datasets
 See Table \ref{regression_results_table} for a summary of all the regression dataset results.
 Especially noteworthy is the performance on the ESOL and PAH datasets, which dramatically surpass literature best and have only 55 datapoints, respectively.
+Citations for the datasets themselves are included in the sub-sections of this section.
 
 Table: Summary of regression benchmark results. \label{regression_results_table}
 
@@ -150,6 +232,7 @@ a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn]
  - For comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol], a derivative of Chemprop that also encodes 3D information.
  - In this study they trained on only three especially difficult targets (homo, lumo, and gap) using 80/10/10 scaffold-based splitting.
  - `fastprop` gets an L1 average across the three tasks of 0.0062, which beats everything except the CMPNN which is also encoding 3D information.
+ - TODO: re-run the CMPNN and Chemprop with a holdout set to get a more honest result.
 <!-- [01/17/2024 02:59:17 PM fastprop.fastprop_core] INFO: Displaying validation results:
                               count      mean       std       min       25%       50%       75%       max
 validation_mse_loss             2.0  0.062624  0.002877  0.060589  0.061606  0.062624  0.063641  0.064658
@@ -493,7 +576,7 @@ unitful_test_rmse_output_f2-CAM      2.0  0.043930  0.001995  0.042519  0.043224
  - ~1.1k points
  - First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular proeprty prediction studies; includes molecular structure for some simple organic molecules are their corresponding experimentally measured free energy of solvation.
  - Reference against the CMPNN paper [@cmpnn], but speficially the amended results shown on their GitHub page: https://github.com/SY575/CMPNN/blob/b647df22ec8fde81785c5a86138ac1efd9ccf9c1/README.md and TODO: run both Chemprop and CMPNN on this dataset again with repeitions (and withold data, unlike in the CMPNN study)
- - `fastprop` achieves RMSE of 0.566 kcal/mol on an 80/10/10 random split, on a different split the CMPNN and Chemprop get 0.547 and 0.665, respectively.
+ - `fastprop` achieves RMSE of 0.566 kcal/mol on an 80/10/10 random split, on a different split (5-fold CV w/o holdout) the CMPNN and Chemprop get 0.547 and 0.665, respectively.
 <!-- [01/16/2024 11:55:48 AM fastprop.fastprop_core] INFO: Displaying validation results:
                           count      mean       std       min       25%       50%       75%       max
 validation_mse_loss         2.0  0.072686  0.000135  0.072591  0.072639  0.072686  0.072734  0.072781
@@ -720,9 +803,13 @@ This will also become clear in the later ARA classification dataset (see [ARA](#
  - Only 55 molecules.
  - Originally compiled by Arockiaraj et al. [@pah], contains water/octanol partition coefficients (logP, among some other properties for some molecules) for polyclicic aromatic hydrocarbons ranging from napthalene up to circumcoronene.
  - Reference study designed a new set of molecular descriptors that show a strong correlation to logP, with correlation coefficients between 96 to 99%.
- - `fastprop`, using a 4-repetition 80/10/10 random split, is able to achieve a correlation coefficient of 0.960 +/- 0.027 in 2m12s (17s descriptor calculation). This is an L1 error of 0.230 and an MAPE of 3.1%.
- - Chemprop using the same scheme achieves only 0.746 +/- 0.085 in 36s. This is an L1 error 1.07 +/1 0.20.
+ - `fastprop`, using a 4-repetition 80/10/10 random split, is able to achieve a correlation coefficient of 0.960+/-0.027 in 2m12s (17s descriptor calculation). This is an L1 error of 0.230 and an MAPE of 3.1%.
+ - Chemprop using the same scheme achieves only 0.746+/-0.085 in 36s. This is an L1 error 1.07+/-0.20.
  - `fastprop` is able to correlate structure directly to property without expert knowledge in only minutes while having only 44 training points.
+<!--
+On only the 21 points that have a retention index, mape: 0.024147   0.008081 
+Similar good story on the boiling point, acentric factor only has 12 points left after removing unvalued entries - difficult to call it anything.
+-->
 
 <!-- fastprop: about 17 seconds calculating descriptors
 
@@ -777,6 +864,7 @@ sys     0m15.281s -->
 ## Classification Datasets
 See Table \ref{classification_results_table} for a summary of all the classification dataset results.
 Especially noteworthy is the performance on QuantumScents dataset, which outperforms the best literature result.
+Citations for the datasets themselves are included in the sub-sections of this section.
 
 Table: Summary of regression benchmark results. \label{classification_results_table}
 
@@ -799,43 +887,52 @@ Table: Summary of regression benchmark results. \label{classification_results_ta
 a [@unimol] b [@quantumscents] c [@cmpnn] d [@ara] * These results were generated for this study.
 
 ### HIV Inhibition
-~41k points
-
-This dataset is unique in that the labels in the original study include three possible classes (a _multiclass_) regression problem whereas the most common reported metric is instead lumping positive and semi-positive labels into a single class to reduce the task to _binary_ classification.
-Both metrics are reported here.
-
-#### Multiclass
-OOB:
-<!-- [01/18/2024 09:50:50 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                       count      mean       std       min       25%       50%       75%       max
-validation_kldiv_loss    2.0  0.154615  0.019345  0.140936  0.147776  0.154615  0.161455  0.168295
-validation_auroc         2.0  0.798816  0.006996  0.793869  0.796342  0.798816  0.801289  0.803762
-[01/18/2024 09:50:50 AM fastprop.fastprop_core] INFO: Displaying testing results:
-                 count      mean       std       min       25%       50%       75%       max
-test_kldiv_loss    2.0  0.136559  0.041120  0.107482  0.122021  0.136559  0.151097  0.165635
-test_auroc         2.0  0.828546  0.010771  0.820930  0.824738  0.828546  0.832354  0.836163
-[01/18/2024 09:50:50 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.082>0.05. -->
+ - ~41k points
+ - Originally compiled by Riesen and Bunke [@hiv], this dataset includes the reported HIV activity for many small molecules; this is an established benchmark in the world of molecular property prediction, and the exact version used is that which was prepared in MoleculeNet [@moleculenet].
+ - This dataset is unique in that the labels in the original study include three possible classes (a _multiclass_) regression problem whereas the most common reported metric is instead lumping positive and semi-positive labels into a single class to reduce the task to _binary_ classification; both are reported here.
+ - To compare to UniMol, use an 80/10/10 scaffold-based split with three repetitions.
 
 #### Binary
-<!-- [01/18/2024 10:54:11 AM fastprop.fastprop_core] INFO: Displaying validation results:
+ - `fastprop` matches the literature best UniMol (AUROC: 80.8+/-0.3 [@unimol]), AUROC: 0.805+/-0.04. This corresponds to an accuracy of 96.8+/-1.0.
+ - Chemprop performs worse than both of these models.
+<!-- [01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    2.0  0.135136  0.016572  0.123418  0.129277  0.135136  0.140995  0.146854
-validation_f1          2.0  0.293810  0.004932  0.290323  0.292066  0.293810  0.295554  0.297297
-validation_auroc       2.0  0.772978  0.010357  0.765655  0.769316  0.772978  0.776640  0.780301
-[01/18/2024 10:54:11 AM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_bce_loss    3.0  0.137778  0.012579  0.123418  0.133239  0.143060  0.144957  0.146854
+validation_accuracy    3.0  0.963035  0.004458  0.959144  0.960603  0.962062  0.964981  0.967899
+validation_f1          3.0  0.289890  0.007632  0.282051  0.286187  0.290323  0.293810  0.297297
+validation_auroc       3.0  0.781569  0.016585  0.765655  0.772978  0.780301  0.789526  0.798751
+[01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: Displaying testing results:
                count      mean       std       min       25%       50%       75%       max
-test_bce_loss    2.0  0.116358  0.026022  0.097957  0.107157  0.116358  0.125558  0.134758
-test_f1          2.0  0.307614  0.160427  0.194175  0.250894  0.307614  0.364333  0.421053
-test_auroc       2.0  0.814166  0.053693  0.776199  0.795183  0.814166  0.833149  0.852133
-[01/18/2024 10:54:11 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.398>0.05. -->
+test_bce_loss    3.0  0.123481  0.022154  0.097957  0.116358  0.134758  0.136243  0.137729
+test_accuracy    3.0  0.968142  0.009633  0.959630  0.962913  0.966196  0.972398  0.978599
+test_f1          3.0  0.307895  0.113440  0.194175  0.251316  0.308458  0.364755  0.421053
+test_auroc       3.0  0.805190  0.041026  0.776199  0.781719  0.787238  0.819685  0.852133
+[01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.452>0.05.-->
 
-Results range from as high as the best reported results and lower.
-Others do not report using folds.
+
+#### Multiclass
+ - Not yet found any reported results in the literature.
+ - TODO: run Chemprop in this fashion.
+ - `fastprop` achieves 0.818+/-0.019 AUROC, actually _increasing_ performance from the 'easier' binary classification task; note though that the accuracy has dropped to 0.424+/-0.071.
+<!-- [01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: Displaying validation results:
+                       count      mean       std       min       25%       50%       75%       max
+validation_kldiv_loss    3.0  0.158862  0.015531  0.140936  0.154146  0.167356  0.167825  0.168295
+validation_auroc         3.0  0.801941  0.007333  0.793869  0.798816  0.803762  0.805977  0.808192
+validation_accuracy      3.0  0.390970  0.030146  0.370830  0.373641  0.376451  0.401039  0.425628
+[01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: Displaying testing results:
+                 count      mean       std       min       25%       50%       75%       max
+test_kldiv_loss    3.0  0.142161  0.030653  0.107482  0.130424  0.153366  0.159501  0.165635
+test_auroc         3.0  0.818408  0.019140  0.798132  0.809531  0.820930  0.828546  0.836163
+test_accuracy      3.0  0.424130  0.071443  0.343844  0.395847  0.447851  0.464273  0.480695
+[01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.236>0.05. -->
 
 ### QuantumScents
-Unique in that this is QSOR.
-~3.5k points.
-[@quantumscents]
+ - ~3.5k points
+ - Compiled by Burns and Rogers [@quantumscents], this dataset contains SMILES and 3D structures for a collection of molecules labeled with their scents; each molecule can have any number of reported scents from a possible 113 different labels.
+ - This benchmark is specifically a Quantitive Structure-Odor Relationship.
+ - In the reference study, Chemprop achieved an AUROC of 0.85 with its default settings and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
+ - `fastprop`, without using these descriptors and only the SMILES (not 3D) information, achieves an AUROC of 0.915+/-0.004.
+ - The GitHub repository contains an example of generating custom descriptors incorporating the 3D information from QuantumScents and passing these to `fastprop`; impact on the performance was negligible.
 <!-- [01/19/2024 07:44:19 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
 validation_bce_loss    3.0  0.075712  0.001303  0.074208  0.075307  0.076405  0.076463  0.076522
@@ -857,51 +954,69 @@ test_auroc       3.0  0.914514  0.004367  0.909671  0.912695  0.915720  0.916935
 [01/19/2024 08:15:04 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.758>0.05. -->
 
 ### SIDER
-TODO: double check scaffold vs random for this in the reference study (unimol).
-Matches CMPNN performance OOB:
-<!-- [01/16/2024 04:17:32 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                    count      mean       std       min       25%       50%       75%       max
-validation_ce_loss    2.0  0.510756  0.001610  0.509618  0.510187  0.510756  0.511325  0.511895
-validation_auroc      2.0  0.651896  0.033294  0.628353  0.640125  0.651896  0.663667  0.675439
-[01/16/2024 04:17:32 PM fastprop.fastprop_core] INFO: Displaying testing results:
-              count      mean       std       min       25%       50%       75%       max
-test_ce_loss    2.0  0.486880  0.005306  0.483128  0.485004  0.486880  0.488756  0.490632
-test_auroc      2.0  0.658325  0.008519  0.652302  0.655314  0.658325  0.661337  0.664349
-[01/16/2024 04:17:32 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.816>0.05. -->
+ - ~1.4k compounds, including small molecules, metals, and salts.
+ - First described by Kuhn et al. in 2015 [@sider], the Side Effect Resource (SIDER) database has become a standard property prediction benchmark; the challenging dataset requires mapping structure to any combination of 27 side effects.
+ - Among the best performers in literature is the CMPNN, with a reported AUROC of 0.666+/-0.0007 (5 repeats of 5-fold CV w/o holdout set); with the same approach, Chemprop got 0.646+/-0.016.
+ - TODO: re-run the CMPNN with a holdout set to get a more honest result.
+ - On an 80/10/10 random split with 5 repetitions, `fastprop` achieves AUROC of 0.655+/-0.016 in 5m9s whereas Chemprop achieves 0.637+/-0.011 in just under an **hour**. (*during one repetetion side effect 3 was ill-defined in the testing data and was excluded from the average performance for that repetition, repetition 3 was thrown out entirely because a similar issue occoured with the validation set during training, and AUROC for that trial was 0.473 which was an outlier compared to the others.)
+<!--
+fastprop:
+4m21s to calculate features
+
+[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                     count      mean       std       min       25%       50%       75%       max
+validation_bce_loss    5.0  0.513962  0.007272  0.507627  0.509618  0.511895  0.514545  0.526124
+validation_auroc       5.0  0.634701  0.024984  0.610214  0.621136  0.628353  0.638365  0.675439
+[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: Displaying testing results:
+               count      mean       std       min       25%       50%       75%       max
+test_bce_loss    5.0  0.490345  0.011056  0.476638  0.483128  0.490632  0.496424  0.504902
+test_auroc       5.0  0.655232  0.016167  0.628616  0.652302  0.661167  0.664349  0.669729
+[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.161>0.05.
+
+real    0m47.894s
+user    0m27.250s
+sys     0m19.838s
+
+Chemprop:
+real    56m46.703s
+user    50m36.152s
+sys     6m25.502s
+
+mean auroc was 0.637+/-0.011
+-->
 
 ### Pgp
-Among the higest performers OOB:
-<!-- 
-[01/17/2024 11:09:47 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    4.0  0.358711  0.114111  0.286426  0.296073  0.309923  0.372561  0.528569
-validation_f1          4.0  0.808379  0.128135  0.622642  0.774410  0.854218  0.888186  0.902439
-validation_auroc       4.0  0.915684  0.025065  0.881954  0.907542  0.919325  0.927467  0.942130
-[01/17/2024 11:09:47 AM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_bce_loss    4.0  0.379170  0.028873  0.342636  0.362729  0.385658  0.402100  0.402729
-test_f1          4.0  0.861819  0.030854  0.816327  0.855806  0.874916  0.880930  0.881119
-test_auroc       4.0  0.914512  0.012382  0.902293  0.904942  0.913952  0.923522  0.927851
-[01/17/2024 11:09:47 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.936>0.05. -->
-
-Slight improvement with hopt:
-
-<!-- [01/17/2024 11:51:38 AM fastprop.fastprop_core] INFO: Displaying validation results:
+ - ~1.2k small molecule drugs
+ - First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Theraputic Data Commons (TDC) [@tdc] model benchmarkign tool; the dataset maps drugs to a binary label indicating if they inhibit P-glycoprotein.
+ - TDC serves this data through a Python package, but due to installation issues the data was retrieved from the original study instead. The reccomended splitting approach is a 70/10/20 scaffold-based split, which is done here.
+ - The reference literature model uses a molecular interaction field, bu has since been surpassed by other models; according to TDC the current leader [@pgp_best] on this benchmark has achieved an AUROC of 0.938+/-0.002 (see [the TDC Pgp leaderboard](https://tdcommons.ai/benchmark/admet_group/03pgp/)).
+ - According to the same leaderboard, Chemprop [@chemprop_theory] achieves 0.886+/-0.016 with the includsion of additional molecular features.
+ - `fastprop` achieves 0.926+/-0.010 AUROC with an accuracy of 86.0+/-0.2%, approaching the performance of the current leader and significantly outperforming Chemprop.
+<!--
+fastprop does this in 44s w/ cached descriptors
+[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
 validation_bce_loss    4.0  0.387118  0.069688  0.310836  0.352300  0.379792  0.414611  0.478053
+validation_accuracy    4.0  0.864754  0.056194  0.795082  0.831967  0.872951  0.905738  0.918033
 validation_f1          4.0  0.851747  0.037130  0.800000  0.837500  0.862500  0.876747  0.881988
 validation_auroc       4.0  0.917608  0.018889  0.904749  0.907524  0.910028  0.920112  0.945628
-[01/17/2024 11:51:38 AM fastprop.fastprop_core] INFO: Displaying testing results:
+[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: Displaying testing results:
                count      mean       std       min       25%       50%       75%       max
 test_bce_loss    4.0  0.387347  0.032653  0.358048  0.359642  0.386927  0.414632  0.417484
+test_accuracy    4.0  0.860204  0.002041  0.857143  0.860204  0.861224  0.861224  0.861224
 test_f1          4.0  0.874467  0.008665  0.862903  0.870271  0.876923  0.881119  0.881119
 test_auroc       4.0  0.926062  0.009703  0.914280  0.921085  0.926352  0.931329  0.937263
-[01/17/2024 11:51:38 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.456>0.05. -->
+[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.877>0.05.-->
 
 ### ARA
-`fastprop`:
-
-<!-- [01/23/2024 09:46:32 AM fastprop.fastprop_core] INFO: Displaying validation results:
+ - ~0.8k small molecules
+ - Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps molecular structure to a binary label indicating if the molecule is an Androgen Receptor Antagonist (ARA); the reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 0.911 and an AUROC of 0.945.
+ - For this study, an 80/10/10 random splitting is repeated four times on the dataset since no analogous split to the reference study can be determined.
+ - Chemprop takes 16m55s to run on this dataset and achieves only 0.824+/-0.020 accuracy and 0.898+/-0.022 AUROC.
+ - `fastprop` takes 2m7s and is competitive with the reference study, achieving a 0.882+/-0.02 accuracy and 0.951+/-0.018 AUROC.
+<!--
+fastprop:
+[01/23/2024 09:46:32 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
 validation_bce_loss    4.0  0.324625  0.078561  0.248426  0.270645  0.312653  0.366633  0.424765
 validation_accuracy    4.0  0.872024  0.017857  0.857143  0.857143  0.869048  0.883929  0.892857
@@ -954,66 +1069,62 @@ Maximum	0.9438888888888888
 Sum	3.592470129096031
 Count	4 -->
 
-# Limitations and Future Work
-## Combination with Learned Representations
+## Limitations and Future Work
+### Combination with Learned Representations
 This seems like an intuitive next step, but we shouldn't do it.
 _Not_ just slamming all the mordred features into Chemprop, which would definitely give good results but would take out the `fast` part (FNN would also have to be increased in size).
 `fastprop` is good enough on its own.
 
-## Stereochemical Descriptors
+### Inference Time
+Slow on inference, especially on virtual libaries which may number in the millions of compounds.
+Thankfully descriptor calclulation is embarassingly parallel, and in practice the number of descriptors needed to be calculated can be reduced once those which are relevant to the neural network are selected based on their weights.
+
+### Additional Descriptors
+The `mordredcommunity` featurization package could of course stand to have more features added that could potentially expand its applicability beyond the datasets listed here and improve the performance on those already attempted.
+
+### Stereochemical Descriptors
 In its current state, the underlying `mordredcommunity` featurization engine does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
 While some of the 3D descriptors it implements will inherently reflects these differences somewhat, more explicit descriptors like the Stero Signature Molecular Descriptor (see https://doi.org/10.1021/ci300584r) may prove helpful in the future.
 
 This is really just one named domain - any domain where there are bespoke descriptors could be added to `mordredcommunity`.
 
-## Inference Time
-Slow on inference, especially on virtual libaries which may number in the millions of compounds.
-Thankfully descriptor calclulation is embarassingly parallel, and in practice the number of descriptors needed to be calculated can be reduced once those which are relevant to the neural network are selected based on their weights.
-
-## Incoporating 3D Descriptors
+### Incoporating 3D Descriptors
  - already supported by `mordredcommunity` just need to find a good way to ingest 3D data or embed 3D conformers (cite some lit. like quantumscents for the latter point)
 
-# Using `fastprop`
-`fastprop` is open source under the terms of a permissive license (MIT) and hosted on GitHub.
-Detailed instructions for various installation methods can be found at the repository, as well as an issue tracker, etc.
+# Availability
+ - Project name: fastprop
+ - Project home page: github.com/jacksonburns/fastprop
+ - Operating system(s): Platform independent
+ - Programming language: Python
+ - Other requirements: pyyaml, lightning, mordredcommunity, astartes
+ - License: MIT
 
-## Example Usage
+# Declarations
 
-As an example, this is what the input file looks like for running QM9 with `fastprop` (see https://github.com/JacksonBurns/fastprop/blob/main/benchmarks/qm9/qm9.yml for more):
-```
-# qm9.yml
+## Availability of data and materials
+`fastprop` is Free and Open Source Software; anyone may view, modify, and execute it according to the terms of the MIT license. See github.com/jacksonburns/fastprop for more information.
 
-# architecture
-# optimize: True
-hidden_size: 1900
-fnn_layers: 3
+All data used in the Benchmarks shown above is publicly avialable under a permissive license. See the benchmarks directory at the `fastprop` GitHub page for instructions on retrieving each dataset and preparing it for use with `fastprop`, where applicable.
 
-# generic
-output_directory: qm9
-input_file: qm9/benchmark_data.csv
-target_columns: homo lumo gap
-smiles_column: smiles
-number_repeats: 2
+## Competing interests
+None.
 
-# featurization
-precomputed: qm9/precomputed.csv
+## Funding
+This material is based upon work supported by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, Department of Energy Computational Science Graduate Fellowship under Award Number DE-SC0023112.
 
-# training
-random_seed: 27
-batch_size: 163072
-number_epochs: 600
-patience: 30
+## Authors' contributions
+Initial ideation of `fastprop` was a joint effort of Burns and Green.
+Implementation, benchmarking, and writing were done by Burns.
 
-# data splitting
-train_size: 0.8
-val_size: 0.1
-test_size: 0.1
-sampler: scaffold
-```
+## Acknowledgements
+The authors acknowledge Haoyang Wu, Hao-Wei Pang, and Xiaorui Dong for their insightful conversations when initially forming the central ideas of `fastprop`.
 
-## Choice of Descriptors
- - multiple descriptor generation tools were tried, none of which yielded the same performance as `mordred`
- - users can walk up with their own descriptors, and as shown in the reference code for the QuantumScents benchmark do so eithe rprogrammatically or through the command line interface
- - on-th-fly descriptor generation can be pared down to only those which are often highly weighted, which would speed up inference and training time
+## Disclaimer
+This report was prepared as an account of work sponsored by an agency of the United States Government.
+Neither the United States Government nor any agency thereof, nor any of their employees, makes any warranty, express or implied, or assumes any legal liability or responsibility for the accuracy, completeness, or usefulness of any information, apparatus, product, or process disclosed, or represents that its use would not infringe privately owned rights.
+Reference herein to any specific commercial product, process, or service by trade name, trademark, manufacturer, or otherwise does not necessarily constitute or imply its
+endorsement, recommendation, or favoring by the United States Government or any agency
+thereof.
+The views and opinions of authors expressed herein do not necessarily state or reflect those of the United States Government or any agency thereof.
 
 # Cited Works

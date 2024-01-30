@@ -124,7 +124,7 @@ See the `benchmarks` or the `paper` for additional details for each benchmark, i
 ## Regression
 
 | Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
-|:---:|:---:|:---:|:---:|:---:|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | QM9 | ~130 | L1 | 0.0047 $^a$ | 0.0063 | 0.0081 $^a$ | ~ |
 | OCELOTv1 | ~25 | GEOMEAN(L1) | 0.128 $^b$ | 0.148 | 0.140 $^b$ | ~ |
 | QM8 | ~22 | L1 | 0.016 $^a$  | 0.016 | 0.019 $^a$ | ~ |
@@ -139,7 +139,7 @@ See the `benchmarks` or the `paper` for additional details for each benchmark, i
 ## Classification
 
 | Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
-|:---:|:---:|:---:|:---:|:---:|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | HIV (binary) | ~41 | AUROC | 0.81 $^a$ | 0.81 | 0.77 $^a$ | ~ |
 | HIV (ternary) | ~41 | AUROC | ~ | 0.83 | WIP | ~ |
 | QuantumScents | ~3.5 | AUROC | 0.88 $^j$ | 0.91 | 0.85 $^j$ | ~ |
