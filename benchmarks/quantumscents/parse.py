@@ -1,4 +1,4 @@
-from dataset.loader import QS_DATA, CID_TO_SMILES
+from dataset.loader import CID_TO_SMILES, QS_DATA
 
 QS_DATA.insert(0, "smiles", list(CID_TO_SMILES[i] for i in QS_DATA.index))
 

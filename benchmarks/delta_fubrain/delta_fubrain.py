@@ -3,7 +3,6 @@ from statistics import mean, stdev
 
 import pandas as pd
 
-
 maes = []
 rmses = []
 for i in range(1, 11):
