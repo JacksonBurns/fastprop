@@ -1,5 +1,7 @@
 # benchmarking files
 run_log.txt
+fastprop_log.txt
+checkpoints
 *benchmark_data.csv
 benchmark_smiles.smi
 precomputed.csv

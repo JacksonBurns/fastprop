@@ -1,8 +1,14 @@
+import os
 from types import MappingProxyType
 import logging
 
-_LOGGING_ARGS = {"format": "[%(asctime)s %(name)s] %(levelname)s: %(message)s", "datefmt": "%m/%d/%Y %I:%M:%S %p"}
-logging.basicConfig(**_LOGGING_ARGS)
+
+def _init_loggers(outpath):
+    logging.basicConfig(
+        format="[%(asctime)s %(name)s] %(levelname)s: %(message)s",
+        datefmt="%m/%d/%Y %I:%M:%S %p",
+        handlers=[logging.FileHandler(os.path.join(outpath, "fastprop_log.txt")), logging.StreamHandler()],
+    )
 
 
 def init_logger(module_name):

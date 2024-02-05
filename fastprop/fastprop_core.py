@@ -23,6 +23,7 @@ from astartes.molecules import train_val_test_split_molecules
 from pytorch_lightning import LightningDataModule
 from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.callbacks import ModelCheckpoint
 from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
@@ -43,7 +44,7 @@ from fastprop.utils import (
     mordred_descriptors_from_strings,
 )
 
-from .defaults import init_logger
+from .defaults import init_logger, _init_loggers
 from .preprocessing import preprocess
 
 descriptors_lookup = dict(
@@ -383,13 +384,30 @@ def train_and_test(
         list[dict{metric: score}]: Output of lightning model.test and model.validate
     """
     if not no_logs:
-        csv_logger = CSVLogger(
-            outdir,
-            "csv_logs",
+        try:
+            version_num = len(os.listdir(os.path.join(outdir, "csv_logs"))) + 1
+        except FileNotFoundError:
+            version_num = 1
+        csv_logger = CSVLogger(outdir, name="csv_logs", version=f"repetition_{version_num}")
+        tensorboard_logger = TensorBoardLogger(outdir, name="tensorboard_logs", version=f"repetition_{version_num}")
+
+    callbacks = [
+        EarlyStopping(
+            monitor=f"validation_{model.training_metric}_loss",
+            mode="min",
+            verbose=False,
+            patience=patience,
         )
-        tensorboard_logger = TensorBoardLogger(
-            outdir,
-            "tensorboard_logs",
+    ]
+    if enable_checkpoints:
+        callbacks.append(
+            ModelCheckpoint(
+                monitor=f"validation_{model.training_metric}_loss",
+                dirpath=os.path.join(outdir, "checkpoints"),
+                filename=f"repetition-{version_num}" + "-{epoch:02d}-{val_loss:.2f}",
+                save_top_k=1,
+                mode="min",
+            )
         )
 
     trainer = pl.Trainer(
@@ -401,14 +419,7 @@ def train_and_test(
         log_every_n_steps=0 if no_logs else 1,
         enable_checkpointing=enable_checkpoints,
         check_val_every_n_epoch=1,
-        callbacks=[
-            EarlyStopping(
-                monitor=f"validation_{model.training_metric}_loss",
-                mode="min",
-                verbose=False,
-                patience=patience,
-            )
-        ],
+        callbacks=callbacks,
     )
 
     t1_start = perf_counter()
@@ -588,10 +599,13 @@ def train_fastprop(
 
     See the fastprop documentation or CLI --help for details on each argument.
     """
-    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
-    torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
+    output_subdirectory = os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
+    os.mkdir(output_subdirectory)
+    _init_loggers(output_subdirectory)
+    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
+    torch.manual_seed(random_seed)
     targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
     descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
 
@@ -605,6 +619,7 @@ def train_fastprop(
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     number_features = X.shape[1]
+
     return _training_loop(
         number_repeats,
         number_features,
@@ -613,7 +628,7 @@ def train_fastprop(
         hidden_size,
         learning_rate,
         fnn_layers,
-        output_directory,
+        output_subdirectory,
         datamodule,
         patience,
         problem_type,
