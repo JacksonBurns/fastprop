@@ -18,11 +18,6 @@
 output_directory: flash
 random_seed: 195091191
 problem_type: regression
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-fnn_layers: 2
-hidden_size: 2800
 
 # featurization
 input_file: flash/benchmark_data.csv

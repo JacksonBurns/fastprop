@@ -23,11 +23,6 @@
 output_directory: hopv15_subset
 random_seed: 12345
 problem_type: regression
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-fnn_layers: 3
-hidden_size: 900
 
 # featurization
 input_file: hopv15_subset/benchmark_data.csv

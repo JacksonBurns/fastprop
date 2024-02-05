@@ -14,11 +14,6 @@
 output_directory: pah
 random_seed: 55
 problem_type: regression
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-fnn_layers: 4
-hidden_size: 1200
 
 # featurization
 input_file: pah/arockiaraj_pah_data.csv

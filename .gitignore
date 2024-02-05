@@ -1,6 +1,6 @@
 # benchmarking files
 run_log.txt
-benchmark_data.csv
+*benchmark_data.csv
 benchmark_smiles.smi
 precomputed.csv
 chemprop_features.csv
@@ -33,8 +33,10 @@ paper/paper.pdf
 benchmarks/tox21
 benchmarks/ace
 benchmarks/chiral
-benchmarks/cepdb_subset
 benchmarks/h2s
+benchmarks/ftrs
+benchmarks/cepdb_subset
+benchmarks/pairs_fubrain
 
 # run logs
 csv_logs

@@ -16,7 +16,7 @@ logger = init_logger(__name__)
 
 def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=False, colinear_drop=False, problem_type="regression"):
     # mock the scaler object for classification tasks
-    target_scaler = SimpleNamespace(feature_names_in_=None, n_features_in_=targets.shape[1])
+    target_scaler = SimpleNamespace(feature_names_in_=None, n_features_in_=targets.shape[1], inverse_transform=lambda x: x)
     y = targets
     if problem_type == "regression":
         target_scaler = StandardScaler()

@@ -23,6 +23,8 @@ To reduce total calculation burden, could interpolatively sample dataset to get 
 and then see which among those are transformed out, and then calc just the remaining for rest of
 dataset. Still should make calc'ing all an option.
 """
+
+import copy
 import datetime
 import logging
 import os
@@ -44,6 +46,8 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
+from sklearn.metrics import mean_absolute_error as mae
+from sklearn.linear_model import ElasticNet
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy, multiclass_accuracy
 from torchmetrics.functional.regression import r2_score
@@ -247,6 +251,9 @@ class fastprop(pl.LightningModule):
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "test")
         return loss
 
+    # TODO: when implementing the predict_step function, ensure that (1) scalers and used (2) correct set of descs used and (3) appropriate
+    # final activation function is applied
+
     def _machine_loss(self, batch, reduction="mean", return_all=False):
         x, y = batch
         y_hat = self.forward(x)
@@ -389,6 +396,19 @@ def train_and_test(
         logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
     validation_results = trainer.validate(model, datamodule, verbose=verbose)
     test_results = trainer.test(model, datamodule, verbose=verbose)
+
+    # added this for DeepDelta comparison
+    # train_features, train_labels = next(iter(datamodule.test_dataloader()))
+    # with torch.no_grad():
+    #     predictions = model(train_features)
+    # rescaled_train_labels = model.target_scaler.inverse_transform(train_labels)
+    # rescaled_prediction_labels = model.target_scaler.inverse_transform(predictions)
+    # with open("temp.txt", "a") as f:
+    #     f.write("real,pred\n")
+    #     for real, pred in zip(rescaled_train_labels, rescaled_prediction_labels):
+    #         f.write(f"{real.item()},{pred.item()}\n")
+    # later split this up into separate files with csplit
+
     return test_results, validation_results
 
 
@@ -545,6 +565,61 @@ def train_fastprop(
     target_scaler.feature_names_in_ = target_columns
     num_classes = y.shape[1] if problem_type == "multiclass" else None
     logger.info("...done.")
+
+    if problem_type != "regression":
+        logging.warning("TODO: implement baseline model for classification")
+    else:
+        baseline_seed = copy.deepcopy(random_seed)  # just to be safe
+        baseline_performance = []
+        for repetition in range(number_repeats):
+            # split the data in the same way fastprop would
+            X_train = X_val = X_test = y_train = y_val = y_test = None
+            if sampler != "scaffold":
+                X_train, X_val, X_test, y_train, y_val, y_test = train_val_test_split(
+                    X,
+                    y,
+                    train_size=train_size,
+                    val_size=val_size,
+                    test_size=test_size,
+                    sampler=sampler,
+                    random_state=baseline_seed,
+                )
+            else:
+                *_, idxs_train, idxs_val, idxs_test = train_val_test_split_molecules(
+                    smiles,
+                    train_size=train_size,
+                    val_size=val_size,
+                    test_size=test_size,
+                    sampler=sampler,
+                    return_indices=True,
+                    random_state=baseline_seed,
+                )
+                X_train, X_val, X_test = X[idxs_train], X[idxs_val], X[idxs_test]
+                y_train, y_val, y_test = y[idxs_train], y[idxs_val], y[idxs_test]
+            # train some basic models
+            model = None
+            model = ElasticNet(random_state=baseline_seed)
+            logger.info(f"Training {model.__repr__()} model repetition {repetition} as baseline...")
+            model.fit(X_train, y_train)
+            logger.info("...done.")
+            val_pred = model.predict(X_val)
+            test_pred = model.predict(X_test)
+            for pred_arr, truth_arr, name in zip((val_pred, test_pred), (y_val, y_test), ("validation", "test")):
+                rescaled_pred = target_scaler.inverse_transform(pred_arr.reshape(-1, 1))
+                rescaled_truth = target_scaler.inverse_transform(truth_arr.reshape(-1, 1))
+                logger.info(f"Baseline linear model statistics for {name}:")
+                l2 = l2_error(rescaled_truth, rescaled_pred, squared=False)
+                logger.info(f"RMSE: {l2:.4f}")
+                l1 = mae(rescaled_truth, rescaled_pred)
+                logger.info(f"MAE: {l1:.4f}")
+                wm = mape(rescaled_truth, rescaled_pred, sample_weight=rescaled_truth)
+                logger.info(f"wMAPE: {wm:.4f}")
+                m = mape(rescaled_truth, rescaled_pred)
+                logger.info(f"MAPE: {m:.4f}")
+                baseline_performance.append({name + "-l2": l2, name + "-l1": l1, name + "-wmape": wm, name + "-mape": m})
+            baseline_seed += 1
+        perf_df = pd.DataFrame.from_records(baseline_performance)
+        logger.info("Displaying summary baseline results:\n%s", perf_df.describe().transpose().to_string())
 
     datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     number_features = X.shape[1]
