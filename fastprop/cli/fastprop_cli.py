@@ -52,7 +52,7 @@ def main():
     train_subparser.add_argument("-pc", "--patience", help="number of epochs to wait before early stopping")
 
     predict_subparser = subparsers.add_parser("predict")
-    predict_subparser.add_argument("-c", "--checkpoint", required=True, help="checkpoint file for predictions")
+    predict_subparser.add_argument("-cd", "--checkpoints_dir", required=True, help="directory of checkpoint file(s) for predictions")
     input_group = predict_subparser.add_mutually_exclusive_group()
     input_group.add_argument("-s", "--smiles", help="SMILES string for prediction")
     input_group.add_argument("-i", "--input-file", help="file containing SMILES strings")
