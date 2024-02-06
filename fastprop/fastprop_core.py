@@ -385,11 +385,11 @@ def train_and_test(
     """
     if not no_logs:
         try:
-            version_num = len(os.listdir(os.path.join(outdir, "csv_logs"))) + 1
+            repetition_number = len(os.listdir(os.path.join(outdir, "csv_logs"))) + 1
         except FileNotFoundError:
-            version_num = 1
-        csv_logger = CSVLogger(outdir, name="csv_logs", version=f"repetition_{version_num}")
-        tensorboard_logger = TensorBoardLogger(outdir, name="tensorboard_logs", version=f"repetition_{version_num}")
+            repetition_number = 1
+        csv_logger = CSVLogger(outdir, name="csv_logs", version=f"repetition_{repetition_number}")
+        tensorboard_logger = TensorBoardLogger(outdir, name="tensorboard_logs", version=f"repetition_{repetition_number}")
 
     callbacks = [
         EarlyStopping(
@@ -404,7 +404,7 @@ def train_and_test(
             ModelCheckpoint(
                 monitor=f"validation_{model.training_metric}_loss",
                 dirpath=os.path.join(outdir, "checkpoints"),
-                filename=f"repetition-{version_num}" + "-{epoch:02d}-{val_loss:.2f}",
+                filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
                 save_top_k=1,
                 mode="min",
             )
@@ -430,8 +430,13 @@ def train_and_test(
     t1_stop = perf_counter()
     if verbose:
         logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    validation_results = trainer.validate(model, datamodule, verbose=verbose)
-    test_results = trainer.test(model, datamodule, verbose=verbose)
+    validation_results = trainer.validate(model, datamodule, verbose=False)
+    test_results = trainer.test(model, datamodule, verbose=False)
+    if verbose:
+        validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
+        logger.info("Displaying validation results for repetition %d:\n%s", repetition_number, validation_results_df.transpose().to_string())
+        test_results_df = pd.DataFrame.from_records(test_results, index=("value",))
+        logger.info("Displaying validation results for repetition %d:\n%s", repetition_number, test_results_df.transpose().to_string())
     return test_results, validation_results
 
 
