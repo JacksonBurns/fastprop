@@ -9,48 +9,38 @@ import datetime
 import logging
 import os
 import warnings
-from pathlib import Path
 from time import perf_counter
 from typing import OrderedDict
 
 import numpy as np
 import pandas as pd
-import psutil
 import pytorch_lightning as pl
 import torch
 from astartes import train_val_test_split
 from astartes.molecules import train_val_test_split_molecules
 from pytorch_lightning import LightningDataModule
-from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
 from scipy.stats import ttest_ind
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
-
 from torch.utils.data import Dataset as TorchDataset
-from torchmetrics.functional.classification import multilabel_auroc, f1_score, auroc, multiclass_auroc, binary_accuracy, multiclass_accuracy
+from torchmetrics.functional.classification import (
+    auroc,
+    binary_accuracy,
+    f1_score,
+    multiclass_accuracy,
+    multiclass_auroc,
+    multilabel_auroc,
+)
 from torchmetrics.functional.regression import r2_score
 
-from fastprop.utils import linear_baseline
+from fastprop.defaults import _init_loggers, init_logger
+from fastprop.preprocessing import preprocess
 
 # choose the descriptor set absed on the args
-from fastprop.utils import (
-    ALL_2D,
-    SUBSET_947,
-    calculate_mordred_desciptors,
-    load_from_csv,
-    load_saved_desc,
-    mordred_descriptors_from_strings,
-)
-
-from .defaults import init_logger, _init_loggers
-from .preprocessing import preprocess
-
-descriptors_lookup = dict(
-    optimized=SUBSET_947,
-    all=ALL_2D,
-)
+from fastprop.utils import _get_descs, linear_baseline, load_from_csv
 
 logger = init_logger(__name__)
 
@@ -440,43 +430,6 @@ def train_and_test(
     return test_results, validation_results
 
 
-def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols):
-    """Loads descriptors according to the user-specified configuration
-
-    Args:
-        precomputed (str): Use precomputed descriptors if str is.
-        input_file (str): Filepath of input data.
-        output_directory (str): Destination directory for caching.
-        descriptors (list): List of strings of descriptors to calculate.
-        enable_cache (bool): Allow/disallow caching mechanism.
-        mols (list): RDKit molecules.
-    """
-    descs = None
-    if precomputed:
-        del mols
-        logger.info(f"Loading precomputed descriptors from {precomputed}.")
-        descs = load_saved_desc(precomputed)
-    else:
-        in_name = Path(input_file).stem
-        # cached descriptors, which contains (1) cached (2) source filename (3) types of descriptors (4) timestamp when file was last touched
-        cache_file = os.path.join(output_directory, "cached_" + in_name + "_" + descriptors + "_" + str(int(os.stat(input_file).st_ctime)) + ".csv")
-
-        if os.path.exists(cache_file) and enable_cache:
-            logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
-            descs = load_saved_desc(cache_file)
-        else:
-            d2c = mordred_descriptors_from_strings(descriptors_lookup[descriptors])
-            # use all the cpus available
-            logger.info("Calculating descriptors.")
-            descs = calculate_mordred_desciptors(d2c, mols, psutil.cpu_count(logical=False), "fast")
-            # cache these
-            if enable_cache:
-                d = pd.DataFrame(descs)
-                d.to_csv(cache_file)
-                logger.info(f"Cached descriptors to {cache_file}.")
-    return descs
-
-
 def _training_loop(
     number_repeats,
     number_features,
@@ -604,6 +557,8 @@ def train_fastprop(
 
     See the fastprop documentation or CLI --help for details on each argument.
     """
+    if checkpoint is not None:
+        raise RuntimeError("TODO: Restarting from checkpoint not currently supported. Exiting.")
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
     output_subdirectory = os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")

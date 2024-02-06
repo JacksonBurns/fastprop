@@ -5,10 +5,9 @@ from importlib.metadata import version
 
 import yaml
 
-from fastprop import DEFAULT_TRAINING_CONFIG, train_fastprop, hopt_fastprop
+from fastprop import DEFAULT_TRAINING_CONFIG, hopt_fastprop, train_fastprop
 from fastprop.defaults import init_logger
 from fastprop.utils import validate_config
-
 
 logger = init_logger(__name__)
 

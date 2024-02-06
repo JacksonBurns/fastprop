@@ -7,9 +7,9 @@ from types import SimpleNamespace
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from .defaults import init_logger
+from fastprop.defaults import init_logger
 
 logger = init_logger(__name__)
 

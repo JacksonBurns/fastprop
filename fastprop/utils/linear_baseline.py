@@ -1,12 +1,12 @@
 import copy
 
+import pandas as pd
 from astartes import train_val_test_split
 from astartes.molecules import train_val_test_split_molecules
-from sklearn.metrics import mean_absolute_error as mae
 from sklearn.linear_model import ElasticNet
+from sklearn.metrics import mean_absolute_error as mae
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
-import pandas as pd
 
 from fastprop.defaults import init_logger
 

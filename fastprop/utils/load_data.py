@@ -1,7 +1,6 @@
+import numpy as np
 import pandas as pd
 from rdkit import Chem
-
-import numpy as np
 
 from fastprop.defaults import init_logger
 

@@ -3,6 +3,7 @@ hopt.py
 
 This file implements parallel hyperparameter optimization for fastprop using hyperopt.
 """
+
 import logging
 import os
 
@@ -11,14 +12,9 @@ import torch
 import yaml
 
 from fastprop.defaults import init_logger
-from fastprop.fastprop_core import (
-    ArbitraryDataModule,
-    fastprop,
-    _get_descs,
-    _training_loop,
-)
+from fastprop.fastprop_core import ArbitraryDataModule, _training_loop, fastprop
 from fastprop.preprocessing import preprocess
-from fastprop.utils import load_from_csv
+from fastprop.utils import _get_descs, load_from_csv
 
 tune, OptunaSearch = None, None
 try:

@@ -1,9 +1,20 @@
+import os
 from multiprocessing import Pool
+from pathlib import Path
 from typing import Literal
 
 import numpy as np
-from mordred import Calculator
+import pandas as pd
 import psutil
+from mordred import Calculator
+
+from fastprop.defaults import init_logger
+
+from .descriptor_lists import descriptors_lookup
+from .load_data import load_saved_desc
+from .select_descriptors import mordred_descriptors_from_strings
+
+logger = init_logger(__name__)
 
 
 # mordred tried to avoid instantiating multiple Calculator classes, which makes
@@ -15,6 +26,21 @@ def _f(in_tuple):
 
 
 def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Literal["fast", "low-memory"] = "fast", ignore_3d=True):
+    """Wraps the mordred descriptor calculator.
+
+    Args:
+        descriptors (Mordred descriptor instances): Descriptors to calculate
+        rdkit_mols (list[rdkit mols]): List of RDKit molecules.
+        n_procs (int): Number of parallel processes.
+        strategy (Literal["fast", "low-memory", optional): Parallelization strategy. Defaults to "fast".
+        ignore_3d (bool, optional): Include 3D descriptors, if in given list. Defaults to True.
+
+    Raises:
+        RuntimeError: Invalid choice of parallel strategy.
+
+    Returns:
+        np.array: Calculated descriptors.
+    """
     # descriptors should be a list of mordred descriptors classes
     if strategy not in {"fast", "low-memory"}:
         raise RuntimeError(f"Strategy {strategy} not supported, only 'fast' and 'low-memory'.")
@@ -35,3 +61,42 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
         mordred_calc = Calculator(descriptors, ignore_3D=ignore_3d)
         mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=psutil.cpu_count(logical=True), quiet=False)))
     return mordred_descs
+
+
+def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols):
+    """Loads descriptors according to the user-specified configuration.
+
+    This is a 'hidden' function since the caching logic is specific to fastprop.
+
+    Args:
+        precomputed (str): Use precomputed descriptors if str is.
+        input_file (str): Filepath of input data.
+        output_directory (str): Destination directory for caching.
+        descriptors (list): List of strings of descriptors to calculate.
+        enable_cache (bool): Allow/disallow caching mechanism.
+        mols (list): RDKit molecules.
+    """
+    descs = None
+    if precomputed:
+        del mols
+        logger.info(f"Loading precomputed descriptors from {precomputed}.")
+        descs = load_saved_desc(precomputed)
+    else:
+        in_name = Path(input_file).stem
+        # cached descriptors, which contains (1) cached (2) source filename (3) types of descriptors (4) timestamp when file was last touched
+        cache_file = os.path.join(output_directory, "cached_" + in_name + "_" + descriptors + "_" + str(int(os.stat(input_file).st_ctime)) + ".csv")
+
+        if os.path.exists(cache_file) and enable_cache:
+            logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
+            descs = load_saved_desc(cache_file)
+        else:
+            d2c = mordred_descriptors_from_strings(descriptors_lookup[descriptors])
+            # use all the cpus available
+            logger.info("Calculating descriptors.")
+            descs = calculate_mordred_desciptors(d2c, mols, psutil.cpu_count(logical=False), "fast")
+            # cache these
+            if enable_cache:
+                d = pd.DataFrame(descs)
+                d.to_csv(cache_file)
+                logger.info(f"Cached descriptors to {cache_file}.")
+    return descs

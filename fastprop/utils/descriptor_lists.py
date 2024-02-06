@@ -2567,3 +2567,8 @@ SUBSET_947 = [
     "mZagreb1",
     "mZagreb2",
 ]
+
+descriptors_lookup = dict(
+    optimized=SUBSET_947,
+    all=ALL_2D,
+)

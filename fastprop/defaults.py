@@ -1,6 +1,6 @@
+import logging
 import os
 from types import MappingProxyType
-import logging
 
 
 def _init_loggers(outpath):
