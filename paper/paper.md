@@ -29,9 +29,9 @@ note: |
 
 <!--
 Current Project Status:
- - fastprop has all of the training features that it needs; the prediction side still needs be written, as well as the intepretability
+ - fastprop has all of the training features that it needs; the prediction side still needs be written, as well as the intepretability and speedup (this will be a follow-up paper)
  - need to run a 'diminishing training size' experiment on a large dataset where Chemprop and fastprop have similar peak (80% training) performance - probably QM8
- - the paper is in bullets with a good overall structure; need to fill out the sentence transitions
+ - emphasize the accuracy on small datasets more so than the runtime, though it warrants a mention in just a paragraph or so
 -->
 
 <!-- Graphical Abstract Goes Here -->
@@ -45,6 +45,7 @@ Current Project Status:
 
  - **Historical Approach, Today**: Break these two ideas out in much greater detail in the body of the text:
  - The logical combination of bulk molecular-level descriptors with deep learning as a regression technique (as stated in the chemprop paper) has not seen the same success as learned representations, like UniMol [@unimol], Communicative Message Passing Neural Networks [@cmpnn], and especially Chemprop [@chemprop_theory; @chemprop_software].
+ - This may be due to a variety of factors: to do this need to know both sides of the lit, practice may have been wrong on the chemists side, computer scientists dont have the domain knowledge to think to use these, the development in these fields have been largely __orthogonal__.
  - Despite past failures, this paper establishes that by combining a cogent set of molecular descriptors with deep learning, generalizable deep-QSPR is realized.
 
 ## Scientific Contribution
@@ -270,7 +271,7 @@ test_rmse_output_gap      2.0  0.010896  0.000651  0.010436  0.010666  0.010896 
  - Originally described by Bhat et al. [@ocelot]; quantum mechanics descriptors and optoelectronic properties of chromophoric small molecules.
  - Literature best model is the Molecular Hypergraph Neural Network (MHNN) [@mhnn] which specializes in the prediction of optoelectronic properties, and they have comparisons to a lot of other models.
  - Uses a 70/10/20 random split with three repetitions, final performance reported is the average across those three repetitions.
- - Performance for each metric is shown in Table \label{ocelot_results_table}.
+ - Performance for each metric is shown in Table \ref{ocelot_results_table}.
  - `fastprop` 'trades places' with Chemprop, outperforming on some metrics and not on others. Overall geometrics mean of performance is ~6% lower. Both are worse than the MHNN across the board, though it is of course limited to this application.
  - TODO: add training time for Chemprop and possibly also the MHNN.
 
@@ -453,7 +454,7 @@ test_rmse_output_s0t1     3.0     0.293400     0.002714  0.290960  0.291938  0.2
  - Predecessor to QM9 first described in 2015 [@qm8], follows the same procedure but includes only up to eight heavy atoms. Again used the data as prepared by MoleculeNet [@moleculenet].
  - Again comparing to the UniMol study [@unimol].
  - UniMol got 0.00156, `fastprop` got 0.0166, and Chemprop got 0.0190.
- - Of note is that this looks good, but by looking at the weighted mean absolute percentage error (wMAPE) (see Table \label{qm8_results_table}) we see a different story. Despite being among the 'most accurate' of existing literature models, `fastprop` has large errors.
+ - Of note is that this looks good, but by looking at the weighted mean absolute percentage error (wMAPE) (see Table \ref{qm8_results_table}) we see a different story. Despite being among the 'most accurate' of existing literature models, `fastprop` has large errors.
 
 Table: Per-task QM8 dataset results. \label{qm8_results_table}
 
@@ -1069,17 +1070,26 @@ Maximum	0.9438888888888888
 Sum	3.592470129096031
 Count	4 -->
 
-## Limitations and Future Work
-### Combination with Learned Representations
+# Limitations and Future Work
+## Combination with Learned Representations
 This seems like an intuitive next step, but we shouldn't do it.
 _Not_ just slamming all the mordred features into Chemprop, which would definitely give good results but would take out the `fast` part (FNN would also have to be increased in size).
 `fastprop` is good enough on its own.
 
-### Inference Time
+## Inference Time
 Slow on inference, especially on virtual libaries which may number in the millions of compounds.
 Thankfully descriptor calclulation is embarassingly parallel, and in practice the number of descriptors needed to be calculated can be reduced once those which are relevant to the neural network are selected based on their weights.
 
-### Additional Descriptors
+## Speedup
+There is an obvious performance improvement to be had (both in training and inference) by reducing the number of descriptors used to a subset that are highly-weighted in the network.
+This has _not_ been done in this initial study for two reasons:
+ 1. To emphasize the capacity of the DL framework to effecitvely perform feature selection on its own via the training process, de-emphasizing unimportant descriptors.
+ 2. Because the framework as it stands is already _dramatically_ faster than alternatives, and all existing modeling solutions are fast relative to the timescale of drug development where they are deployed (i.e. accuracy is more important than runtime).
+
+## Interpretability
+Cite Wengao's paper about backing out meaning from intermediate embeddings, but emphasize we are in an even better spot because of the physical meaning of the inputs.
+
+## Additional Descriptors
 The `mordredcommunity` featurization package could of course stand to have more features added that could potentially expand its applicability beyond the datasets listed here and improve the performance on those already attempted.
 
 ### Stereochemical Descriptors
