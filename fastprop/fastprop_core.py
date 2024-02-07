@@ -6,7 +6,6 @@ for the fastprop framework.
 """
 
 import datetime
-import logging
 import os
 import warnings
 from time import perf_counter
@@ -36,11 +35,7 @@ from torchmetrics.functional.classification import (
 )
 from torchmetrics.functional.regression import r2_score
 
-from fastprop.defaults import _init_loggers, init_logger
-from fastprop.preprocessing import preprocess
-
-# choose the descriptor set absed on the args
-from fastprop.utils import _get_descs, linear_baseline, load_from_csv
+from fastprop.defaults import init_logger
 
 logger = init_logger(__name__)
 
@@ -254,8 +249,15 @@ class fastprop(pl.LightningModule):
         self._human_loss(y_hat.detach().cpu(), y.detach().cpu(), "test")
         return loss
 
-    # TODO: when implementing the predict_step function, ensure that (1) scalers and used (2) correct set of descs used and (3) appropriate
-    # final activation function is applied
+    def predict_step(self, X):
+        with torch.no_grad():
+            logits = self.forward(X)
+        if self.problem_type == "regression":
+            return self.target_scaler.inverse_transform(logits.detach().cpu())
+        elif self.problem_type in {"multilabel", "binary"}:
+            return torch.sigmoid(logits).detach().cpu()
+        elif self.problem_type == "multiclass":
+            return torch.nn.functional.softmax(logits, dim=1).detach().cpu()
 
     def _machine_loss(self, batch, reduction="mean", return_all=False):
         x, y = batch
@@ -525,72 +527,3 @@ def _training_loop(
     else:
         logger.info("fastprop is unable to generate statistics to check for overfitting, consider increasing 'num_repeats' to at least 2.")
     return test_results_df, validation_results_df
-
-
-def train_fastprop(
-    output_directory,
-    input_file,
-    smiles_column,
-    target_columns,
-    descriptors="optimized",
-    enable_cache=True,
-    precomputed=None,
-    rescaling=True,
-    zero_variance_drop=False,
-    colinear_drop=False,
-    fnn_layers=2,
-    hidden_size=1800,
-    learning_rate=0.0001,
-    batch_size=2048,
-    number_epochs=100,
-    number_repeats=1,
-    problem_type="regression",
-    checkpoint=None,
-    train_size=0.8,
-    val_size=0.1,
-    test_size=0.1,
-    sampler="random",
-    random_seed=0,
-    patience=5,
-):
-    """Driver function for automatic training.
-
-    See the fastprop documentation or CLI --help for details on each argument.
-    """
-    if checkpoint is not None:
-        raise RuntimeError("TODO: Restarting from checkpoint not currently supported. Exiting.")
-    if not os.path.exists(output_directory):
-        os.mkdir(output_directory)
-    output_subdirectory = os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
-    os.mkdir(output_subdirectory)
-    _init_loggers(output_subdirectory)
-    logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
-    torch.manual_seed(random_seed)
-    targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
-    descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
-
-    logger.info("Preprocessing data...")
-    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
-    target_scaler.feature_names_in_ = target_columns
-    num_classes = y.shape[1] if problem_type == "multiclass" else None
-    logger.info("...done.")
-
-    linear_baseline(problem_type, random_seed, number_repeats, sampler, train_size, val_size, test_size, X, y, smiles, target_scaler)
-
-    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
-    number_features = X.shape[1]
-
-    return _training_loop(
-        number_repeats,
-        number_features,
-        target_scaler,
-        number_epochs,
-        hidden_size,
-        learning_rate,
-        fnn_layers,
-        output_subdirectory,
-        datamodule,
-        patience,
-        problem_type,
-        num_classes,
-    )

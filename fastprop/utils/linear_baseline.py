@@ -68,8 +68,12 @@ def linear_baseline(problem_type, random_seed, number_repeats, sampler, train_si
             val_pred = model.predict(X_val)
             test_pred = model.predict(X_test)
             for pred_arr, truth_arr, name in zip((val_pred, test_pred), (y_val, y_test), ("validation", "test")):
-                rescaled_pred = target_scaler.inverse_transform(pred_arr.reshape(-1, 1))
-                rescaled_truth = target_scaler.inverse_transform(truth_arr.reshape(-1, 1))
+                if len(pred_arr.shape) == 1 or pred_arr.shape[1] == 1:  # capture 2d and 1d
+                    rescaled_pred = target_scaler.inverse_transform(pred_arr.reshape(-1, 1))
+                    rescaled_truth = target_scaler.inverse_transform(truth_arr.reshape(-1, 1))
+                else:
+                    rescaled_pred = target_scaler.inverse_transform(pred_arr)
+                    rescaled_truth = target_scaler.inverse_transform(truth_arr)
                 logger.info(f"Baseline linear model statistics for {name}:")
                 l2 = l2_error(rescaled_truth, rescaled_pred, squared=False)
                 logger.info(f"RMSE: {l2:.4f}")

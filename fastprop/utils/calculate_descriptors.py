@@ -63,7 +63,7 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
     return mordred_descs
 
 
-def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols):
+def _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols, as_df=False):
     """Loads descriptors according to the user-specified configuration.
 
     This is a 'hidden' function since the caching logic is specific to fastprop.
@@ -72,7 +72,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
         precomputed (str): Use precomputed descriptors if str is.
         input_file (str): Filepath of input data.
         output_directory (str): Destination directory for caching.
-        descriptors (list): List of strings of descriptors to calculate.
+        descriptors (list): fastprop set of descriptors to calculate.
         enable_cache (bool): Allow/disallow caching mechanism.
         mols (list): RDKit molecules.
     """
@@ -99,4 +99,6 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
                 d = pd.DataFrame(descs)
                 d.to_csv(cache_file)
                 logger.info(f"Cached descriptors to {cache_file}.")
+    if as_df:
+        return pd.DataFrame(data=descs, columns=descriptors_lookup[descriptors])
     return descs

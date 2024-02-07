@@ -1,11 +1,15 @@
 import argparse
-import json
 import sys
 from importlib.metadata import version
 
 import yaml
 
-from fastprop import DEFAULT_TRAINING_CONFIG, hopt_fastprop, train_fastprop
+from fastprop import (
+    DEFAULT_TRAINING_CONFIG,
+    hopt_fastprop,
+    predict_fastprop,
+    train_fastprop,
+)
 from fastprop.defaults import init_logger
 from fastprop.utils import validate_config
 
@@ -51,9 +55,9 @@ def main():
     train_subparser.add_argument("-pc", "--patience", help="number of epochs to wait before early stopping")
 
     predict_subparser = subparsers.add_parser("predict")
-    predict_subparser.add_argument("-cd", "--checkpoints_dir", required=True, help="directory of checkpoint file(s) for predictions")
+    predict_subparser.add_argument("checkpoints_dir", help="directory of checkpoint file(s) for predictions")
     input_group = predict_subparser.add_mutually_exclusive_group()
-    input_group.add_argument("-s", "--smiles", help="SMILES string for prediction")
+    input_group.add_argument("-s", "--smiles", nargs="+", help="SMILES string for prediction")
     input_group.add_argument("-i", "--input-file", help="file containing SMILES strings")
     predict_subparser.add_argument("-o", "--output", required=False, help="output file for predictions (defaults to stdout)")
 
@@ -89,7 +93,7 @@ def main():
             training_default.update({k: v for k, v in args.items() if v is not None})
 
         optim_requested = training_default.pop("optimize") or optim_requested
-        logger.info(f"Training Parameters:\n {json.dumps(training_default, indent=4)}")
+        logger.info(f"Training Parameters:\n {yaml.dump(training_default)}")
         # validate this dictionary, i.e. layer counts are positive, etc.
         # cannot specify both precomputed and descriptors or enable/cache
         validate_config(training_default)
@@ -104,4 +108,5 @@ def main():
     else:
         if args["smiles"] is None and args["input_file"] is None:
             raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")
-        logger.info(f"Predict Parameters:\n {json.dumps(args, indent=4)}")
+        logger.info(f"Predict Parameters:\n {yaml.dump(args)}")
+        predict_fastprop(**args)

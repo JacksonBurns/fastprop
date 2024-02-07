@@ -5,6 +5,7 @@ import warnings
 from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -14,9 +15,21 @@ from fastprop.defaults import init_logger
 logger = init_logger(__name__)
 
 
-def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=False, colinear_drop=False, problem_type="regression"):
+def _mock_inverse_transform(x):
+    return x
+
+
+def preprocess(
+    descriptors,
+    targets,
+    rescaling=True,
+    zero_variance_drop=False,
+    colinear_drop=False,
+    problem_type="regression",
+    return_X_scalers=False,
+):
     # mock the scaler object for classification tasks
-    target_scaler = SimpleNamespace(feature_names_in_=None, n_features_in_=targets.shape[1], inverse_transform=lambda x: x)
+    target_scaler = SimpleNamespace(feature_names_in_=None, n_features_in_=targets.shape[1], inverse_transform=_mock_inverse_transform)
     y = targets
     if problem_type == "regression":
         target_scaler = StandardScaler()
@@ -26,29 +39,43 @@ def preprocess(descriptors, targets, rescaling=True, zero_variance_drop=False, c
         target_scaler = OneHotEncoder(sparse_output=False)
         y = target_scaler.fit_transform(targets)
 
-    # make it optional to either drop columns with any missing or do this
-    imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean")
+    # drop missing features
+    descriptors: pd.DataFrame
+    descriptors = descriptors.dropna(axis=1, how="all")
+
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean").set_output(transform="pandas")
+    scalers = [imp_mean]
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore", message="Skipping features without any observed values.*")
-        descriptors = imp_mean.fit_transform(descriptors, targets)
+        descriptors = imp_mean.fit_transform(descriptors)
 
     if rescaling:
-        # scale each column 0-1
-        feature_scaler = StandardScaler()
-        descriptors = feature_scaler.fit_transform(descriptors, targets)
-        logger.info(f"size after clean (drop empty, impute missing, scale 0-1): {descriptors.shape}")
+        # scale each column to unit variance
+        feature_scaler = StandardScaler().set_output(transform="pandas")
+        scalers.append(feature_scaler)
+        descriptors = feature_scaler.fit_transform(descriptors)
+        logger.info(f"size after clean (impute missing, scale to unit variance): {descriptors.shape}")
 
     if zero_variance_drop:
-        # drop low variance features
-        descriptors = VarianceThreshold(threshold=0).fit_transform(descriptors, y)
+        # drop invariant features
+        var_scaler = VarianceThreshold(threshold=0).set_output(transform="pandas")
+        scalers.append(var_scaler)
+        descriptors = var_scaler.fit_transform(descriptors)
         logger.info(f"size after invariant feature removal: {descriptors.shape}")
 
     if colinear_drop:
         raise NotImplementedError("TODO")
 
-    X = descriptors
+    X: pd.DataFrame = descriptors
 
-    if not np.isfinite(X).all():
-        raise RuntimeError("Postprocessing failed finite check, please file a bug report.")
+    assert np.isfinite(X.to_numpy()).all(), "Postprocessing failed finite check, please file a bug report."
 
-    return X, y, target_scaler
+    if return_X_scalers:
+        return (
+            X,
+            y,
+            target_scaler,
+            scalers,
+        )
+    else:
+        return X, y, target_scaler
