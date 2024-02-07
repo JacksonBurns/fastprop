@@ -18,6 +18,10 @@ Installing from `pip` or `conda` is the best way to get `fastprop`, but if you n
 ## `pip` [recommended]
 `fastprop` is available via PyPI with `pip install fastprop`.
 
+To make extending `fastprop` easier and keep the installation size down, dependencies required for hyperparameter optimization and SHAP analysis are _optional_.
+They can be installed with `pip install fastprop[hopt]`, `pip install fastprop[shap]`, or `pip install fastprop[shap,hopt]` to install them both.
+If you want to use `fastprop` but not write new code on top of it, you may want to install these now - you can always do so later, however, and `fastprop` will remind you.
+
 ## `conda` - _coming soon!_
 ~~`fastprop` is available from `conda-forge` with `conda install -c conda-forge fastprop`.~~
 
@@ -35,6 +39,10 @@ See [Developing `fastprop`](#developing-fastprop) for more details.
 By passing in a list of SMILES strings, `fastprop` will automatically generate and cache a set of molecular descriptors using [`mordredcommunity`](https://github.com/JacksonBurns/mordred-community) and train an FNN to predict the corresponding properties.
 See the `examples` and `benchmarks` directories to see how to run training - the rest of this documentation will focus on how you can run, configure, and customize `fastprop`.
 
+## Paper
+An academic paper has been prepared which describes the `fastprop` approach and walks through the `benchmarks` in greater detail.
+See the `paper` directory for more information.
+
 ## `fastprop` Framework
 There are four distinct steps in `fastprop` that define its framework:
  1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
@@ -49,33 +57,34 @@ There are four distinct steps in `fastprop` that define its framework:
     - Target column name(s): name(s) of the columns containing the targets
 
     _and_
-    - Which `mordred` descriptors to calculate: 'all' or 'optimized' (a smaller set of descriptors previously found to be useful).
+    - Which `mordred` descriptors to calculate: 'all' or 'optimized' (a smaller set of descriptors; faster, but less accurate).
     - Enable/Disable caching of calculated descriptors: `fastprop` will by default cache calculated descriptors based on the input filename and warn the user when it loads descriptors from the file rather than calculating on the fly
 
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
     - Enable/Disable re-scaling of parameters between 0 and 1 (enabled by default and _highly_ recommended)
-    - Enable/Disable dropping of zero-variance parameters (disabled by default; can possibly speed up training)
-    - Enable/Disable dropping of co-linear descriptors (disabled by default; improves speed but typically decreases accuracy)
+    - Enable/Disable dropping of zero-variance parameters (disabled by default; faster, but often less accurate)
+    ~~- Enable/Disable dropping of co-linear descriptors (disabled by default; faster, decreased accuracy)~~ _WIP_
     - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
  3. Training
-    - Number of FNN layers (default 3; repeated fully connected layers of hidden size)
-    - Hidden Size: number of neurons per FNN layer
+    - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).
+    - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
+    - Hidden Size: number of neurons per FNN layer (default 1800)
 
     _or_
-    - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size.
+    - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size
 
     _generic NN training parameters_
     - Output Directory
     - Learning rate
     - Batch size
-    - Checkpoint file to resume from (optional)
+    ~~- Checkpoint file to resume from (optional)~~ _WIP_
     - Problem type (one of: regression, binary, multiclass, multilabel)
  4. Prediction
     - Input SMILES: either a single SMILES or a CSV file
-    - Output format: either a filepath to write the results, defaults to stdout
-    - Checkpoint file: previously trained model file
+    - Output format: filepath to write the results or nothing, defaults to stdout
+    - Checkpoints directory: directory where previously trained model(s) are
 
 # Using `fastprop`
 `fastprop` can be run from the command line or as a Python module.
@@ -83,11 +92,15 @@ Regardless of the method of use the parameters described in [Configurable Parame
 Some system-specific configuration options can be specified in a `.fastpropconfig` file - see the [example file](https://github.com/JacksonBurns/fastprop/blob/main/.fastpropconfig).
 
 ## Command Line
-After installation, `fastprop` is accessible from the command line via `fastprop`.
-Try `fastprop --help` for more information and see below.
+After installation, `fastprop` is accessible from the command line via `fastprop subcommand`, where `subcommand` is either `train`, `predict`, or `shap`.
+ - `train` takes in the parameters described in [Configurable Parameters](#configurable-parameters) sections 1, 2, and 3 (featurization, preproccessing, and training) and trains `fastprop` model(s) on the input data.
+ - `predict` uses the output of a call to `train` to make prediction on arbitrary SMILES strings.
+ - `shap` performs SHAP analysis on a trained model to determine which of the input features are important.
+
+Try `fastprop --help` or `fastprop subcommand --help` for more information and see below.
 
 ### Configuration File [recommended]
-See `examples/example_fastprop_*_config.yaml` for configuration files that show all options that can be configured.
+See `examples/example_fastprop_train_config.yaml` for configuration files that show all options that can be configured during training.
 It is everything shown in the [Configurable Parameters](#configurable-parameters) section.
 
 ### Arguments
@@ -95,22 +108,29 @@ All of the options shown in the [Configuration File](#configuration-file-recomme
 When passing the arguments, replace all `_` (underscore) with `-` (hyphen), i.e. `fastprop train --number-epochs 100`
 See `fastprop train --help` or `fastprop predict --help` for more information.
 
+`fastprop shap` and `fastprop predict` have only a couple arguments and so do not use configuration files.
+
 ## Python Module
 This section documents where the various modules and functions used in `fastprop` are located.
 Check each file listed for more information, as each contains additional inline documentation useful for development as a Python module.
+To use the core `fastprop` model and dataloaders in your own work, consider looking at `shap.py` or `train.py` which show how to import and instantiate the relevant classes.
 
 ### `fastprop`
  - `defaults`: contains the function `init_logger` used to initialize loggers in different submodules, as well as the default configuration for training.
- - `hopt`: example code for hyperparameter optimization, which was used to help determine the defaults.
- - `preprocessing`: contains a single function `preprocess` that performs all of the preprocessing described above.
- - `fastprop_core`: catch-all for the remaining parts of `fastprop`, including the model itself, data PyTorch Lightning dataloader, some convenience functions for caching descriptors, and the actual training functions used in the CLI.
+ - `fastprop_core`: the model itself, data PyTorch Lightning dataloader, and convenience functions.
+ - `hopt`: hyperparameter optimization using Optuna and Ray\[tune\], used by the CLI.
+ - `train`: performs model training, used by the CLI.
+ - `predict`: loads models from their checkpoint and config files and runs inference, used by the CLI.
+ - `shap`: performs SHAP analysis on a previously trained model, used by the CLI.
+ - `preprocessing`: performs all of the preprocessing described above.
 
 ### `fastprop.utils`
- - `calculate_descriptors`: wraps the `mordredcommunity` descriptor calculator
+ - `calculate_descriptors`: wraps the `mordredcommunity` descriptor calculator.
+ - `linear_baseline`: trains a basic linear model on the same inputs to `fastprop` to act as a baseline.
  - `descriptor_lists`: hardcoded lists of all of the descriptors implemented in `mordredcommunity`.
  - `select_descriptors`: the script to retrieve the `mordredcommunity` modules based on the strings in the above file (`mordredcommunity` has a weird interface; thus, it is wrapped).
  - `load_data`: short wrappers to `pandas` CSV loading utility, but specialized for the output from `mordredcommunity` and `fastprop`.
- - `validate_config`: (WIP!) validate the input from the command line.
+ - `validate_config`: _WIP_ validate the input from the command line.
 
 ### `fastprop.cli`
 `fastprop_cli`` contains all the CLI code which is likely not useful in use from a script.
@@ -166,3 +186,5 @@ Bug reports, feature requests, and pull requests are welcome and encouraged!
 
 `fastprop` is built around PyTorch lightning, which defines a rigid API for implementing models that is followed here.
 See the [section on the package layout](#python-module) for information on where all the other functions are, and check out the docstrings and inline comments in each file for more information on what each does.
+
+Note that the `pyproject.toml` defines optional `dev` and `bmark` packages, which will get you setup with the same dependencies used for CI and benchmarking.

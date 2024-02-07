@@ -43,6 +43,17 @@ def preprocess(
     descriptors: pd.DataFrame
     descriptors = descriptors.dropna(axis=1, how="all")
 
+    if zero_variance_drop:
+        # drop invariant features
+        var_scaler = VarianceThreshold(threshold=0).set_output(transform="pandas")
+        # exclude from the returned feature scalers - the columns which should be dropped are done
+        # automatically by not calculating them in the first place during prediction.
+        descriptors = var_scaler.fit_transform(descriptors)
+        logger.info(f"size after invariant feature removal: {descriptors.shape}")
+
+    if colinear_drop:
+        raise NotImplementedError("TODO")
+
     imp_mean = SimpleImputer(missing_values=np.nan, strategy="mean").set_output(transform="pandas")
     scalers = [imp_mean]
     with warnings.catch_warnings():
@@ -55,16 +66,6 @@ def preprocess(
         scalers.append(feature_scaler)
         descriptors = feature_scaler.fit_transform(descriptors)
         logger.info(f"size after clean (impute missing, scale to unit variance): {descriptors.shape}")
-
-    if zero_variance_drop:
-        # drop invariant features
-        var_scaler = VarianceThreshold(threshold=0).set_output(transform="pandas")
-        scalers.append(var_scaler)
-        descriptors = var_scaler.fit_transform(descriptors)
-        logger.info(f"size after invariant feature removal: {descriptors.shape}")
-
-    if colinear_drop:
-        raise NotImplementedError("TODO")
 
     X: pd.DataFrame = descriptors
 

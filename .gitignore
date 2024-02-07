@@ -40,6 +40,9 @@ benchmarks/ftrs
 benchmarks/cepdb_subset
 benchmarks/pairs_fubrain
 
+# example plots
+*_feature_importance_beeswarm.png
+
 # run logs
 csv_logs
 tensorboard_logs

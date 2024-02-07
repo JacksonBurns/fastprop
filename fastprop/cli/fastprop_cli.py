@@ -8,6 +8,7 @@ from fastprop import (
     DEFAULT_TRAINING_CONFIG,
     hopt_fastprop,
     predict_fastprop,
+    shap_fastprop,
     train_fastprop,
 )
 from fastprop.defaults import init_logger
@@ -47,12 +48,12 @@ def main():
     train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")
     train_subparser.add_argument("-nr", "--number-repeats", type=int, help="number of repeats")
     train_subparser.add_argument("-pt", "--problem-type", help="problem type (regression or a type of classification)")
-    train_subparser.add_argument("-ns", "--train-size", help="train size")
-    train_subparser.add_argument("-vs", "--val-size", help="val size")
-    train_subparser.add_argument("-ts", "--test-size", help="test size")
+    train_subparser.add_argument("-ns", "--train-size", type=float, help="train size")
+    train_subparser.add_argument("-vs", "--val-size", type=float, help="val size")
+    train_subparser.add_argument("-ts", "--test-size", type=float, help="test size")
     train_subparser.add_argument("-s", "--sampler", help="choice of sampler, i.e. random, kmeans, etc.")
-    train_subparser.add_argument("-rs", "--random-seed", help="random seed for sampling and pytorch seed")
-    train_subparser.add_argument("-pc", "--patience", help="number of epochs to wait before early stopping")
+    train_subparser.add_argument("-rs", "--random-seed", type=int, help="random seed for sampling and pytorch seed")
+    train_subparser.add_argument("-pc", "--patience", type=int, help="number of epochs to wait before early stopping")
 
     predict_subparser = subparsers.add_parser("predict")
     predict_subparser.add_argument("checkpoints_dir", help="directory of checkpoint file(s) for predictions")
@@ -60,6 +61,17 @@ def main():
     input_group.add_argument("-s", "--smiles", nargs="+", help="SMILES string for prediction")
     input_group.add_argument("-i", "--input-file", help="file containing SMILES strings")
     predict_subparser.add_argument("-o", "--output", required=False, help="output file for predictions (defaults to stdout)")
+
+    shap_subparser = subparsers.add_parser("shap")
+    shap_subparser.add_argument("checkpoints_dir", help="directory of checkpoint file(s) for SHAP analysis")
+    shap_subparser.add_argument("input_file", help="csv of SMILES and targets used during training")
+    shap_subparser.add_argument(
+        "-it",
+        "--importance-threshold",
+        default=0.75,
+        type=float,
+        help="[0-1] hide features below (most important feature) x this",
+    )
 
     # no args provided - print the help text
     if len(sys.argv) == 1:
@@ -105,8 +117,15 @@ def main():
             hopt_fastprop(**training_default)
         else:
             train_fastprop(**training_default)
-    else:
+    elif subcommand == "shap":
+        shap_fastprop(**args)
+    elif subcommand == "predict":
         if args["smiles"] is None and args["input_file"] is None:
             raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")
         logger.info(f"Predict Parameters:\n {yaml.dump(args)}")
         predict_fastprop(**args)
+    else:
+        logger.critical(f"Unrecognized subcommand '{subcommand}', printing help and exiting.")
+        parser.print_help()
+        sys.exit(0)
+    logger.info("If you use fastprop in published work, please cite: ...WIP...")

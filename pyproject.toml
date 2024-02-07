@@ -20,6 +20,7 @@ dependencies = ["pyyaml", "lightning", "mordredcommunity", "astartes[molecules]"
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
 hopt = ["ray[train]", "optuna"]
+shap = ["shap"]
 bmark = ["py2opsin"]
 
 [project.readme]

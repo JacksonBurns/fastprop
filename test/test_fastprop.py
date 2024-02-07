@@ -1,7 +1,7 @@
 import os
-from pathlib import Path
-import unittest
 import shutil
+import unittest
+from pathlib import Path
 
 import yaml
 

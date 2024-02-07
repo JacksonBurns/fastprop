@@ -79,23 +79,25 @@ def train_fastprop(
     datamodule = ArbitraryDataModule(X.to_numpy(), y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
     number_features = X.shape[1]
 
-    # write the requried predict config into the checkpoints directory for later use
-    with open(os.path.join(output_subdirectory, "checkpoints", "predict_config.yml"), "w") as file:
+    # write information needed for feature importance, prediction, etc. into the checkpoints directory for later use
+    with open(os.path.join(output_subdirectory, "checkpoints", "fastprop_config.yml"), "w") as file:
         file.write(
             yaml.dump(
                 dict(
-                    descriptors=X.columns.to_list(),
                     rescaling=rescaling,
                     zero_variance_drop=zero_variance_drop,
                     colinear_drop=colinear_drop,
                     problem_type=problem_type,
                     number_features=number_features,
                     hidden_size=hidden_size,
-                    target_scaler=pickle.dumps(target_scaler),
-                    feature_scalers=[pickle.dumps(i) for i in feature_scalers],
                     fnn_layers=fnn_layers,
                     targets=target_columns,
-                )
+                    smiles=smiles_column,
+                    descriptors=X.columns.to_list(),
+                    target_scaler=pickle.dumps(target_scaler),
+                    feature_scalers=[pickle.dumps(i) for i in feature_scalers],
+                ),
+                sort_keys=False,
             )
         )
 

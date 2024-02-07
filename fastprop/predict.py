@@ -32,23 +32,22 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
     if type(smiles) is str:
         smiles = [smiles]
     checkpoint_dir_contents = os.listdir(checkpoints_dir)
-    predict_args = None
+    config_dict = None
     try:
-        with open(os.path.join(checkpoints_dir, "predict_config.yml")) as file:
-            predict_args = yaml.safe_load(file)
-            print()
+        with open(os.path.join(checkpoints_dir, "fastprop_config.yml")) as file:
+            config_dict = yaml.safe_load(file)
     except FileNotFoundError:
         logger.error("checkpoints directory is missing 'preprocess_config.yml'. Re-execute training.")
 
     descs = calculate_mordred_desciptors(
-        mordred_descriptors_from_strings(predict_args["descriptors"]),
+        mordred_descriptors_from_strings(config_dict["descriptors"]),
         [Chem.MolFromSmiles(i) for i in smiles],
         n_procs=0,  # ignored for "strategy='low-memory'"
         strategy="low-memory",
     )
-    descs = pd.DataFrame(data=descs, columns=predict_args["descriptors"])
+    descs = pd.DataFrame(data=descs, columns=config_dict["descriptors"])
 
-    for pickled_scaler in predict_args["feature_scalers"]:
+    for pickled_scaler in config_dict["feature_scalers"]:
         scaler = pickle.loads(pickled_scaler)
         descs = scaler.transform(descs)
 
@@ -59,11 +58,11 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
             continue
         model = fastprop.load_from_checkpoint(
             os.path.join(checkpoints_dir, checkpoint),
-            number_features=predict_args["number_features"],
-            hidden_size=predict_args["hidden_size"],
-            target_scaler=pickle.loads(predict_args["target_scaler"]),
-            fnn_layers=predict_args["fnn_layers"],
-            problem_type=predict_args["problem_type"],
+            number_features=config_dict["number_features"],
+            hidden_size=config_dict["hidden_size"],
+            target_scaler=pickle.loads(config_dict["target_scaler"]),
+            fnn_layers=config_dict["fnn_layers"],
+            problem_type=config_dict["problem_type"],
             num_epochs=None,
             learning_rate=None,
         )
@@ -82,7 +81,7 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
     res[:, 0::2] = perf
     res[:, 1::2] = err
     column_names = []
-    for target in predict_args["targets"]:
+    for target in config_dict["targets"]:
         column_names.extend([target, target + "_stdev"])
     out = pd.DataFrame(res, columns=column_names, index=smiles)
     if output is None:

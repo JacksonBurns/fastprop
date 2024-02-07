@@ -46,6 +46,7 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
         raise RuntimeError(f"Strategy {strategy} not supported, only 'fast' and 'low-memory'.")
 
     mordred_descs = None
+    logger.info(f"Calculating descriptors using {strategy=}")
     if strategy == "fast":
         # higher level parallelism - uses more memory
         # TODO: subdivide batches further to avoid large communication bottleneck after all descriptors are calculated
@@ -92,7 +93,6 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
         else:
             d2c = mordred_descriptors_from_strings(descriptors_lookup[descriptors])
             # use all the cpus available
-            logger.info("Calculating descriptors.")
             descs = calculate_mordred_desciptors(d2c, mols, psutil.cpu_count(logical=False), "fast")
             # cache these
             if enable_cache:
