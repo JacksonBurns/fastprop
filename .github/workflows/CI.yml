@@ -59,7 +59,7 @@ jobs:
             python=${{ matrix.python-version }}
       - name: Install Dependencies
         run: |
-          python -m pip install ".[dev,hopt,bmark]"
+          python -m pip install ".[dev,hopt,bmark,shap]"
           python -m pip install coverage pytest
       - name: Run Tests
         run: |
