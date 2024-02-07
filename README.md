@@ -10,6 +10,11 @@
   <img alt="PyPI - License" src="https://img.shields.io/github/license/JacksonBurns/fastprop">
 </p>
 
+# Announcement - Open Beta!
+`fastprop` is currently in the version 1 open beta!
+Please try `fastprop` on your datasets and let us know what you think.
+Feature requests and bug reports are **very** appreciated!
+
 # Installing `fastprop`
 `fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.11 (except 3.11 on Windows).
 As dependencies gradually begin to support Python 3.12 it will be added.
@@ -85,6 +90,13 @@ There are four distinct steps in `fastprop` that define its framework:
     - Input SMILES: either a single SMILES or a CSV file
     - Output format: filepath to write the results or nothing, defaults to stdout
     - Checkpoints directory: directory where previously trained model(s) are
+
+## Relationship to Chemprop
+In addition to having a similar name, `fastprop` and Chemprop do a similar things: map chemical structures to their corresponding properties in a user-friendly way using machine learning.
+I ([@JacksonBurns](https://github.com/jacksonburns)) am also a developer of Chemprop so some code is inevitably shared between the two (`fastprop`->Chemprop and vice versa).
+
+`fastprop` _feels_ a lot like Chemprop but without a lot of the clutter.
+The `fast` in `fastprop` (both in usage and execution time) comes from the basic architecture, the use of caching, and the reduced configurability of `fastprop` (i.e. I hope you like MSE loss for regression tasks, because that's the only training metric `fastprop` will use).
 
 # Using `fastprop`
 `fastprop` can be run from the command line or as a Python module.
