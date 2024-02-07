@@ -1,5 +1,5 @@
 ---
-title: "One Model to Rule Them All: Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`"
+title: "Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`. Part 1: Framework and Benchmarks"
 author: 
   - name: Jackson W. Burns \orcidlink{0000-0002-0657-9426}
     affil-id: 1
