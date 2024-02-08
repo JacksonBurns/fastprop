@@ -1,5 +1,5 @@
 <p align="center">  
-  <img alt="fastproplogo" height="400" src="https://github.com/JacksonBurns/fastprop/blob/main/fastprop_logo.png">
+  <img alt="fastproplogo" height="400" src="https://raw.githubusercontent.com/JacksonBurns/fastprop/main/fastprop_logo.png">
 </p>
 <h2 align="center">Fast Molecular Property Prediction with mordredcommunity</h2>
  
