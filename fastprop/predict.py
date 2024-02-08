@@ -46,6 +46,7 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
         strategy="low-memory",
     )
     descs = pd.DataFrame(data=descs, columns=config_dict["descriptors"])
+    descs = descs.dropna(axis=1, how="all")
 
     for pickled_scaler in config_dict["feature_scalers"]:
         scaler = pickle.loads(pickled_scaler)
