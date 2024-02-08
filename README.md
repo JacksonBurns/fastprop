@@ -15,6 +15,12 @@
 Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
 
+Check out the demo notebook for quick intro to `fastprop` via Google Colab - runs in your browser, GPU included, no install required!
+
+<a target="_blank" href="https://colab.research.google.com/github/JacksonBurns/fastprop/blob/main/fastprop_demo.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
 # Installing `fastprop`
 `fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.11 (except 3.11 on Windows).
 As dependencies gradually begin to support Python 3.12 it will be added.
