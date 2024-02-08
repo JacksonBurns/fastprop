@@ -105,7 +105,7 @@ def main():
             training_default.update({k: v for k, v in args.items() if v is not None})
 
         optim_requested = training_default.pop("optimize") or optim_requested
-        logger.info(f"Training Parameters:\n {yaml.dump(training_default)}")
+        logger.info(f"Training Parameters:\n {yaml.dump(training_default, sort_keys=False)}")
         # validate this dictionary, i.e. layer counts are positive, etc.
         # cannot specify both precomputed and descriptors or enable/cache
         validate_config(training_default)
@@ -122,7 +122,7 @@ def main():
     elif subcommand == "predict":
         if args["smiles"] is None and args["input_file"] is None:
             raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")
-        logger.info(f"Predict Parameters:\n {yaml.dump(args)}")
+        logger.info(f"Predict Parameters:\n {yaml.dump(args, sort_keys=False)}")
         predict_fastprop(**args)
     else:
         logger.critical(f"Unrecognized subcommand '{subcommand}', printing help and exiting.")
