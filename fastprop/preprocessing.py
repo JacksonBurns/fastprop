@@ -39,8 +39,11 @@ def preprocess(
         target_scaler = OneHotEncoder(sparse_output=False)
         y = target_scaler.fit_transform(targets)
 
-    # drop missing features
+    # drop missing features - if this is direct output from mordred, missing values are
+    # strings describing why they are missing. If this is output from fastprop.utils.load_daved_desc
+    # the missing descriptors are nan. To deal with the former case, force all str->nan
     descriptors: pd.DataFrame
+    descriptors = descriptors.apply(pd.to_numeric, errors="coerce")
     descriptors = descriptors.dropna(axis=1, how="all")
 
     if zero_variance_drop:

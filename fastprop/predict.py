@@ -28,7 +28,7 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
         output (str or None): Either save to a file or just print result.
     """
     if input_file:
-        raise NotImplementedError("TODO")
+        raise NotImplementedError("TODO: please pass as command line options, loading from file is a WIP")
     if type(smiles) is str:
         smiles = [smiles]
     checkpoint_dir_contents = os.listdir(checkpoints_dir)
@@ -37,7 +37,7 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
         with open(os.path.join(checkpoints_dir, "fastprop_config.yml")) as file:
             config_dict = yaml.safe_load(file)
     except FileNotFoundError:
-        logger.error("checkpoints directory is missing 'preprocess_config.yml'. Re-execute training.")
+        logger.error("checkpoints directory is missing 'fastprop_config.yml'. Re-execute training.")
 
     descs = calculate_mordred_desciptors(
         mordred_descriptors_from_strings(config_dict["descriptors"]),
@@ -46,7 +46,6 @@ def predict_fastprop(checkpoints_dir, smiles, input_file, output=None):
         strategy="low-memory",
     )
     descs = pd.DataFrame(data=descs, columns=config_dict["descriptors"])
-    descs = descs.dropna(axis=1, how="all")
 
     for pickled_scaler in config_dict["feature_scalers"]:
         scaler = pickle.loads(pickled_scaler)
