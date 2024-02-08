@@ -21,7 +21,7 @@ try:
     from ray import tune
     from ray.tune.search.optuna import OptunaSearch
 except ImportError as ie:
-    raise RuntimeError("Unable to import hyperparameter optimization dependencies, please install fastprop[hopt]. Original error: " + str(ie))
+    hopt_error = ie
 
 logger = init_logger(__name__)
 
@@ -62,6 +62,10 @@ def hopt_fastprop(
     n_trials=NUM_HOPT_TRIALS,
     n_parallel=MODELS_PER_GPU,
 ):
+    if tune is None or OptunaSearch is None:
+        raise RuntimeError(
+            "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt]. Original error: " + str(hopt_error)
+        )
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):

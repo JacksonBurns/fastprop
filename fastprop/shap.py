@@ -17,13 +17,15 @@ shap = None
 try:
     import shap
 except ImportError as ie:
-    raise RuntimeError("Unable to import shap dependencies, please install fastprop[shap]. Original error: " + str(ie))
+    shape_error = ie
 
 
 logger = init_logger(__name__)
 
 
 def shap_fastprop(checkpoints_dir, input_file, importance_threshold=0.75):
+    if shap is None:
+        raise RuntimeError("Unable to import shap dependencies, please install fastprop[shap]. Original error: " + str(shape_error))
     # get the configuration file with some run metadata
     checkpoint_dir_contents = os.listdir(checkpoints_dir)
     with open(os.path.join(checkpoints_dir, "fastprop_config.yml")) as file:
