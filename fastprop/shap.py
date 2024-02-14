@@ -92,6 +92,7 @@ def shap_fastprop(checkpoints_dir, input_file, importance_threshold=0.75):
             model_shap_values = [model_shap_values]
         per_model_shap.append(model_shap_values)
     all_shap_values = np.mean(np.array(per_model_shap), axis=0)
+    # TODO: write these to a file, sorted by highest absolute SHAP on first target.
 
     # for each target, create a plot of the most important features
     for i, target_name in enumerate(config_dict["targets"]):
