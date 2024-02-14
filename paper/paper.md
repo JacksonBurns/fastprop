@@ -31,19 +31,25 @@ note: |
 
 
 # Abstract
- - **Problem**: Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
- - **Historical Approach**: Historically this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI (see the sub-field of transition metal-mediated cross-coupling reactions, where molecular descriptors specific to ligands such as cone angle, sterimol parameters, and buried volume are used).
- - This continued for years and culminated in packages like (sort these chronologically) DRAGON, Mordred, PaDEL-descriptor, E-DRAGON, Parameter Client, etc. Other packages like molfeat, ChemDes, and AIMSim aggregate these other descriptor generation tools
+Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
+Since its inception this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI.
+This continued for years and culminated in packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy),  Mordred, and many others.
+The sheer number of different packages resulted in the creation of 'metapackages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
+Despite the creation of these aggregation tools, QSPR studies have continued to focus on QOI-by-QOI studies rather than attempting to create a generalizable approach which is capable of modeling across chemical domains.
 
- - **Historical Approach, Today**: Break these two ideas out in much greater detail in the body of the text:
- - The logical combination of bulk molecular-level descriptors with deep learning as a regression technique (as stated in the chemprop paper) has not seen the same success as learned representations, like UniMol [@unimol], Communicative Message Passing Neural Networks [@cmpnn], and especially Chemprop [@chemprop_theory; @chemprop_software].
- - This may be due to a variety of factors: to do this need to know both sides of the lit, practice may have been wrong on the chemists side, computer scientists dont have the domain knowledge to think to use these, the development in these fields have been largely __orthogonal__.
- - Despite past failures, this paper establishes that by combining a cogent set of molecular descriptors with deep learning, generalizable deep-QSPR is realized.
+One contributing factor to this is that QSPR studies have relied almost exclusively on linear methods for regression.
+Efforts to incorporate Deep Learning (DL) as a regression technique (Deep-QSPR), which would be capable of capturing the non-linear behavior of arbitrary QOIs, have instead focused on using molecular fingerprints as inputs.
+The combination of bulk molecular-level descriptors with DL has remained largely unexplored, in significant part due to the orthogonal domain expertise required to combine the two.
+Generalizable QSPR has turned to learned representations primarily via message passing graph neural networks.
+This approach has proved remarkably effective but is not without drawbacks.
+Learning a representation requires large datasets to avoid overfitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
+This paper introduces `fasprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
+`fastprop` is designed with Research Software Engineering best practices and is free and open source, hosted at github.com/jacksonburns/fastprop.
 
 ## Scientific Contribution
 <!-- use a maximum of 3 sentences to specifically highlight the scientific contributions that advance the field and what differentiates your contribution from prior work on this topic. -->
- - `fastprop` is significantly faster than existing learned representations and more generalizable than typical QSPR approaches.
- - Use of molecular descriptors also enables effective modeling on datasets of miniscule size for typical generalizable approaches.
+`fastprop` is a QSPR framework that achieves state-of-the-art accuracy on datasets of all sizes without sacrificing speed or interpretability.
+As a software package `fastprop` emphasizes Research Software Engineering best practices, reproduciblity, and ease of use for experts across domains.
 
 # Keywords
  - QSPR
@@ -52,140 +58,177 @@ note: |
  - Molecular Descriptors
 
 # Introduction
- - in the same pattern as the outline in subsections, establish the idea of QSPR, the historical focus on linear methods with bespoke descriptors, the failure of these methods to work generally (I claim because the descriptor sets were not sufficient and the regression techniques could not learn the complex functions, i.e. non-linearity), the move into learned representations to counter this, and then the idea that modern software finally has good enough sets of descriptors to facilitate the previous approach and by going back and not 'starting' from zero we can go faster more interpretably and on smaller datasets
- - A lot of this is covered here: https://doi.org/10.1093/bib/bbad422 including an exhaustive list of descriptor calculation software and a good historical summary of why we are here today.
+Chemists have long sought a method to relate only the connectivity of a molecule to its corresponding molecular properties.
+The Quantitative Structure-Property Relationship (QSPR) would effectively solve the forward problem of molecular engineering and enable rapid development.
+Reviews on the topic are numerous and cover an enormous range of scientific subdomains; a comprehensive review of the literature is beyond the scope of this publication, though the work of Muratov and coauthors [@muratov_qsar] provides an excellent starting point for further review.
+An abridged version of the history behind QSPR is presented here to contextualize the approach of `fastprop`.
 
 ## Historical Approaches
-See this outstanding review by Muratov et. al (https://doi.org/10.1039/D0CS00098A), qsar was historically linear methods (nowadays also called ML), especially random forest, and has only recently tried DL; DL has been unsuccessful primarily because of data limitations, I will prove that it still can be successful.
+Early in the history of computing, limited computational power meant that significant human expertise was required to guide QSPR models toward effectiveness.
+This materialized in the form of bespoke molecular descriptors: the Wiener Index in 1947 [@wiener_index], Atom-Bond Connectivity indices in 1998 [@estrada_abc], and _thousands_ of others.
+To this day descriptors are still being developed - the geometric-harmonic-Zagreb degree based descriptors were proposed by Arockiaraj et al. in 2023 [@pah].
+In each case, domain experts devised an algorithm which mapped a molecular structure to some scalar value.
+This algorithm would take into account features of the molecule which that expert deduced were relevant to the property at hand.
+This time consuming technique is of course highly effective but the dispersed nature of this chemical knowledge means that these descriptors are spread out throughout many journals and domains with no single source to compute them all.
+
+The range of regression techniques applied to these descriptors has also been limited.
+As explained by Muratov et. al [@muratov_qsar] QSPR uses linear methods ("machine learning" in modern vocabulary) almost exclusively.
+The over-reliance on this category of approaches may be due to simply priorities; domain experts seek interpretability in their work, especially given that the inputs are physically meaningful descriptors, and linear method lend themselves well to this approach.
+Practice may also have been a limitation, since historically training and deploying neural networks required more computer science expertise than linear methods.
+
+All of this is not to say that DL has _never_ been applied to QSPR.
+Applications of DL to QSPR, i.e. DeepQSPR, were attempted throughout this time period but focused on the use of molecular fingerprints rather than descriptors.
+This may be at least partially attributed to knowledge overlap between deep learning experts and this sub-class of descriptors.
+Molecular fingerprints are bit vectors which encode the presence or absence of human-chosen sub-structures in an analogous manner to the "bag of words" featurization strategy common to natural language processing.
+It is reasonable to assume a DL expert may have bridged this gap to open this subdomain, and its effectiveness proved worthwhile.
+In the review of DL for QSPR by Ma and coauthors [@ma_deep_qsar], they state that combinations of fingerprint descriptors are more effective than molecular-level descriptors, either matching our outperforming linear methods across a number of ADME-related datasets.
+This study will later refute that suggestion.
+
+Despite their differences, both classical- and Deep-QSPR shared a lack of generalizability.
+Beyond the domains of chemistry where many of the descriptors had been originally devised, models were either unsuccessful or more likely simply never evaluated.
+As interest began to shift toward the prediction of molecular properties which were themselves descriptors (i.e. derived from quantum mechanics simulations) - to which none of the devised molecular descriptors were designed to be correlated - learned representations (LRs) emerged.
 
 ## Shift to Learned Representations
- - in the search for generalizable QSPR, we shifted away from molecular descriptors and fingerprints toward learned representations
- - exact paper is hard to pin, but the only general-purpose property prediction models on the 'leaderboards' today follow this line of thinking:
-Mention UniMol, Chemprop, CMPNN, and  GSL-MPP (https://arxiv.org/pdf/2312.16855.pdf) and SGGRL (https://arxiv.org/pdf/2401.03369.pdf) and MOCO (https://sxkdz.github.io/files/publications/JCIM/MOCO/MOCO.pdf).
-And also MHNN: https://github.com/schwallergroup/mhnn
-And also also GraphMSL: https://arxiv.org/pdf/2401.17615.pdf
+The exact timing of the transition from descriptors (molecular-level or fingerprints) to LRs is difficult to ascertain.
+Among the most cited at least is the work of Yang and coworkers in 2019 [@chemprop_theory] which laid the groundwork for applying LRs to "Property Prediction" - QSPR by another name.
+In short, the basic idea is to initialize a molecular graph with only information about its bonds and atoms such as order, aromaticity, atomic number, etc.
+Then via a Message Passing Neural Network (MPNN) architecture, which is able to aggregate these atom- and bond-level features into a vector in a manner which can be updated, the 'best' representation of the molecule is found during training.
+This method proved highly accurate _and_ achieved the generalizability apparently lacking in descriptor-based modeling.
+The corresponding software package Chemprop (later described in [@chemprop_software]) has become the de-facto standard for property prediction, partially because of the significant development and maintenance effort surrounding the software itself.
 
-## Previous Deep-QSPR and the `fastprop` Approach
- - as we moved toward learned representations, we lost interpretablity, sacrificed speed, and **lost the ability to correlate small datasets with a target** ([@chemprop_theory] states that <1000 entries, fingerprint models are competitive with Chemprop again) **because we are starting from near-zero everytime**
- - This review talks about wanting to fit on low data and the advanced ML techinques needed to do it when using these more involved models.
-https://chemrxiv.org/engage/chemrxiv/article-details/65b154a166c13817292fad82 they want low data DL, here it is! None of this involved stuff
-**by starting from such an informed initialization (100 years of descriptor design) we circumvent the need for advanced training techniques and progressively slower, complex, and uninterpretable models**
+Following the initial success of Chemprop numerous representation learning frameworks have been devised, all of slightly improve performance.
+The Communicative-MPNN (CMPNN) framework is a modified version of Chemprop with a different message passing scheme to increase the interactions between node and edge features [@cmpnn].
+Uni-Mol incorporates 3D information and relies extensively on transformers [@unimol].
+In a "full circle moment" architectures like the Molecular Hypergraph Neural Network (MHNN) have been devised to learn representations for specific subsets of chemistry, in that case optoelectronic properties [@mhnn].
+Myriad others exist including GSL-MPP (accounts for intra-dataset molecular similarity) [@gslmpp], SGGRL (trains three representations simultaneously using different input formats) [@sggrl], and MOCO (multiple representations and contrastive pretraining) [@moco].
 
-`fastprop` is simply the `mordred` molecular descriptor calculator connected to an FNN with research software engineering best practices applied at the same level as the best alternative in the literature Chemprop [@chemprop_software].
-See the `fastprop` logo in Figure \ref{logo}.
-This contradicts the leading review on deep-QSPR [@ma_deep_qsar] which says that these are ineffective, and that fingerprints should be used instead.
+### Limitations
+Despite the continuous incremental performance improvements, this area of research has had serious drawbacks.
+A thru-theme in these frameworks is the increasing complexity of DL techniques and consequent uninterpretability.
+This also means that actually _using_ these methods to do research on real-world dataset requires varying amounts of DL expertise, creating a rift between QSPR experts and these methods.
+Perhaps the most significant failure is the inability to achieve good predictions on small [^1] datasets.
+This is a long-standing limitation, with the original Chemprop paper stating that datasets with fewer than 1000 entries see fingerprint-based linear on par with Chemprop [@chemprop_theory].
+
+This limitation is especially challenging because it is a _fundamental_ drawback of the LR approach.
+Without the use of advanced DL techniques like pre-training or transfer learning, the model is essentially starting from near-zero information every time is trained.
+This inherently requires larger datasets to allow the model to effectively 're-learn' the chemical intuition which was built in to descriptor- and fingerprint-based representations.
+
+Efforts are of course underway to address this limitation, though none are broadly successful.
+One simple but incredibly computationally expensive approach is to use delta learning, which artificially increases dataset size by generating all possible _pairs_ of molecules from the available data (thus squaring the size of the dataset).
+This was attempted by Nalini et al. [@deepdelta], who use an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
+They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
+Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review], though such techniques are furthering the consequences of complexity mentioned above.
+
+While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
+A turning point in this domain was the release of `mordred`, a fast and well-developed package capable of calculating more than 1600 molecular descriptors.
+Critically this package was fully open source and written in Python, allowing it to readily interoperate with the world-class Python DL software ecosystem that greatly benefitted the LR community.
+Now despite previous evidence that molecular descriptors _cannot_ achieve generalizable QSPR in combination with DL, the opposite is shown.
+
+[^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon by researchers.
+For the purposes of this study, it will be used to refer to datasets with ~1000 samples or less, which the authors believe better reflects the size of real-world datasets.
+
+# Implementation
+At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}).
+The user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding properties.
+`fastprop` automatically calculates the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated target properties.
+By default this FNN is two hidden layers with 1800 neurons each, though the configuration can be readily changed via the command line interface or configuration file.
+`fastprop` owes its success to the cogent set of descriptors assembled by the developers of `mordred`, the ease of training FNNs with modern software like PyTorch Lightning, and the careful application of Research Software Engineering best practices that make it as user friendly as the best-maintained alternatives.
 
 ![`fastprop` logo.\label{logo}](../fastprop_logo.png){ width=2in }
 
-This is a simple idea, here are some that have tried it before and failed:
- - In the Fuel property prediction world, this review by Comesana and coauthors [@fuels_qsar_method] establishes that (1) methods using huge numbers of descriptors are not the most successful (2) instead introduces a method to downsample
- - Esaki and coauthors [@fubrain] took the mordred descriptors for a dataset of small molecules but then they did a huge pre-processing pipeline that removed all but 53 descs, and then only did linear methods. DeepDelta then fit on this dataset and improved the accuracy, but I do better here in the Benchmarks section.
+This trivially simple idea has been alluded to in previous published work but neither described in detail nor lauded for its generalizability or accuracy.
+Comesana and coauthors, based on a review of the biofuels property prediction landscape, established that methods (DL or otherwise) using large numbers of molecular descriptors were unsuccessful, instead proposing a feature selection method [@fuels_qsar_method].
+As a baseline in a study of photovoltaic property prediction, Wu et al. reported using the `mordred` descriptors in combination with both a Random Forest and an Artificial Neural Network, though the performance is worse than their bespoke model and no code is available for inspection [@wu_photovoltaic].
 
-Add more examples to the above after writing the benchmarks section (basically want to provide a short summary of each of the qspr-style benchmarks here, to get the point across).
+Others have also incorporated `mordred` descriptors into their modeling efforts, though none with a simple FNN as described above.
+Esaki and coauthors started a QSPR study with `mordred` descriptors for a dataset of small molecules, but via an enormously complex modeling pipeline (using only linear methods) removed all but 53 [@fubrain].
+Yalamanchi and coauthors used DL on `mordred` descriptors as part of a two-headed representation, but their network architecture was sequential hidden layers _decreasing_ in size to only 12 features [@yalamanchi] as opposed to the constant 1800 in `fastprop`.
 
-But of course, `fastprop` stands on the shoulder of giants, see this next section which talks about the evolution of molecular descriptor software.
+The reason `fastprop` stands out from these studies and contradicts previous reports is for the simple reason that it works.
+As discussed at length in the [Results & Discussion](#results--discussion) section, this approach matches the performance of leading LR approaches on common benchmark datasets and bespoke QSPR models on small real-world datasets.
+`fastprop` also overcomes the limitations of LRs discussed above.
+Because all inputs to the FNN are physically meaningful molecular descriptors, intermediate representations in the FNN are also physically meaningful and can be directly interpreted.
+The simplicity of the framework enables domain experts to apply it easily and makes model training dramatically faster than LRs.
+Most importantly this approach is successful on the _smallest_ of real-world datasets.
+By starting from such an informed initialization the FNN can be readily trained on datasets with as few as _forty_ training examples (see [PAHs](#pahs)).
 
-### Maturation of Descriptor Generation Software
- - part of the failure of this method may be the lack of descriptor generation software with a sufficient collection of descriptors, which `mordred` isThis continued for - expand on the line form the intro: DRAGON, Mordred, PaDEL-descriptor, E-DRAGON, etc. Other packages like molfeat and AIMSim aggregate these other descriptor generation tools
- - from here forward `mordred` will be referred to as such, though the actual implementation of `fastprop` uses a community-maintained fork of the original (which is no longer maintained) aptly named `mordredcommunity` (cite the Zenodo)
-
-# Implementation
- - PyTorch lightning FNN with a nice wrapper around `mordredcommunity` for the automatic generation and caching of molecular descriptors.
- - `fastprop` is open source under the terms of a permissive license (MIT) and hosted on GitHub. Detailed instructions for various installation methods can be found at the repository, as well as an issue tracker, etc.
+[^2]: The original `mordred` package is no longer maintained. `fastprop` uses a fork of `mordred` called `mordredcommunity` that is maintained by community-contributed patches (see github.com/JacksonBurns/mordred-community).
+Multiple descriptor calculators from the very thorough review by McGibbon et al. [@representation_review] could be used instead, though none are as readily interoperable as `mordred`.
 
 ## Example Usage
-As an example, this is what the input file looks like for running QM9 with `fastprop` (see https://github.com/JacksonBurns/fastprop/blob/main/benchmarks/qm9/qm9.yml for more):
+`fastprop` is built with ease of use at the forefront of design.
+To that end, input data is accepted in the immensely popular Comma-Separated Values (CSV) format, editable with all modern spreadsheet editors and completely platform independent.
+An example specify some properties for benzene is shown below, including its SMILES string:
+
 ```
-# qm9.yml
+compound,smiles,log_p,retention_index,boiling_point_c,acentric_factor
+Benzene,C1=CC=CC=C1,2.04,979,80,0.21
+```
 
-# architecture
-# optimize: True
-hidden_size: 1900
-fnn_layers: 3
+`fastprop` itself is accessed via the command line interface, with configuration parameters passed as either command line arguments or in an easily editable configuration file:
 
-# generic
-output_directory: qm9
-input_file: qm9/benchmark_data.csv
-target_columns: homo lumo gap
-smiles_column: smiles
-number_repeats: 2
-
+```
+# pah.yml
+# generic args
+output_directory: pah
+random_seed: 55
+problem_type: regression
 # featurization
-precomputed: qm9/precomputed.csv
-
+input_file: pah/arockiaraj_pah_data.csv
+target_columns: log_p
+smiles_column: smiles
+descriptors: all
+# preprocessing
+rescaling: True
+zero_variance_drop: False
+colinear_drop: False
 # training
-random_seed: 27
-batch_size: 163072
-number_epochs: 600
-patience: 30
-
-# data splitting
+number_repeats: 4
+number_epochs: 100
+batch_size: 64
+patience: 15
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1
-sampler: scaffold
+sampler: random
 ```
 
-## Choice of Descriptors
- - multiple descriptor generation tools were tried, none of which yielded the same performance as `mordred`
- - users can walk up with their own descriptors, and as shown in the reference code for the QuantumScents benchmark do so either programmatically or through the command line interface
- - on-th-fly descriptor generation can be pared down to only those which are often highly weighted, which would speed up inference and training time
-
+Training, prediction, and feature importance and then readily accessible via the commands `fastprop train`, `fastprop predict`, or `fastprop shap`, respectively.
+The `fastprop` GitHub repository contains a Jupyter notebook runnable from the browser via Google colab which allows users to actually execute the above example, which is also discussed at length in the [PAHs section](#pahs), as well as further details about each configurable option.
 
 # Results & Discussion
-Start by establishing difference between small and large datasets:
- - There are a number of established molecular property prediction benchmarks in the cheminfomatics community, especially those standardized by MoleculeNet.
- - Some of these, namely QM8/9, are perceived as the 'gold standard' for property prediction.
- - While this task is important, the enormous size of these datsets in particular means that many model architectures are highly accurate given the rich coverage of chemical space (inherent in the design of the combinatorial datasets) i.e. these datasets are so comprehensive, and model worth its salt should be able to learn.
+There are a number of established molecular property prediction benchmarks commonly used in LR studies, especially those standardized by MoleculeNet [@moleculenet].
+Principal among them are QM8 [@qm8] and QM9 [@qm9], often regarded as _the_ standard benchmark for property prediction.
+These are important benchmarks and are included here for completeness, though the enormous size and rich coverage of chemical space (inherent in the design of the combinatorial datasets) means that nearly all model architectures are highly accurate.
 
-Talk about the real world datasets to be worked on here:
- - Real world datasets, particularly those common in QSPR studies, often number in the hundreds.
- - To demonstrate the applicability of `fastprop` to these regimes, many smaller datasets are selected, including some from the QSPR literature that are not established benchmarks.
- - As explained in each subsection, these studies relied on **more complex and slow modeling techniques (the ARA dataset) or design of a bespoke descriptor (the PAH dataset)** and **have not yeen come to rely on learned representations as a go-to tool (whereas QM9 etc. are dominated by CMPNN, UniMol, Chemprop)**; **we believe because in these data-limited environments the 'start from almost-nothing' approach of Chemprop leads to overfitting or requires more data** and that the 'start from 100 years of QSPR' approach of `fastprop` circumvents this.
+Real world datasets, particularly those common in QSPR studies, often number in the hundreds.
+To demonstrate the applicability of `fastprop` to these regimes, many smaller datasets are selected including some from the QSPR literature that are not established benchmarks.
+These studies relied on more complex and slow modeling techniques ([ARA](#ara)) or the design of a bespoke descriptor ([PAHs](#pahs)) and have not yet come to rely on learned representations as a go-to tool.
+In these data-limited regimes where LRs sometimes struggle, `fastprop` and its intuition-loaded initialization are highly powerful.
+To emphasize this point further, the benchmarks are presented in order of size, descending, for first regression and then classification tasks.
+Consistently `fastprop` is able to match the performance of LRs on large datasets (O(10,000)+ entries) and compete with or exceed their performance on small datasets ($\leq$O(1,000) entries).
 
-The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid overfitting.
+<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid overfitting. -->
 
-To emphasize this point further, the benchmarks are presented in order of size descending (for first regression and then classification).
-Consistently `fastprop` is able to match the performance of learned representations on large (O(10,000)+ entries) datasets and compete with or exceed their performance on small ($\leq$O(1,000) entries).
-
-All of these `fastprop` benchmarks are reproducible, and complete instructions for installation, data retrieval and preparation, and training are publicly available on the `fastprop` GitHub repository [github.com/jacksonburns/fastprop](https://github.com/jacksonburns/fastprop).
-
-**TODO: re-run all of these (with timing, too) for a first complete draft**
+All of these `fastprop` benchmarks are reproducible, and complete instructions for installation, data retrieval and preparation, and training are publicly available on the `fastprop` GitHub repository at [github.com/jacksonburns/fastprop](https://github.com/jacksonburns/fastprop).
 
 ## Benchmark Methods
-All of these use 80% of the dataset for training (selected randomly, unless otherwise stated), 10% for validation, and holdout the remaining 10% for testing (unless otherwise stated).
+All benchmarks use 80% of the dataset for training (selected randomly, unless otherwise stated), 10% for validation, and holdout the remaining 10% for testing (unless otherwise stated).
 Sampling is performed using the `astartes` package [@astartes], which implements a variety of sampling algorithms and is highly reproducible.
 
-### Reporting of Error Bounds
- - Results for `fastprop` are reported with repetitions (explain) rather than with cross-validation (CV) (also explain).
- - When CV is performed without a holdout set, occasionally seen in literature, it allows the model to learn the validation dataset (the accuracy on which is reported as the 'result') during training (i.e. data leakage).
- - Even when CV is done corectly, i.e. with a holdout set, for small datasets especially this can lead to misreprentation of accuracy. The holdout set, when initially randomly selected, may contain only 'easy' samples; regardless of the number of folds within the training/validation data, the reported performance will be overly optimistic.
+Results for `fastprop` are reported as the average value of a metric and its standard deviation across a number of repetitions (repeated re-sampling of the dataset).
+The number of repetitions is chosen to either match referenced literature studies or else increased from two until the standard deviation changes by less than ten percent.
+Note that this is _not_ the same as cross-validation.
 
-<!-- Rant part that needs to be refined:
-The solution is to either _nest_ cross validation (i.e. repeat cross validation multiple times with different holdout sets (as was done in https://pubs.acs.org/doi/10.1021/acsomega.1c02156, for example)) or to just simply do repeats (like the MHNN paper)(more practical for deep learning, which is slow compared to linear methods **and, if anything, only makes the model performance not as good as it could since I don't optimize on each possible subset (so statistcally I'm not guaranteed a good result and NN should not be a steep function of this training choice) be so really I'm being super-duper extra honest here**). -->
+The evaluation metric used in each of these benchmarks are chosen to match literature precedent, particularly as established by MoleculeNet [@moleculenet].
+However, scale-dependent metrics require readers to understand the relative magnitude of the target variables (for regression) or understand the nuances of classification quantification (ARUOC).
+The authors prefer more readily interpretable metrics such as accuracy for classification and (Weighted) Mean Absolute Percentage Error (W/MAPE) for regression, both of which are included where relevant.
 
- - By simply repeating a random selection of train/validation/testing subsets, we reduce the impact of biased holdout set selections while also avoiding data leakage.
- - For this study, the number of repetitions vary per-benchmark and are determined by first setting the number of repetitions to two, and then increasing until the result of a 2-sided T-test between the validation and testing set accuracy yielded a p-value greater than 0.05 at 95% confidence.
- - At that point it is asserted that a reasonable approximation of the accuracy as a function of the holdout set has been achieved.
-
-### Choice of Evaluation Metric
-The evaluation metric used in each of these metrics (L1, L2, AUROC, etc.) are presented here because that is what the reference papers (and the literature at large) use, especially the metrics established in moleculenet.
-It is my opinion that this choice of metric 'buries the lede' by requiring the reader to understand the relative magnitude of the target variables (for regression) or understand the nuances of classification quantification (ARUOC).
-On the HOPV15 subset, for example, an MAE of 1.1 seems exceptional in the literature, except that the WMAPE is nearly N%.
-That's right - when weighted by their magnitude, the best performing model is still usually off by about N%.
-For classification, especially multilabel, AUROC scores near one are impressive despite accuracy being low.
-
-The best metrics to use are those that are actually interpretable: accuracy for classification, and mape (or wmape) for regression.
-Pertinent Metrics are included on a per-study basis to emphasize when a 'good looking' scale-dependent metric is also intuitively good.
-
-### Timing Results
-Execution time is as reported by the unix `time` command using Chemprop version 1.6.1 on Python 3.8 and `fastprop` 0.0.0b0 on Python 3.11 and include the complete invocation of their respective program, i.e. `time chemprop_train` and `time fastprop train`.
+Execution time is as reported by the unix `time` command using Chemprop version 1.6.1 on Python 3.8 and `fastprop` 1.0.0rc2 on Python 3.11 and include the complete invocation of their respective program: `time chemprop_train ...` and `time fastprop train ...`.
 The insignificant time spent manually collating Chemprop results (Chemprop does not natively support repetitions) is excluded.
-The latter version of Python is known to be broadly faster (as well as the more updated versions of some dependencies that come with it), but the overall speed trends still stand.
+This coarse comparison is intended to emphasize the scaling of LRs and Deep-QSPR and that `fastprop` is, generally speaking, much faster.
 
-TODO: report the timing results per-epoch rather than the overall time, which removes the annoyance of different numbers of epochs to converge.
-
-also TODO: break out and specifically mention the time to generate features for `fastprop`
+# TODO: break out and specifically mention the time to generate features for `fastprop` and update fastprop version in the paragrpah above this
 
 ## Regression Datasets
 See Table \ref{regression_results_table} for a summary of all the regression dataset results.
@@ -221,11 +264,11 @@ Table: Summary of regression benchmark results. \label{regression_results_table}
 a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn] d [@deepdelta] e [@flash] f [@ysi] (original study did not report accuracy across entire dataset) g [@hopv15_subset] (uses a subset of the complete HOPV15 dataset) h [@fubrain] i [@pah] * These results were generated for this study.
 
 ### QM9
- - ~130k points
- - Originally described in Scientific Data [@qm9] and perhaps _the_ most established property prediction benchmark; quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms.
- - Data was retrieved from MoleculeNet [@moleculenet] in a more readily usable format.
- - For comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol], a derivative of Chemprop that also encodes 3D information.
- - In this study they trained on only three especially difficult targets (homo, lumo, and gap) using 80/10/10 scaffold-based splitting.
+Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~130k.
+The data was retrieved from MoleculeNet [@moleculenet] in a readily usable format.
+As a point of comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol] previously mentioned.
+In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting.
+
  - `fastprop` gets an L1 average across the three tasks of 0.0062, which beats everything except the CMPNN which is also encoding 3D information.
  - TODO: re-run the CMPNN and Chemprop with a holdout set to get a more honest result.
 <!-- [01/17/2024 02:59:17 PM fastprop.fastprop_core] INFO: Displaying validation results:
@@ -1067,6 +1110,9 @@ Count	4 -->
 
 # Limitations and Future Work
 ## Execution Time
+Execution is ultimately not a significant concern - dataset generation takes a huge amount of time relative to all training methods.
+Day to day speedup is nice and significant here, but again just a nice to have.
+
 There is an obvious performance improvement to be had (both in training and inference) by reducing the number of descriptors used to a subset that are highly-weighted in the network.
 Future work will address the possibility of reducing the required number of descriptors to achieve accurate predictions, which would shrink the required size of the network and remove the training limitation and remediate the inference limitation.
 This has _not_ been done in this initial study for two reasons:
@@ -1098,13 +1144,15 @@ Cite Wengao's paper about backing out meaning from intermediate embeddings, but 
 The `mordredcommunity` featurization package could of course stand to have more features added that could potentially expand its applicability beyond the datasets listed here and improve the performance on those already attempted.
 Domain-specific additions which are not just derived from the descriptors already implemented will be required.
 
-### Stereochemical Descriptors
+### Stereochemical
 In its current state, the underlying `mordredcommunity` featurization engine does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
 While some of the 3D descriptors it implements will inherently reflects these differences somewhat, more explicit descriptors like the Stero Signature Molecular Descriptor (see https://doi.org/10.1021/ci300584r) may prove helpful in the future.
 
 This is really just one named domain - any domain where there are bespoke descriptors could be added to `mordredcommunity`.
 
-### Incoporating 3D Descriptors
+### Charged Species
+
+### 3D Descriptors
  - already supported by `mordredcommunity` just need to find a good way to ingest 3D data or embed 3D conformers (cite some lit. like quantumscents for the latter point)
 
 # Availability
