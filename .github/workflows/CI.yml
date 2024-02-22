@@ -69,6 +69,7 @@ jobs:
           coverage report -m
   
   ci-report-status:
+    if: ${{ always() }}
     name: report CI status
     needs: build-and-test
     runs-on: ubuntu-latest
