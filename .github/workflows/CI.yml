@@ -73,13 +73,14 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          result="${{ needs.build-and-test.result }}"
-          if [[ $result == "success" ]] ; then
-            exit 0
-          else
-            exit 1
-          fi
+      - run: exit 1
+        # see https://stackoverflow.com/a/67532120/4907315
+        if: >-
+          ${{
+               contains(needs.build-and-test.result, 'failure')
+            || contains(needs.build-and-test.result, 'cancelled')
+            || contains(needs.build-and-test.result, 'skipped')
+          }}
   
   check-for-new-release:
     runs-on: ubuntu-latest
