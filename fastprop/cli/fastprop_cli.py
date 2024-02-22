@@ -1,6 +1,8 @@
 import argparse
+import datetime
 import sys
 from importlib.metadata import version
+from time import perf_counter
 
 import yaml
 
@@ -18,6 +20,7 @@ logger = init_logger(__name__)
 
 
 def main():
+    cli_start = perf_counter()
     parser = argparse.ArgumentParser(description="fastprop command line interface - try 'fastprop subcommand --help'")
 
     parser.add_argument("-v", "--version", help="print version and exit", action="store_true")
@@ -105,7 +108,7 @@ def main():
             training_default.update({k: v for k, v in args.items() if v is not None})
 
         optim_requested = training_default.pop("optimize") or optim_requested
-        logger.info(f"Training Parameters:\n {yaml.dump(training_default, sort_keys=False)}")
+        logger.info(f"Training Parameters:\n{yaml.dump(training_default, sort_keys=False)}")
         # validate this dictionary, i.e. layer counts are positive, etc.
         # cannot specify both precomputed and descriptors or enable/cache
         validate_config(training_default)
@@ -129,3 +132,4 @@ def main():
         parser.print_help()
         sys.exit(0)
     logger.info("If you use fastprop in published work, please cite: ...WIP...")
+    logger.info("Total elapsed time: " + str(datetime.timedelta(seconds=perf_counter() - cli_start)))

@@ -1,23 +1,24 @@
 """
 hopt.py
 
-This file implements parallel hyperparameter optimization for fastprop using hyperopt.
+Implements parallel hyperparameter optimization for fastprop using ray[tune] and Optuna.
 """
 
 import logging
 import os
 
-import ray
+import numpy as np
 import torch
 import yaml
 
 from fastprop.defaults import init_logger
-from fastprop.fastprop_core import ArbitraryDataModule, _training_loop, fastprop
+from fastprop.fastprop_core import _training_loop, fastprop
 from fastprop.preprocessing import preprocess
 from fastprop.utils import _get_descs, load_from_csv
 
 tune, OptunaSearch = None, None
 try:
+    import ray
     from ray import tune
     from ray.tune.search.optuna import OptunaSearch
 except ImportError as ie:
@@ -44,7 +45,6 @@ def hopt_fastprop(
     descriptors="optimized",
     enable_cache=True,
     precomputed=None,
-    rescaling=True,
     zero_variance_drop=True,
     colinear_drop=False,
     learning_rate=0.0001,
@@ -64,56 +64,24 @@ def hopt_fastprop(
 ):
     if tune is None or OptunaSearch is None:
         raise RuntimeError(
-            "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt]. Original error: " + str(hopt_error)
+            "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt].\nOriginal error: " + str(hopt_error)
         )
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
     torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
     targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
-    descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols)
+    descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols, as_df=True)
 
-    logger.info("Preprocessing data...")
-    X, y, target_scaler = preprocess(descs, targets, rescaling, zero_variance_drop, colinear_drop, problem_type=problem_type)
-    target_scaler.feature_names_in_ = target_columns
-    num_classes = y.shape[1] if problem_type == "multiclass" else None
-    logger.info("...done.")
-    number_features = X.shape[1]
+    logger.info("Preprocessing features")
+    X = preprocess(descs, zero_variance_drop, colinear_drop).to_numpy()
 
-    datamodule = ArbitraryDataModule(X, y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
-    return _hopt_loop(
-        datamodule,
-        problem_type,
-        number_epochs,
-        learning_rate,
-        number_features,
-        target_scaler,
-        number_repeats,
-        output_directory,
-        random_seed,
-        patience,
-        num_classes,
-        n_parallel,
-        n_trials,
-    )
+    input_size = X.shape[1]
+    readout_size = targets.shape[1] if problem_type != "multiclass" else np.max(targets[:, 1])
 
-
-def _hopt_loop(
-    datamodule,
-    problem_type,
-    number_epochs,
-    learning_rate,
-    number_features,
-    target_scaler,
-    number_repeats,
-    output_directory,
-    random_seed,
-    patience,
-    num_classes,
-    n_parallel,
-    n_trials,
-):
-    datamodule_ref = ray.put(datamodule)
+    X_ref = ray.put(X)
+    targets_ref = ray.put(targets)
+    smiles_ref = ray.put(smiles)
 
     _, metric = fastprop.get_metrics(problem_type)
 
@@ -127,16 +95,23 @@ def _hopt_loop(
         tune.with_resources(
             lambda trial: objective(
                 trial,
-                datamodule_ref,
+                X_ref,
+                targets_ref,
+                smiles_ref,
+                input_size,
+                readout_size,
                 number_epochs,
                 learning_rate,
-                number_features,
-                target_scaler,
                 number_repeats,
-                output_directory,
                 patience,
                 problem_type,
-                num_classes,
+                train_size,
+                val_size,
+                test_size,
+                sampler,
+                target_columns,
+                batch_size,
+                random_seed,
             ),
             # run n_parallel models at the same time (leave 20% for system)
             # don't specify cpus, and just let pl figure it out
@@ -160,35 +135,52 @@ def _hopt_loop(
 
 def objective(
     trial,
-    datamodule_ref,
+    X_ref,
+    targets_ref,
+    smiles_ref,
+    input_size,
+    readout_size,
     number_epochs,
     learning_rate,
-    number_features,
-    target_scaler,
     number_repeats,
-    output_directory,
     patience,
     problem_type,
-    num_classes,
+    train_size,
+    val_size,
+    test_size,
+    sampler,
+    target_columns,
+    batch_size,
+    random_seed,
 ) -> float:
-    datamodule = ray.get(datamodule_ref)
+    X = ray.get(X_ref)
+    targets = ray.get(targets_ref)
+    smiles = ray.get(smiles_ref)
     results_df, _ = _training_loop(
         number_repeats,
-        number_features,
-        target_scaler,
         number_epochs,
+        input_size,
         trial["hidden_size"],
+        readout_size,
         learning_rate,
         trial["fnn_layers"],
-        output_directory,
-        datamodule,
+        None,  # output_directory ignored during hopt
         patience,
         problem_type,
-        num_classes,
+        train_size,
+        val_size,
+        test_size,
+        sampler,
+        smiles,
+        X,
+        targets,
+        target_columns,
+        batch_size,
+        random_seed,
         hopt=True,
     )
     _, metric = fastprop.get_metrics(problem_type)
-    if target_scaler.n_features_in_ == 1 or problem_type != "regression":
+    if readout_size == 1 or problem_type != "regression":
         return {metric: results_df.describe().at["mean", f"test_{metric}"]}
     else:
         return {metric: results_df.describe().at["mean", f"test_{metric}_avg"]}

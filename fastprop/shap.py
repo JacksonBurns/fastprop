@@ -3,7 +3,6 @@ import pickle
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 import yaml
 from tqdm import tqdm
@@ -50,10 +49,6 @@ def shap_fastprop(checkpoints_dir, input_file, importance_threshold=0.75):
         n_procs=0,  # ignored for "strategy='low-memory'"
         strategy="low-memory",
     )
-    descs = pd.DataFrame(data=descs, columns=config_dict["descriptors"])
-    for pickled_scaler in config_dict["feature_scalers"]:
-        scaler = pickle.loads(pickled_scaler)
-        descs = scaler.transform(descs)
 
     # load each of the models in the group
     all_models = []
@@ -62,22 +57,22 @@ def shap_fastprop(checkpoints_dir, input_file, importance_threshold=0.75):
             continue
         model = fastprop.load_from_checkpoint(
             os.path.join(checkpoints_dir, checkpoint),
-            number_features=config_dict["number_features"],
-            hidden_size=config_dict["hidden_size"],
-            target_scaler=pickle.loads(config_dict["target_scaler"]),
-            fnn_layers=config_dict["fnn_layers"],
-            problem_type=config_dict["problem_type"],
-            num_epochs=None,
-            learning_rate=None,
+            cleaned_data=None,
+            targets=None,
+            smiles=None,
         )
-        model.eval()
+        try:
+            with open(os.path.join(checkpoints_dir, f"repetition_{checkpoint.split('-')[1]}_scalers.yml")) as file:
+                scalers = yaml.safe_load(file)
+        except FileNotFoundError:
+            logger.error(f"checkpoints directory is missing 'repetition_{checkpoint.split('-')[1]}_scalers.yml'. Re-execute training.")
+        model.target_scaler = pickle.loads(scalers["target_scaler"])
+        model.mean_imputer = pickle.loads(scalers["mean_imputer"])
+        model.feature_scaler = pickle.loads(scalers["feature_scaler"])
         all_models.append(model)
 
-    # now send the data to whatever device lightning put the model on
-    X = torch.tensor(descs.to_numpy(), dtype=torch.float32).to(all_models[0].device)
-
     # we will use half of the data for 'integrating', and the other half for getting shap values
-    halfway_idx = len(X) // 2
+    halfway_idx = descs.shape[0] // 2
 
     # shap terminology explanation:
     # background: 100 to 1000 random samples from the training data
@@ -85,6 +80,8 @@ def shap_fastprop(checkpoints_dir, input_file, importance_threshold=0.75):
     # run shap on each of these models, then average the results
     per_model_shap = []
     for model in tqdm(all_models, desc="Calculating SHAP values for each model"):
+        # now scale and send the data to whatever device lightning put the model on
+        X = torch.tensor(model.feature_scaler.transform(model.mean_imputer.transform(descs)), dtype=torch.float32).to(model.device)
         e = shap.DeepExplainer(model, X[:halfway_idx])
         model_shap_values = e.shap_values(X[halfway_idx:])
         # returns a list for multi-target problems, cast for uniformity

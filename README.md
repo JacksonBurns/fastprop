@@ -74,10 +74,10 @@ There are four distinct steps in `fastprop` that define its framework:
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
-    - Enable/Disable re-scaling of parameters between 0 and 1 (enabled by default and _highly_ recommended)
     - Enable/Disable dropping of zero-variance parameters (disabled by default; faster, but often less accurate)
+
     ~~- Enable/Disable dropping of co-linear descriptors (disabled by default; faster, decreased accuracy)~~ _WIP_
-    - _not configurable_: `fastprop` will always drop columns with no values and impute missing values with the mean per-column
+    - _not configurable_: `fastprop` will always rescale input feature, drop columns with no values, and impute missing values with the mean per-column
  3. Training
     - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).
     - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
@@ -90,6 +90,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Output Directory
     - Learning rate
     - Batch size
+
     ~~- Checkpoint file to resume from (optional)~~ _WIP_
     - Problem type (one of: regression, binary, multiclass, multilabel)
  4. Prediction

@@ -1,17 +1,17 @@
 import datetime
 import logging
 import os
-import pickle
 
+import numpy as np
 import torch
 import yaml
 
-from fastprop import ArbitraryDataModule, fastprop_core
+from fastprop import fastprop_core
 from fastprop.defaults import _init_loggers, init_logger
 from fastprop.preprocessing import preprocess
 
 # choose the descriptor set absed on the args
-from fastprop.utils import _get_descs, linear_baseline, load_from_csv
+from fastprop.utils import _get_descs, load_from_csv
 
 logger = init_logger(__name__)
 
@@ -24,7 +24,6 @@ def train_fastprop(
     descriptors="optimized",
     enable_cache=True,
     precomputed=None,
-    rescaling=True,
     zero_variance_drop=False,
     colinear_drop=False,
     fnn_layers=2,
@@ -60,58 +59,41 @@ def train_fastprop(
     targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
     descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols, as_df=True)
 
-    logger.info("Preprocessing data...")
-    X, y, target_scaler, feature_scalers = preprocess(
-        descs,
-        targets,
-        rescaling,
-        zero_variance_drop,
-        colinear_drop,
-        problem_type=problem_type,
-        return_X_scalers=True,
-    )
-    target_scaler.feature_names_in_ = target_columns
-    num_classes = y.shape[1] if problem_type == "multiclass" else None
-    logger.info("...done.")
-
-    linear_baseline(problem_type, random_seed, number_repeats, sampler, train_size, val_size, test_size, X.to_numpy(), y, smiles, target_scaler)
-
-    datamodule = ArbitraryDataModule(X.to_numpy(), y, batch_size, random_seed, train_size, val_size, test_size, sampler, smiles=smiles)
-    number_features = X.shape[1]
+    logger.info("Preprocessing features")
+    X = preprocess(descs, zero_variance_drop, colinear_drop)
 
     # write information needed for feature importance, prediction, etc. into the checkpoints directory for later use
     with open(os.path.join(output_subdirectory, "checkpoints", "fastprop_config.yml"), "w") as file:
         file.write(
             yaml.dump(
-                dict(
-                    rescaling=rescaling,
-                    zero_variance_drop=zero_variance_drop,
-                    colinear_drop=colinear_drop,
-                    problem_type=problem_type,
-                    number_features=number_features,
-                    hidden_size=hidden_size,
-                    fnn_layers=fnn_layers,
-                    smiles=smiles_column,
-                    targets=target_columns,
-                    descriptors=X.columns.to_list(),
-                    target_scaler=pickle.dumps(target_scaler),
-                    feature_scalers=[pickle.dumps(i) for i in feature_scalers],
-                ),
+                dict(smiles=smiles_column, targets=target_columns, descriptors=X.columns.to_list()),
                 sort_keys=False,
             )
         )
 
+    input_size = X.shape[1]
+    readout_size = targets.shape[1] if problem_type != "multiclass" else np.max(targets[:, 1])
+
     return fastprop_core._training_loop(
         number_repeats,
-        number_features,
-        target_scaler,
         number_epochs,
+        input_size,
         hidden_size,
+        readout_size,
         learning_rate,
         fnn_layers,
         output_subdirectory,
-        datamodule,
         patience,
         problem_type,
-        num_classes,
+        train_size,
+        val_size,
+        test_size,
+        sampler,
+        smiles,
+        X.to_numpy(),
+        targets,
+        target_columns,
+        batch_size,
+        random_seed,
+        hopt=False,
     )

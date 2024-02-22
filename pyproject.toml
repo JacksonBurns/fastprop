@@ -33,6 +33,9 @@ fastprop = "fastprop.cli.fastprop_cli:main"
 [tool.isort]
 profile = "black"
 
+[tool.black]
+line-length = 150
+
 [tool.setuptools]
 include-package-data = true
 

@@ -29,7 +29,6 @@ DEFAULT_TRAINING_CONFIG = MappingProxyType(
         descriptors="optimized",
         enable_cache=True,
         precomputed=None,
-        rescaling=True,
         zero_variance_drop=False,
         colinear_drop=False,
         fnn_layers=2,
