@@ -8,7 +8,6 @@ import logging
 import os
 
 import numpy as np
-import torch
 import yaml
 
 from fastprop.defaults import init_logger
@@ -20,6 +19,7 @@ tune, OptunaSearch = None, None
 try:
     import ray
     from ray import tune
+    from ray.train.torch import enable_reproducibility
     from ray.tune.search.optuna import OptunaSearch
 except ImportError as ie:
     hopt_error = ie
@@ -67,7 +67,6 @@ def hopt_fastprop(
             "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt].\nOriginal error: " + str(hopt_error)
         )
     logging.getLogger("pytorch_lightning").setLevel(logging.WARNING)
-    torch.manual_seed(random_seed)
     if not os.path.exists(output_directory):
         os.mkdir(output_directory)
     targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
@@ -77,7 +76,7 @@ def hopt_fastprop(
     X = preprocess(descs, zero_variance_drop, colinear_drop).to_numpy()
 
     input_size = X.shape[1]
-    readout_size = targets.shape[1] if problem_type != "multiclass" else np.max(targets[:, 1])
+    readout_size = targets.shape[1] if problem_type != "multiclass" else (np.max(targets[:, 1]) + 1)
 
     X_ref = ray.put(X)
     targets_ref = ray.put(targets)
@@ -156,6 +155,7 @@ def objective(
     X = ray.get(X_ref)
     targets = ray.get(targets_ref)
     smiles = ray.get(smiles_ref)
+    enable_reproducibility(random_seed)
     results_df, _ = _training_loop(
         number_repeats,
         number_epochs,
