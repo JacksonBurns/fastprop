@@ -159,39 +159,11 @@ If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
 The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`).
-See the `paper/paper.md` for additional details for each benchmark, including the links to the citations, a better description of what the 'literature best' is, as well as more information about the reported performance metric.
-
-## Regression
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |
-+===============+====================+=============+===================================+============+=========================+
-|QM9            |~134                |MAE          |0.0047$^a$                         |0.0069      |0.0081$^a$               |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|OCELOTv1       |~25                 |MAE          |0.128$^b$                          |0.158       |0.140$^b$                |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|QM8            |~22                 |MAE          |0.016$^a$                          |0.018       |0.019$^a$                |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|ESOL           |~1.1                |RMSE         |0.55$^c$                           |0.64        |0.67$^c$                 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|FreeSolv       |~0.6                |RMSE         |0.82$^c$                           |1.33        |1.26$^c$                 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|Flash          |~0.6                |RMSE         |13.2$^e$                           |13.3        |21.2*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|YSI            |~0.4                |MAE          |22.3$^f$                           |13.6        |28.9*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|HOPV15$^g$     |~0.3                |MAE          |1.32$^g$                           |1.55        |1.60                     |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|Fubrain        |~0.3                |RMSE         |0.44$^h$/0.83$^d$                  |0.19/0.74   |0.22*/0.97$^d$           |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|PAH            |~0.06               |R2           |0.96$^i$                           |0.98        |0.59*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-
-
-## Classification
-
+To just see the results, checkout `paper/paper.pdf` (or `paper/paper.md` for the plain text version).
 
 # Developing `fastprop`
 Bug reports, feature requests, and pull requests are welcome and encouraged!
+Follow [this tutorial from GitHub](https://docs.github.com/en/get-started/exploring-projects-on-github/contributing-to-a-project) to get started.
 
 `fastprop` is built around PyTorch lightning, which defines a rigid API for implementing models that is followed here.
 See the [section on the package layout](#python-module) for information on where all the other functions are, and check out the docstrings and inline comments in each file for more information on what each does.
