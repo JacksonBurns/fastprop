@@ -3,8 +3,8 @@ import logging
 import os
 
 import numpy as np
-import torch
 import yaml
+from lightning.pytorch import seed_everything
 
 from fastprop import fastprop_core
 from fastprop.defaults import _init_loggers, init_logger
@@ -55,7 +55,7 @@ def train_fastprop(
     os.mkdir(os.path.join(output_subdirectory, "checkpoints"))
     _init_loggers(output_subdirectory)
     logging.getLogger("pytorch_lightning").setLevel(logging.INFO)
-    torch.manual_seed(random_seed)
+    seed_everything(random_seed)
     targets, mols, smiles = load_from_csv(input_file, smiles_column, target_columns)
     descs = _get_descs(precomputed, input_file, output_directory, descriptors, enable_cache, mols, as_df=True)
 
@@ -72,7 +72,7 @@ def train_fastprop(
         )
 
     input_size = X.shape[1]
-    readout_size = targets.shape[1] if problem_type != "multiclass" else np.max(targets[:, 1])
+    readout_size = targets.shape[1] if problem_type != "multiclass" else (np.max(targets[:, 1]) + 1)
 
     return fastprop_core._training_loop(
         number_repeats,

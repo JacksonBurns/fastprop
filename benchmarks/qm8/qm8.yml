@@ -22,10 +22,6 @@
 #
 # the UniMol paper reports results on a scaffold split.
 
-# architecture
-# optimize: True
-hidden_size: 3000
-fnn_layers: 5
 # generic
 output_directory: qm8
 input_file: qm8/benchmark_data.csv
@@ -39,7 +35,6 @@ descriptors: all
 enable_cache: True
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 
@@ -47,5 +42,5 @@ colinear_drop: False
 learning_rate: 0.0001
 random_seed: 709
 batch_size: 40768
-number_epochs: 1200
+number_epochs: 400
 patience: 30

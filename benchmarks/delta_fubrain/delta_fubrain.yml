@@ -45,11 +45,21 @@ descriptors: all
 enable_cache: True
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 
 # training
+
+# re-use architecture from regular fubrain model
+# number_repeats: 4
+# number_epochs: 20
+# batch_size: 256
+# patience: 2
+# train_size: 0.64
+# val_size: 0.07
+# test_size: 0.29
+
+# match the deepdelta paper
 number_repeats: 10
 number_epochs: 15
 batch_size: 256
@@ -57,4 +67,5 @@ patience: 20
 train_size: 0.90
 val_size: 0.01
 test_size: 0.10
+
 sampler: random

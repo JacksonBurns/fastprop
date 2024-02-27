@@ -1,6 +1,8 @@
+import datetime
 import os
 from multiprocessing import Pool
 from pathlib import Path
+from time import perf_counter
 from typing import Literal
 
 import numpy as np
@@ -41,6 +43,7 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
     Returns:
         np.array: Calculated descriptors.
     """
+    start = perf_counter()
     # descriptors should be a list of mordred descriptors classes
     if strategy not in {"fast", "low-memory"}:
         raise RuntimeError(f"Strategy {strategy} not supported, only 'fast' and 'low-memory'.")
@@ -61,6 +64,7 @@ def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Lit
         # mordred parallelism
         mordred_calc = Calculator(descriptors, ignore_3D=ignore_3d)
         mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=psutil.cpu_count(logical=True), quiet=False)))
+    logger.info(f"Descriptor calculation complete, elapsed time: {str(datetime.timedelta(seconds=perf_counter() - start))}")
     return mordred_descs
 
 

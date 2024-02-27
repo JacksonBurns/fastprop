@@ -7,7 +7,6 @@ _logging_format = dict(
     datefmt="%m/%d/%Y %I:%M:%S %p",
     level=logging.INFO,
 )
-logging.basicConfig(**_logging_format)
 
 
 def _init_loggers(outpath):

@@ -197,7 +197,9 @@ class fastprop(pl.LightningModule):
                 ) = train_val_test_split_molecules(self.smiles, **split_kwargs)
 
             logger.info("Imputing and rescaling input features.")
-            self.mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean")
+            # it is possible that the randomly chosen training set can have all entries missing a descriptor
+            # even if other members of the dataset are valued! They will be zeroed out
+            self.mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean", keep_empty_features=True)
             self.mean_imputer.fit(self.data[self.train_idxs, :])
             self.data = self.mean_imputer.transform(self.data)
 
@@ -322,7 +324,7 @@ class fastprop(pl.LightningModule):
                 self.log(f"{name}_r2", r2)
 
             # mean absolute percentage error
-            per_task_mape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values")
+            per_task_mape = np.abs(mape(rescaled_truth, rescaled_pred, multioutput="raw_values"))
             if n_tasks == 1:
                 self.log(f"{name}_mape", np.mean(per_task_mape))
             else:
@@ -332,7 +334,7 @@ class fastprop(pl.LightningModule):
             # same, but weighted
             # sklearn asks for an array of weights, but it actually just passes through to np.average which
             # accepts weights of the same shape as the inputs
-            per_task_wmape = mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth)
+            per_task_wmape = np.abs(mape(rescaled_truth, rescaled_pred, multioutput="raw_values", sample_weight=rescaled_truth))
             if n_tasks == 1:
                 self.log(f"{name}_wmape", np.mean(per_task_wmape))
             else:
@@ -445,6 +447,7 @@ def train_and_test(
         enable_checkpointing=enable_checkpoints,
         check_val_every_n_epoch=1,
         callbacks=callbacks,
+        deterministic=True,
     )
 
     t1_start = perf_counter()

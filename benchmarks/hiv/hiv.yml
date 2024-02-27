@@ -20,11 +20,11 @@
 # https://paperswithcode.com/sota/drug-discovery-on-hiv-dataset
 #
 # The original HIV dataset had three labels, and can be trained like this:
-problem_type: multiclass
-target_columns: ternary_activity
+# problem_type: multiclass
+# target_columns: ternary_activity
 # the modern version usually instead treats it as binary, like this:
-# problem_type: binary
-# target_columns: binary_activity
+problem_type: binary
+target_columns: binary_activity
 
 # generic args
 output_directory: hiv

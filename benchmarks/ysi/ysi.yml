@@ -20,8 +20,8 @@ problem_type: regression
 # run hyperparameter optimization
 # optimize: True
 # optimized results
-fnn_layers: 4
-hidden_size: 2800
+fnn_layers: 2
+hidden_size: 1200
 
 # featurization
 input_file: ysi/benchmark_data.csv
@@ -30,16 +30,15 @@ smiles_column: SMILES
 descriptors: all
 
 # preprocessing
-rescaling: True
 zero_variance_drop: True
 colinear_drop: False
 
 # training
-number_repeats: 4
+number_repeats: 8
 number_epochs: 100
 batch_size: 1024
 patience: 15
-train_size: 0.8
-val_size: 0.1
-test_size: 0.1
+train_size: 0.6
+val_size: 0.2
+test_size: 0.2
 sampler: random

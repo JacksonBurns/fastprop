@@ -77,9 +77,11 @@ There are four distinct steps in `fastprop` that define its framework:
     - Enable/Disable dropping of zero-variance parameters (disabled by default; faster, but often less accurate)
 
     ~~- Enable/Disable dropping of co-linear descriptors (disabled by default; faster, decreased accuracy)~~ _WIP_
-    - _not configurable_: `fastprop` will always rescale input feature, drop columns with no values, and impute missing values with the mean per-column
+    - _not configurable_: `fastprop` will always rescale input features, drop columns with no values, and impute missing values with the per-feature mean
  3. Training
     - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).
+
+    _and_
     - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
     - Hidden Size: number of neurons per FNN layer (default 1800)
 
@@ -136,7 +138,7 @@ To use the core `fastprop` model and dataloaders in your own work, consider look
 
 ### `fastprop`
  - `defaults`: contains the function `init_logger` used to initialize loggers in different submodules, as well as the default configuration for training.
- - `fastprop_core`: the model itself, data PyTorch Lightning dataloader, and convenience functions.
+ - `fastprop_core`: the model itself and convenience functions.
  - `hopt`: hyperparameter optimization using Optuna and Ray\[tune\], used by the CLI.
  - `train`: performs model training, used by the CLI.
  - `predict`: loads models from their checkpoint and config files and runs inference, used by the CLI.
@@ -156,49 +158,37 @@ To use the core `fastprop` model and dataloaders in your own work, consider look
 If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
-The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`) as well as the actual results, which are also summarized here.
-
-See the `benchmarks` or the `paper` for additional details for each benchmark, including a better description of what the 'literature best' is as well as more information about the reported performance metric.
+The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`).
+See the `paper/paper.md` for additional details for each benchmark, including the links to the citations, a better description of what the 'literature best' is, as well as more information about the reported performance metric.
 
 ## Regression
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |
++===============+====================+=============+===================================+============+=========================+
+|QM9            |~134                |MAE          |0.0047$^a$                         |0.0069      |0.0081$^a$               |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|OCELOTv1       |~25                 |MAE          |0.128$^b$                          |0.158       |0.140$^b$                |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|QM8            |~22                 |MAE          |0.016$^a$                          |0.018       |0.019$^a$                |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|ESOL           |~1.1                |RMSE         |0.55$^c$                           |0.64        |0.67$^c$                 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|FreeSolv       |~0.6                |RMSE         |0.82$^c$                           |1.33        |1.26$^c$                 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|Flash          |~0.6                |RMSE         |13.2$^e$                           |13.3        |21.2*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|YSI            |~0.4                |MAE          |22.3$^f$                           |13.6        |28.9*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|HOPV15$^g$     |~0.3                |MAE          |1.32$^g$                           |1.55        |1.60                     |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|Fubrain        |~0.3                |RMSE         |0.44$^h$/0.83$^d$                  |0.19/0.74   |0.22*/0.97$^d$           |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|PAH            |~0.06               |R2           |0.96$^i$                           |0.98        |0.59*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 
-| Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| QM9 | ~130 | L1 | 0.0047 $^a$ | 0.0063 | 0.0081 $^a$ | ~ |
-| OCELOTv1 | ~25 | GEOMEAN(L1) | 0.128 $^b$ | 0.148 | 0.140 $^b$ | ~ |
-| QM8 | ~22 | L1 | 0.016 $^a$  | 0.016 | 0.019 $^a$ | ~ |
-| ESOL | ~1.1 | L2 | 0.55 $^c$ | 0.57 | 0.67 $^c$ | ~ |
-| FreeSolv | ~0.6 | L2 | 1.29 $^d$ | 1.06 | 1.37 $^d$ | ~ |
-| Flash | ~0.6 | MAPE/RMSE | 2.5/13.2 $^e$ | 2.7/13.5 | ~/21.2 $^x$ | 5m43s/1m20s |
-| YSI | ~0.4 | MdAE/MAE | 2.9~28.6 $^f$ | 8.3/20.2 | ~/21.8 $^x$ | 4m3s/2m15s |
-| HOPV15 Subset | ~0.3 | L1 | 1.32 $^g$ | 1.44 | WIP | WIP |
-| Fubrain | ~0.3 | L2 | 0.44 $^h$ | 0.19 | 0.22 $^x$ | 5m11s/54s |
-| PAH | ~0.06 | R2 | 0.99 $^g$ | 0.96 | 0.75 $^x$ | 36s/2m12s |
 
 ## Classification
 
-| Benchmark | Number Samples (k) | Metric | Literature Best | `fastprop` | Chemprop | Speedup | 
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| HIV (binary) | ~41 | AUROC | 0.81 $^a$ | 0.81 | 0.77 $^a$ | ~ |
-| HIV (ternary) | ~41 | AUROC | ~ | 0.83 | WIP | ~ |
-| QuantumScents | ~3.5 | AUROC | 0.88 $^j$ | 0.91 | 0.85 $^j$ | ~ |
-| SIDER | ~1.4 | AUROC | 0.67 $^c$ | 0.66 | 0.57 $^c$ | ~ |
-| Pgp | ~1.3 | AUROC | WIP | 0.93 | WIP | ~ |
-| ARA | ~0.8 | Acc./AUROC | 0.91/0.95 $^k$ | 0.88/0.95 | 0.82/0.90 $^x$ | 16m54s/2m7s |
-
-### References
- - a: UniMol (10.26434/chemrxiv-2022-jjm0j-v4)
- - b: MHNN (10.48550/arXiv.2312.13136)
- - c: CMPNN (10.5555/3491440.3491832)
- - d: DeepDelta (10.1186/s13321-023-00769-x)
- - e: Saldana et al. (10.1021/ef200795j)
- - f: Das et al. (10.1016/j.combustflame.2017.12.005)
- - g: Eibeck et al. (10.1021/acsomega.1c02156)
- - h: Esaki et al. (10.1021/acs.jcim.9b00180)
- - i: Arockiaraj et al. (10.1080/1062936X.2023.2239149)
- - j: Burns et al. (10.1021/acs.jcim.3c01338)
- - k: DeepAR (10.1186/s13321-023-00721-z)
- - x: Run in this repository, see `benchmarks`.
 
 # Developing `fastprop`
 Bug reports, feature requests, and pull requests are welcome and encouraged!
