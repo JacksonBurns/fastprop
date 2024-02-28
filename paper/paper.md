@@ -39,7 +39,7 @@ note: |
 Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
 Since its inception this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI.
 This continued for years and culminated in packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy),  Mordred, and many others.
-The sheer number of different packages resulted in the creation of 'metapackages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
+The sheer number of different packages resulted in the creation of 'meta-packages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
 Despite the creation of these aggregation tools, QSPR studies have continued to focus on QOI-by-QOI studies rather than attempting to create a generalizable approach which is capable of modeling across chemical domains.
 
 One contributing factor to this is that QSPR studies have relied almost exclusively on linear methods for regression.
@@ -47,14 +47,14 @@ Efforts to incorporate Deep Learning (DL) as a regression technique (Deep-QSPR),
 The combination of bulk molecular-level descriptors with DL has remained largely unexplored, in significant part due to the orthogonal domain expertise required to combine the two.
 Generalizable QSPR has turned to learned representations primarily via message passing graph neural networks.
 This approach has proved remarkably effective but is not without drawbacks.
-Learning a representation requires large datasets to avoid overfitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
-This paper introduces `fasprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
+Learning a representation requires large datasets to avoid over-fitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
+This paper introduces `fastprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
 `fastprop` is designed with Research Software Engineering best practices and is free and open source, hosted at github.com/jacksonburns/fastprop.
 
 ## Scientific Contribution
 <!-- use a maximum of 3 sentences to specifically highlight the scientific contributions that advance the field and what differentiates your contribution from prior work on this topic. -->
 `fastprop` is a QSPR framework that achieves state-of-the-art accuracy on datasets of all sizes without sacrificing speed or interpretability.
-As a software package `fastprop` emphasizes Research Software Engineering best practices, reproduciblity, and ease of use for experts across domains.
+As a software package `fastprop` emphasizes Research Software Engineering best practices, reproducibility, and ease of use for experts across domains.
 
 # Keywords
  - QSPR
@@ -109,7 +109,7 @@ Myriad others exist including GSL-MPP (accounts for intra-dataset molecular simi
 
 ### Limitations
 Despite the continuous incremental performance improvements, this area of research has had serious drawbacks.
-A thru-theme in these frameworks is the increasing complexity of DL techniques and consequent uninterpretability.
+A thru-theme in these frameworks is the increasing complexity of DL techniques and consequent un-interpretability.
 This also means that actually _using_ these methods to do research on real-world dataset requires varying amounts of DL expertise, creating a rift between QSPR experts and these methods.
 Perhaps the most significant failure is the inability to achieve good predictions on small [^1] datasets.
 This is a long-standing limitation, with the original Chemprop paper stating that datasets with fewer than 1000 entries see fingerprint-based linear on par with Chemprop [@chemprop_theory].
@@ -212,7 +212,7 @@ In these data-limited regimes where LRs sometimes struggle, `fastprop` and its i
 To emphasize this point further, the benchmarks are presented in order of size, descending, for first regression and then classification tasks.
 Consistently `fastprop` is able to match the performance of LRs on large datasets (O(10,000)+ entries) and compete with or exceed their performance on small datasets ($\leq$O(1,000) entries).
 
-<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid overfitting. -->
+<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid over-fitting. -->
 
 All of these `fastprop` benchmarks are reproducible, and complete instructions for installation, data retrieval and preparation, and training are publicly available on the `fastprop` GitHub repository at [github.com/jacksonburns/fastprop](https://github.com/jacksonburns/fastprop).
 
@@ -286,7 +286,7 @@ a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn]
 Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~134k.
 The data was retrieved from MoleculeNet [@moleculenet] in a readily usable format.
 As a point of comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol] previously mentioned.
-In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting (a more challending alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
+In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting (a more challenging alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
 
 `fastprop` achieves 0.0069 $\pm$ 0.0002 mean absolute error, whereas Chemprop achieves 0.00814 $\pm$ 0.00001 and the UniMol framework manages 0.00467 $\pm$ 0.00004.
 This places the `fastprop` framework ahead of previous learned representation approaches but still trailing UniMol.
@@ -339,7 +339,7 @@ The Organic Crystals in Electronic and Light-Oriented Technologies (OCELOTv1) da
 The literature best model is the Molecular Hypergraph Neural Network (MHNN) [@mhnn] which specializes in learned representations for optoelectronic properties and also includes Chemprop as a baseline for comparison.
 They used a 70/10/20 random split with three repetitions and final performance reported is the average across those three repetitions.
 
-As done in the referene study, the MAE for each task is shown in Table \ref{ocelot_results_table}.
+As done in the reference study, the MAE for each task is shown in Table \ref{ocelot_results_table}.
 Meanings for each abbreviation are the same as in the original database publication [@ocelot].
 The geometric mean across all tasks, which accounts for the different scales of the target values better than the arithmetic mean, is also included as a summary statistic.
 Note also that the relative percentage performance difference between fastprop and chemprop (`fast/chem`) and fastprop and MHNN (`fast/MHNN`) are also included.
@@ -382,14 +382,14 @@ Table: Per-task OCELOT dataset results. MHNN and Chemprop results are retrieved 
 | G-Mean | 0.151    | 0.140    | 7.7%      | 0.128 | 17.9%     |
 +--------+----------+----------+-----------+-------+-----------+
 
-`fastprop` 'trades places with Chemprop, outperforming on four of the metrics (LUMO, HR, AR2) and underperforming on others.
+`fastprop` 'trades places with Chemprop, outperforming on four of the metrics (LUMO, HR, AR2) and under-performing on others.
 Overall the geometric mean of MAE across all the tasks is ~8% higher, though this result may not be statistically significant.
 Both `fastprop` and Chemprop are outperformed by the bespoke MHNN model, which is not itself evaluated on any other common property prediction benchmarks.
 
 Although `fastprop` is not able to reach state-of-the-art accuracy on this dataset this result is still promising.
 None of the descriptors implemented in `mordred` were designed to specifically correlate to these QM-derived targets, yet the FNN is able to learn a representation which is nearly as informative as Chemprop.
 The fact that a bespoke modeling approach is the most performant is not surprising and instead demonstrates the continued importance of expert input on certain domains.
-Were some of this expertise to be oriented toward the descriptor generation softare `mordredcommunity`, new descriptors could be added to address this apparent shortcoming.
+Were some of this expertise to be oriented toward the descriptor generation software `mordredcommunity`, new descriptors could be added to address this apparent shortcoming.
 <!-- [02/22/2024 08:13:00 PM fastprop.fastprop_core] INFO: Displaying validation results:
                               count         mean          std       min       25%       50%          75%           max
 validation_mse_loss             3.0     0.458501     0.057164  0.413317  0.426369  0.439421     0.481093      0.522765
@@ -531,7 +531,7 @@ test_rmse_output_s0t1     3.0     0.298857      0.008914  0.292517  0.293760  0.
 ### QM8
 Quantum Machine 8 (QM8) is the predecessor to QM9 first described in 2015 [@qm8].
 It follows the same generation procedure as QM9 but includes only up to eight heavy atoms for a total of approximately 22k molecules.
-Again, this study used the dataset as prepared by MoleculeNet [@moleculenet] and compares to the UniMol [@unimol] set of benchmarks as a reference point, wherein they used the same data splitting procedure described previsouly but regressed all 12 targets in QM8.
+Again, this study used the dataset as prepared by MoleculeNet [@moleculenet] and compares to the UniMol [@unimol] set of benchmarks as a reference point, wherein they used the same data splitting procedure described previously but regressed all 12 targets in QM8.
 
 UniMol achieved an average MAE across all tasks of 0.00156 $\pm$ 0.0001, `fastprop` approaches that performance with 0.0178 $\pm$ 0.003, and Chemprop trails both frameworks with 0.0190 $\pm$ 0.0001.
 Much like with QM9 `fastprop` outperforms LR frameworks until 3D information is encoded with UniMol.
@@ -693,18 +693,18 @@ test_rmse_output_f2-CAM      3.0  5.694622e-02  1.382938e-02       0.043153  5.0
 [02/22/2024 08:17:34 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:10:48.739306 -->
 
 ### ESOL
-First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular proeprty prediction studies.
+First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular property prediction studies.
 The dataset includes molecular structure for approximately 1.1k simple organic molecules are their corresponding experimentally measured free energy of solvation.
 This property is a classic target of QSPR studies and is especially well suited for `fastprop`.
 
 The CMPNN [@cmpnn] model, a derivative of Chemprop, is used for comparison.
 The performance values are _not_ those from the original paper but instead the _corrected_ results shown on the CMPNN GitHub page [@cmpnn_amended_results].
 These numbers are the average and standard deviation across 5 repetitions, each including 5-fold cross validation (60/20/20 random split), for a total of 25 models.
-`fastprop` performance is reported using the same split sizes across 8 repetitions _without_ cross validation; increasing the number of repeitions further did not meaningfully change model performance.
+`fastprop` performance is reported using the same split sizes across 8 repetitions _without_ cross validation; increasing the number of repetitions further did not meaningfully change model performance.
 
 `fastprop` achieves an RMSE of 0.643 $\pm$ 0.048 trailing the CMPNN at 0.547 $\pm$ 0.011 but matching Chemprop at 0.665 $\pm$ 0.052.
 The same pattern from previous benchmarks is repeated - `fastprop` matches the performance of generic learned representation approaches but is outperformed by bespoke modeling techniques.
-In this case the CMPNN has been designed to perform better on these benchmark datasets specfically and at an increased cost in both execution time and complexity.
+In this case the CMPNN has been designed to perform better on these benchmark datasets specifically and at an increased cost in both execution time and complexity.
 <!-- [02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: Displaying validation results:
                      count         mean           std       min       25%       50%         75%           max
 validation_mse_loss    8.0     0.095556      0.021735  0.071144  0.084887  0.090992    0.098194      0.144221
@@ -869,9 +869,9 @@ test_rmse        8.0  54.804913  13.585199  39.491203  43.347728  52.980692  65.
 [^3]: Predictions are available at this [permalink](https://github.com/pstjohn/ysi-fragment-prediction/blob/bdf8b16a792a69c3e3e63e64fba6f1d190746abe/data/ysi_predictions.csv) to the CSV file on GitHub.
 
 ### HOPV15 Subset
-The HOPV15 Subset is a collection of ~0.3k organic photovlotaic compounds curated by Eibeck and coworkers from the larger Harvard Organic Photovoltaics (HOPV15 [@hopv15_original]) based on criteria described in their paper [@hopv15_subset].
+The HOPV15 Subset is a collection of ~0.3k organic photovoltaic compounds curated by Eibeck and coworkers from the larger Harvard Organic Photovoltaic (HOPV15 [@hopv15_original]) based on criteria described in their paper [@hopv15_subset].
 This dataset is unique in that the target property Power Conversion Efficiency is both experimentally measurable or can be derived from quantum mechanics simulations, but regardless is not a 'classical' target of QSPR.
-After applying a variety of established modeling techniques Eibeck et al. achieved a best-case MAE of 1.32 $\pm$ 0.10 averaged across 5 randomly selected 60/20/20 data splits by using a simple molecular fingerprint representation and supprt vector regression.
+After applying a variety of established modeling techniques Eibeck et al. achieved a best-case MAE of 1.32 $\pm$ 0.10 averaged across 5 randomly selected 60/20/20 data splits by using a simple molecular fingerprint representation and support vector regression.
 
 In the course of this study it was found that changing the random seed when using only 5 repetitions would lead to dramatically different model performance.
 Thus, for this benchmark the number of repetitions was set _higher_ than the reference study at 15.
@@ -895,7 +895,7 @@ test_rmse        5.0  1.776624  0.185695  1.449138  1.806064  1.864390  1.880140
 First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimental experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
 This specific target in combination with this dataset size makes this benchmark highly relevant for typical QSPR studies.
 
-The study that first generated this dataset used `morded` descriptors but as is convention they strictly applied linear modeling methods.
+The study that first generated this dataset used `mordred` descriptors but as is convention they strictly applied linear modeling methods.
 Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
 All told, their model achieved an RMSE of 0.53 averaged across all testing data.
 
@@ -904,14 +904,14 @@ Under the same conditions Chemprop approaches `fastprop`'s performance with an R
 
 #### Delta-Fubrain
 Also noteworthy for the Fubrain dataset is that it has been subject to the delta-learning approach to small dataset limitations.
-DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were used to generate all possiible pairs and then the differences in the property [^4] were predicted rather than absolute values.
+DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were used to generate all possible pairs and then the differences in the property [^4] were predicted rather than absolute values.
 They reported an RMSE of 0.830 $\pm$ 0.023, whereas a Chemprop model trained to directly predict property values was only able to reach an accuracy of 0.965 $\pm$ 0.019 when evaluated on its capacity to predict property differences.
 
 `fastprop` is able to overcome these limitations.
-Using the same model from above (re-trained to predict log-transformed values), which has _less_ training data than DeepDelta even _before_ the augmentation, `fastprop` achieves 0.740 $\pm$ 0.087 RMSE after pairing all witheld test molecules.
-Increasing the amount of training data while retaining some samples for early stopping yields only small improvements, showing that `fastprop` may be approaching the irrededucible error of Fubrain.
+Using the same model from above (re-trained to predict log-transformed values), which has _less_ training data than DeepDelta even _before_ the augmentation, `fastprop` achieves 0.740 $\pm$ 0.087 RMSE after pairing all withheld test molecules.
+Increasing the amount of training data while retaining some samples for early stopping yields only small improvements, showing that `fastprop` may be approaching the irreducible error of Fubrain.
 With an 89/1/10 split the RMSE of `fastprop` decreases to 0.7118 $\pm$ 0.1381, though with significantly increased variance due to small size of the testing data.
-Regardless, the execution time and scaling issues of DeepDelta and the innaccuracy of Chemprop are effectively circumvented by `fastprop`.
+Regardless, the execution time and scaling issues of DeepDelta and the inaccuracy of Chemprop are effectively circumvented by `fastprop`.
 
 [^4]: Although the original Fubrain study reported untransformed fractions, the DeepDelta authors confirmed [via GitHub](https://github.com/RekerLab/DeepDelta/issues/2#issuecomment-1917936697) that DeepDelta was trained on log base-10 transformed fraction values, which is replicated here.
 <!-- [02/26/2024 11:07:47 PM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:00:36.317700
@@ -978,7 +978,7 @@ sys     0m15.378s
 Timing for fastprop: descriptor generation was 30 seconds, total was 54s. -->
 
 ### PAHs
-Originally compiled by Arockiaraj et al. [@pah] the Polyclic Aromatic Hydrocarbons (PAH) dataset contains water/octanol partition coefficients (logP) for exactly 55 polyclicic aromatic hydrocarbons ranging in size from napthalene to circumcoronene.
+Originally compiled by Arockiaraj et al. [@pah] the Polycyclic Aromatic Hydrocarbons (PAH) dataset contains water/octanol partition coefficients (logP) for exactly 55 polycyclic aromatic hydrocarbons ranging in size from napthalene to circumcoronene.
 This size of this benchmark is an ideal case study for the application of `fastprop`.
 Using expert insight the reference study designed a novel set of molecular descriptors that show a strong correlation to logP, with correlation coefficients ranging from 0.96 to 0.99 among the various new descriptors.
 
@@ -1092,7 +1092,7 @@ test_accuracy      3.0  0.428450  0.076047  0.343844  0.397120  0.450396  0.4707
 
 ### QuantumScents
 Compiled by Burns and Rogers [@quantumscents], this dataset contains approximately 3.5k SMILES and 3D structures for a collection of molecules labeled with their scents.
-Each molecule can have any number of reported scents from a possible 113 different labels, making this benchmark a a Quantitive Structure-Odor Relationship.
+Each molecule can have any number of reported scents from a possible 113 different labels, making this benchmark a a Quantitative Structure-Odor Relationship.
 Due to the highly sparse nature of the scent labels a unique sampling algorithm (Szymanski sampling [@szymanski]) was used in the reference study and the exact splits are replicated here for a fair comparison.
 
 In the reference study, Chemprop achieved an AUROC of 0.85 with modest hyperparameter optimization and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
@@ -1108,10 +1108,10 @@ Using the same approach, `fastprop` achieves a decent AUROC of 0.636+/-0.019.
 Despite many of the entries in this dataset being atypical for `mordred` near-leading performance is still possible, supporting the robustness and generalizability of this framework.
 
 ### Pgp
-First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Theraputic Data Commons (TDC) [@tdc] model benchmarking suite.
+First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Therapeutic Data Commons (TDC) [@tdc] model benchmarking suite.
 the dataset maps approximately 1.2k small molecule drugs to a binary label indicating if they inhibit P-glycoprotein (Pgp).
 TDC serves this data through a Python package, but due to installation issues the data was retrieved from the original study instead.
-The reccomended splitting approach is a 70/10/20 scaffold-based split which is done here with 4 replicates.
+The recommended splitting approach is a 70/10/20 scaffold-based split which is done here with 4 replicates.
 
 The model in the original study uses a molecular interaction field but has since been surpassed by other models.
 According to TDC the current leader [@pgp_best] on this benchmark has achieved an AUROC of 0.938 $\pm$ 0.002 [^5].
@@ -1204,15 +1204,15 @@ For day-to-day work it is convenient but the correctness of `fastprop`, especial
 Note that due to the large size of the FNN in `fastprop` it will typically be slower than Chemprop when training on a CPU since Chemprop uses a much smaller FNN and associated components.
 
 Regardless, there is an clear performance improvement to be had by reducing the number of descriptors to a subset of only the most important.
-Future work will address this possibility to decrease time requirements for both training by reducing network size and inference by decreasing the number of descriptors to be calcualted for new molecules.
-This has _not_ been done in this study for two reasons: (1) to emphasize the capacity of the DL framework to effecitvely perform feature selection on its own via the training process, de-emphasizing unimportant descriptors; (2) as discussed above, training time is small compared ot dataset generation time.
+Future work will address this possibility to decrease time requirements for both training by reducing network size and inference by decreasing the number of descriptors to be calculated for new molecules.
+This has _not_ been done in this study for two reasons: (1) to emphasize the capacity of the DL framework to effectively perform feature selection on its own via the training process, de-emphasizing unimportant descriptors; (2) as discussed above, training time is small compared ot dataset generation time.
 
 ## Coverage of Descriptors
 `fastprop` is fundamentally limited by the types of chemicals which can be uniquely described by the `mordred` package.
 Domain-specific additions which are not just derived from the descriptors already implemented will be required to expand its application to new domains.
 
 For example, in its current state `mordred` does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
-While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stero Signature Molecular Descriptor [@stero_signature] may prove helpful in the future if re-implemented in `mordred`.
+While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stereo Signature Molecular Descriptor [@stereo_signature] may prove helpful in the future if re-implemented in `mordred`.
 
 ## Interpretability
 Though not discussed here for the sake of length, `fastprop` already contains the functionality to perform feature importance studies on trained models.
@@ -1233,7 +1233,7 @@ Future studies will demonstrate this in greater detail.
 `fastprop` is Free and Open Source Software; anyone may view, modify, and execute it according to the terms of the MIT license.
 See github.com/jacksonburns/fastprop for more information.
 
-All data used in the Benchmarks shown above is publicly avialable under a permissive license. See the benchmarks directory at the `fastprop` GitHub page for instructions on retrieving each dataset and preparing it for use with `fastprop`, where applicable.
+All data used in the Benchmarks shown above is publicly available under a permissive license. See the benchmarks directory at the `fastprop` GitHub page for instructions on retrieving each dataset and preparing it for use with `fastprop`, where applicable.
 
 ## Competing interests
 None.
