@@ -17,11 +17,6 @@
 output_directory: ara
 random_seed: 1989
 problem_type: binary
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-# fnn_layers: 2
-# hidden_size: 256
 
 # featurization
 input_file: ara/benchmark_data.csv
@@ -30,6 +25,7 @@ smiles_column: Smiles
 descriptors: all
 
 # training
+hidden_size: 2300
 number_epochs: 40
 batch_size: 1024
 patience: 3

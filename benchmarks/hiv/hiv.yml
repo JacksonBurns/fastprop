@@ -20,24 +20,20 @@
 # https://paperswithcode.com/sota/drug-discovery-on-hiv-dataset
 #
 # The original HIV dataset had three labels, and can be trained like this:
-# problem_type: multiclass
-# target_columns: ternary_activity
+problem_type: multiclass
+target_columns: ternary_activity
 # the modern version usually instead treats it as binary, like this:
-problem_type: binary
-target_columns: binary_activity
+# problem_type: binary
+# target_columns: binary_activity
 
 # generic args
 output_directory: hiv
 random_seed: 765309408
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-# fnn_layers: 2
-# hidden_size: 2400
 
 # featurization
 input_file: hiv/benchmark_data.csv
 smiles_column: smiles
+descriptors: all
 precomputed: hiv/precomputed.csv
 
 # training

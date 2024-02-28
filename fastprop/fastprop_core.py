@@ -165,37 +165,39 @@ class fastprop(pl.LightningModule):
         self.hparams["num_classes"] = self.num_classes
         self.save_hyperparameters(ignore=("cleaned_data", "targets", "smiles"))
 
+    def _split(self):
+        logger.info(f"Sampling dataset with {self.sampler} sampler.")
+        split_kwargs = dict(
+            train_size=self.train_size,
+            val_size=self.val_size,
+            test_size=self.test_size,
+            sampler=self.sampler,
+            random_state=self.random_seed,
+            return_indices=True,
+        )
+        if self.sampler != "scaffold":
+            (
+                *_,
+                self.train_idxs,
+                self.val_idxs,
+                self.test_idxs,
+            ) = train_val_test_split(
+                self.data,
+                # flatten 1D targets
+                self.targets.flatten() if self.targets.shape[1] == 1 else self.targets,
+                **split_kwargs,
+            )
+        else:
+            (
+                *_,
+                self.train_idxs,
+                self.val_idxs,
+                self.test_idxs,
+            ) = train_val_test_split_molecules(self.smiles, **split_kwargs)
+
     def setup(self, stage=None):
         if stage == "fit":
-            logger.info(f"Sampling dataset with {self.sampler} sampler.")
-            split_kwargs = dict(
-                train_size=self.train_size,
-                val_size=self.val_size,
-                test_size=self.test_size,
-                sampler=self.sampler,
-                random_state=self.random_seed,
-                return_indices=True,
-            )
-            if self.sampler != "scaffold":
-                (
-                    *_,
-                    self.train_idxs,
-                    self.val_idxs,
-                    self.test_idxs,
-                ) = train_val_test_split(
-                    self.data,
-                    # flatten 1D targets
-                    self.targets.flatten() if self.targets.shape[1] == 1 else self.targets,
-                    **split_kwargs,
-                )
-            else:
-                (
-                    *_,
-                    self.train_idxs,
-                    self.val_idxs,
-                    self.test_idxs,
-                ) = train_val_test_split_molecules(self.smiles, **split_kwargs)
-
+            self._split()
             logger.info("Imputing and rescaling input features.")
             # it is possible that the randomly chosen training set can have all entries missing a descriptor
             # even if other members of the dataset are valued! They will be zeroed out

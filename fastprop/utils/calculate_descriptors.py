@@ -104,5 +104,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
                 d.to_csv(cache_file)
                 logger.info(f"Cached descriptors to {cache_file}.")
     if as_df:
+        if precomputed:  # specifying descriptors' names not required
+            return pd.DataFrame(data=descs)
         return pd.DataFrame(data=descs, columns=descriptors_lookup[descriptors])
     return descs

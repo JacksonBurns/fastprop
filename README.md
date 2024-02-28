@@ -94,7 +94,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Batch size
 
     ~~- Checkpoint file to resume from (optional)~~ _WIP_
-    - Problem type (one of: regression, binary, multiclass, multilabel)
+    - Problem type (one of: regression, binary, multiclass (start labels from 0), multilabel)
  4. Prediction
     - Input SMILES: either a single SMILES or a CSV file
     - Output format: filepath to write the results or nothing, defaults to stdout
@@ -159,7 +159,7 @@ If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
 The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`).
-To just see the results, checkout `paper/paper.pdf` (or `paper/paper.md` for the plain text version).
+To just see the results, checkout [`paper/paper.pdf`](./paper/paper.pdf) (or `paper/paper.md` for the plain text version).
 
 # Developing `fastprop`
 Bug reports, feature requests, and pull requests are welcome and encouraged!

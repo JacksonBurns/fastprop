@@ -72,7 +72,7 @@ def train_fastprop(
         )
 
     input_size = X.shape[1]
-    readout_size = targets.shape[1] if problem_type != "multiclass" else (np.max(targets[:, 1]) + 1)
+    readout_size = targets.shape[1] if problem_type != "multiclass" else int(np.max(targets) + 1)
 
     return fastprop_core._training_loop(
         number_repeats,

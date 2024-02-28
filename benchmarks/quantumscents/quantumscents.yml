@@ -13,7 +13,7 @@
 #
 # This file just demonstrates how to use fastprop using the config file -
 # as explained in the cited paper, we need to use a different splitting method
-# for this data. See quantumscents.py !
+# for this data. See quantumscents.py!
 #
 # Full Disclosure:
 # I (Jackson Burns) am lead author on the QuantumScents paper.
@@ -35,6 +35,8 @@ batch_size: 4096
 patience: 10
 
 # dataset splitting
+fnn_layers: 3
+hidden_size: 3000
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1
