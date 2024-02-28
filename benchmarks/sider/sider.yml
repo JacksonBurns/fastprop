@@ -36,16 +36,15 @@ smiles_column: smiles
 precomputed: sider/precomputed.csv
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 
 # training
-number_repeats: 5
+number_repeats: 8
 number_epochs: 150
 batch_size: 2048
 patience: 10
-train_size: 0.8
-val_size: 0.1
-test_size: 0.1
+train_size: 0.6
+val_size: 0.2
+test_size: 0.2
 sampler: random

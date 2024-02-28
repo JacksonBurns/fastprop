@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastprop"
-version = "1.0.0b2"
+version = "1.0.0b3"
 authors = [
     { name = "Jackson Burns" },
 ]
@@ -32,6 +32,9 @@ fastprop = "fastprop.cli.fastprop_cli:main"
 
 [tool.isort]
 profile = "black"
+
+[tool.black]
+line-length = 150
 
 [tool.setuptools]
 include-package-data = true

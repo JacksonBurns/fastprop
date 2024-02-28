@@ -28,25 +28,22 @@
 # papers-with-code also has a nice summary page:
 # https://paperswithcode.com/sota/molecular-property-prediction-on-qm9
 
-# architecture
-# optimize: True
-hidden_size: 1900
-fnn_layers: 3
 # generic
 output_directory: qm9
 input_file: qm9/benchmark_data.csv
 target_columns: homo lumo gap
 smiles_column: smiles
-number_repeats: 2
+number_repeats: 3
 
 # featurization
+descriptors: all
 precomputed: qm9/precomputed.csv
 
 # training
 random_seed: 27
 batch_size: 163072
-number_epochs: 600
-patience: 30
+number_epochs: 300
+patience: 10
 
 # data splitting
 train_size: 0.8

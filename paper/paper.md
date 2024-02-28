@@ -1,5 +1,6 @@
 ---
-title: "Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`. Part 1: Framework and Benchmarks"
+title: "Generalizable, Fast, and Accurate Deep-QSPR with `fastprop`"
+subtitle: "Part 1: Framework and Benchmarks"
 author: 
   - name: Jackson W. Burns \orcidlink{0000-0002-0657-9426}
     affil-id: 1
@@ -25,16 +26,20 @@ note: |
  You can then compile this paper with:
    pandoc --citeproc -s paper.md -o paper.pdf --template default.latex
  from the paper directory in fastprop.
+
+ To compile _without_ doing all that annoying setup (so, on _any_ pandoc version),
+ you can just leave off '--template default.latex' i.e.:
+  pandoc --citeproc -s paper.md -o paper.pdf
+ This won't render the author block correctly, but everything else should work fine.
 ---
 
 <!-- Graphical Abstract Goes Here -->
-
 
 # Abstract
 Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
 Since its inception this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI.
 This continued for years and culminated in packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy),  Mordred, and many others.
-The sheer number of different packages resulted in the creation of 'metapackages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
+The sheer number of different packages resulted in the creation of 'meta-packages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
 Despite the creation of these aggregation tools, QSPR studies have continued to focus on QOI-by-QOI studies rather than attempting to create a generalizable approach which is capable of modeling across chemical domains.
 
 One contributing factor to this is that QSPR studies have relied almost exclusively on linear methods for regression.
@@ -42,14 +47,14 @@ Efforts to incorporate Deep Learning (DL) as a regression technique (Deep-QSPR),
 The combination of bulk molecular-level descriptors with DL has remained largely unexplored, in significant part due to the orthogonal domain expertise required to combine the two.
 Generalizable QSPR has turned to learned representations primarily via message passing graph neural networks.
 This approach has proved remarkably effective but is not without drawbacks.
-Learning a representation requires large datasets to avoid overfitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
-This paper introduces `fasprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
+Learning a representation requires large datasets to avoid over-fitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
+This paper introduces `fastprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
 `fastprop` is designed with Research Software Engineering best practices and is free and open source, hosted at github.com/jacksonburns/fastprop.
 
 ## Scientific Contribution
 <!-- use a maximum of 3 sentences to specifically highlight the scientific contributions that advance the field and what differentiates your contribution from prior work on this topic. -->
 `fastprop` is a QSPR framework that achieves state-of-the-art accuracy on datasets of all sizes without sacrificing speed or interpretability.
-As a software package `fastprop` emphasizes Research Software Engineering best practices, reproduciblity, and ease of use for experts across domains.
+As a software package `fastprop` emphasizes Research Software Engineering best practices, reproducibility, and ease of use for experts across domains.
 
 # Keywords
  - QSPR
@@ -104,7 +109,7 @@ Myriad others exist including GSL-MPP (accounts for intra-dataset molecular simi
 
 ### Limitations
 Despite the continuous incremental performance improvements, this area of research has had serious drawbacks.
-A thru-theme in these frameworks is the increasing complexity of DL techniques and consequent uninterpretability.
+A thru-theme in these frameworks is the increasing complexity of DL techniques and consequent un-interpretability.
 This also means that actually _using_ these methods to do research on real-world dataset requires varying amounts of DL expertise, creating a rift between QSPR experts and these methods.
 Perhaps the most significant failure is the inability to achieve good predictions on small [^1] datasets.
 This is a long-standing limitation, with the original Chemprop paper stating that datasets with fewer than 1000 entries see fingerprint-based linear on par with Chemprop [@chemprop_theory].
@@ -130,8 +135,8 @@ For the purposes of this study, it will be used to refer to datasets with ~1000 
 # Implementation
 At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}).
 The user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding properties.
-`fastprop` automatically calculates the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated target properties.
-By default this FNN is two hidden layers with 1800 neurons each, though the configuration can be readily changed via the command line interface or configuration file.
+`fastprop` automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN with to predict the indicated target properties.
+By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the command line interface or configuration file.
 `fastprop` owes its success to the cogent set of descriptors assembled by the developers of `mordred`, the ease of training FNNs with modern software like PyTorch Lightning, and the careful application of Research Software Engineering best practices that make it as user friendly as the best-maintained alternatives.
 
 ![`fastprop` logo.\label{logo}](../fastprop_logo.png){ width=2in }
@@ -179,7 +184,6 @@ target_columns: log_p
 smiles_column: smiles
 descriptors: all
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 # training
@@ -208,27 +212,42 @@ In these data-limited regimes where LRs sometimes struggle, `fastprop` and its i
 To emphasize this point further, the benchmarks are presented in order of size, descending, for first regression and then classification tasks.
 Consistently `fastprop` is able to match the performance of LRs on large datasets (O(10,000)+ entries) and compete with or exceed their performance on small datasets ($\leq$O(1,000) entries).
 
-<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid overfitting. -->
+<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid over-fitting. -->
 
 All of these `fastprop` benchmarks are reproducible, and complete instructions for installation, data retrieval and preparation, and training are publicly available on the `fastprop` GitHub repository at [github.com/jacksonburns/fastprop](https://github.com/jacksonburns/fastprop).
 
 ## Benchmark Methods
 All benchmarks use 80% of the dataset for training (selected randomly, unless otherwise stated), 10% for validation, and holdout the remaining 10% for testing (unless otherwise stated).
-Sampling is performed using the `astartes` package [@astartes], which implements a variety of sampling algorithms and is highly reproducible.
+Sampling is performed using the `astartes` package [@astartes] which implements a variety of sampling algorithms and is highly reproducible.
 
 Results for `fastprop` are reported as the average value of a metric and its standard deviation across a number of repetitions (repeated re-sampling of the dataset).
-The number of repetitions is chosen to either match referenced literature studies or else increased from two until the standard deviation changes by less than ten percent.
+The number of repetitions is chosen to either match referenced literature studies or else increased from two until the performance no longer meaningfully changes.
 Note that this is _not_ the same as cross-validation.
 
-The evaluation metric used in each of these benchmarks are chosen to match literature precedent, particularly as established by MoleculeNet [@moleculenet].
-However, scale-dependent metrics require readers to understand the relative magnitude of the target variables (for regression) or understand the nuances of classification quantification (ARUOC).
-The authors prefer more readily interpretable metrics such as accuracy for classification and (Weighted) Mean Absolute Percentage Error (W/MAPE) for regression, both of which are included where relevant.
+For performance metrics retrieved from literature it is assumed that the authors optimized their respective models to achieve the best possible results; therefore, `fastprop` metrics are reported after model optimization using the `fastprop train ... --optimize` option.
+When results are generated for this study using Chemprop, the default settings are used except that the number of epochs is increased to allow the model to converge and batch size is increased to match dataset size and speed up training.
 
-Execution time is as reported by the unix `time` command using Chemprop version 1.6.1 on Python 3.8 and `fastprop` 1.0.0rc2 on Python 3.11 and include the complete invocation of their respective program: `time chemprop_train ...` and `time fastprop train ...`.
+When reported, execution time is as given by the unix `time` command using Chemprop version 1.6.1 on Python 3.8 and includes the complete invocation of Chemprop, i.e. `time chemprop_train ...`.
 The insignificant time spent manually collating Chemprop results (Chemprop does not natively support repetitions) is excluded.
-This coarse comparison is intended to emphasize the scaling of LRs and Deep-QSPR and that `fastprop` is, generally speaking, much faster.
+`fastprop` is run on version 1.0.0b2 using Python 3.11 and timing values are reported according to its internal time measurement  which was verified to be nearly identical to the Unix `time` command.
+The coarse comparison of the two packages is intended to emphasize the scaling of LRs and Deep-QSPR and that `fastprop` is, generally speaking, much faster.
+All models trained for this study were run on a Dell Precision series laptop with an NVIDIA Quadro RTX 4000 GPU and Intel Xeon E-2286M CPU.
 
-# TODO: break out and specifically mention the time to generate features for `fastprop` and update fastprop version in the paragrpah above this
+### Performance Metrics
+The evaluation metrics used in each of these benchmarks are chosen to match literature precedent, particularly as established by MoleculeNet [@moleculenet], where available.
+It is common to use scale-dependent metrics that require readers to understand the relative magnitude of the target variables.
+The authors prefer more readily interpretable metrics such as (Weighted) Mean Absolute Percentage Error (W/MAPE) and are included where relevant.
+
+All metrics are defined according to their typical formulae which are readily available online and are implemented in common software packages.
+Those presented here are summarized below, first for regression:
+ - Mean Absolute Error (MAE): Absolute difference between predictions and ground truth averaged across dataset; scale-dependent.
+ - Root Mean Squared Error (RMSE): Absolute differences _squared_ and then averaged; scale-dependent.
+ - Mean Absolute Percentage Error (MAPE): MAE except that differences are relative (i.e. divided by the ground truth); scale-independent, range 0 (best) and up.
+ - Weighted Mean Absolute Percentage Error (WMAPE): MAPE except the average is a weighted average, where the weight is the magnitude of the ground truth; scale-independent, range 0 (best) and up.
+ - Coefficient of Determination (R2): Proportion of variance explained; scale-independent, range 0 (worst) to 1 (best).
+and classification:
+ - Area Under the Receiver Operating Curve (AUROC, AUC, or ROC-AUC): Summary statistic combining all possible classification errors; scale-independent, range 0.5 (worst, random guessing) to 1.0 (perfect classifier).
+ - Accuracy: Fraction of correct classifications, expressed as either a percentage or a number; scale-independent, range 0 (worst) to 1 (perfect classifier).
 
 ## Regression Datasets
 See Table \ref{regression_results_table} for a summary of all the regression dataset results.
@@ -237,449 +256,543 @@ Citations for the datasets themselves are included in the sub-sections of this s
 
 Table: Summary of regression benchmark results. \label{regression_results_table}
 
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |   Speedup   |
-+===============+====================+=============+===================================+============+=========================+=============+
-|QM9            |~130                |L1           |0.0047$^a$                         |0.0063      |0.0081$^a$               |      ~      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|OCELOTv1       |~25                 |L1           |0.128$^b$                          |0.148       |0.140$^b$                |      ~      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|QM8            |~22                 |L1           |0.016$^a$                          |0.013       |0.019$^a$                |      ~      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|ESOL           |~1.1                |L2           |0.55$^c$                           |0.57        |0.67$^c$                 |      ~      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|FreeSolv       |~0.6                |L2           |1.29$^d$                           |1.06        |1.37$^d$                 |      ~      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|Flash          |~0.6                |L2           |13.2$^e$                           |13.5        |21.2*                    | 5m43s/1m20s |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|YSI            |~0.4                |L1           |See $^f$                           |8.3/20.2    |21.8*                    | 4m3s/2m15s  |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|HOPV15$^g$     |~0.3                |L1           |1.32$^g$                           |1.44        |WIP                      |     WIP     |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|Fubrain        |~0.3                |L2           |0.44$^h$                           |0.19        |0.22*                    |  5m11s/54s  |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
-|PAH            |~0.06               |R2           |0.96$^i$                           |0.96        |0.75*                    |  36s/2m12s  |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+-------------+
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |
++===============+====================+=============+===================================+============+=========================+
+|QM9            |~134                |MAE          |0.0047$^a$                         |0.0069      |0.0081$^a$               |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|OCELOTv1       |~25                 |MAE          |0.128$^b$                          |0.158       |0.140$^b$                |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|QM8            |~22                 |MAE          |0.016$^a$                          |0.018       |0.019$^a$                |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|ESOL           |~1.1                |RMSE         |0.55$^c$                           |0.64        |0.67$^c$                 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|FreeSolv       |~0.6                |RMSE         |0.82$^c$                           |1.33        |1.26$^c$                 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|Flash          |~0.6                |RMSE         |13.2$^e$                           |13.3        |21.2*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|YSI            |~0.4                |MAE          |22.3$^f$                           |13.6        |28.9*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|HOPV15$^g$     |~0.3                |MAE          |1.32$^g$                           |1.55        |1.60                     |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|Fubrain        |~0.3                |RMSE         |0.44$^h$/0.83$^d$                  |0.19/0.74   |0.22*/0.97$^d$           |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
+|PAH            |~0.06               |R2           |0.96$^i$                           |0.98        |0.59*                    |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 
-a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn] d [@deepdelta] e [@flash] f [@ysi] (original study did not report accuracy across entire dataset) g [@hopv15_subset] (uses a subset of the complete HOPV15 dataset) h [@fubrain] i [@pah] * These results were generated for this study.
+a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn] d [@deepdelta] (delta-learning instead of direct prediction) e [@flash] f [@ysi] g [@hopv15_subset] (uses a subset of the complete HOPV15 dataset) h [@fubrain] i [@pah] * These results were generated for this study.
 
 ### QM9
-Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~130k.
+Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~134k.
 The data was retrieved from MoleculeNet [@moleculenet] in a readily usable format.
 As a point of comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol] previously mentioned.
-In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting.
+In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting (a more challenging alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
 
- - `fastprop` gets an L1 average across the three tasks of 0.0062, which beats everything except the CMPNN which is also encoding 3D information.
- - TODO: re-run the CMPNN and Chemprop with a holdout set to get a more honest result.
-<!-- [01/17/2024 02:59:17 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                              count      mean       std       min       25%       50%       75%       max
-validation_mse_loss             2.0  0.062624  0.002877  0.060589  0.061606  0.062624  0.063641  0.064658
-validation_mean_wmape           2.0  0.031053  0.000352  0.030804  0.030928  0.031053  0.031177  0.031302
-validation_wmape_output_homo    2.0  0.022841  0.001046  0.022102  0.022472  0.022841  0.023211  0.023581
-validation_wmape_output_lumo    2.0  0.037646  0.000530  0.037271  0.037459  0.037646  0.037834  0.038021
-validation_wmape_output_gap     2.0  0.032671  0.000540  0.032289  0.032480  0.032671  0.032862  0.033053
-validation_l1_avg               2.0  0.006285  0.000167  0.006167  0.006226  0.006285  0.006344  0.006403
-validation_l1_output_homo       2.0  0.005193  0.000270  0.005003  0.005098  0.005193  0.005289  0.005384
-validation_l1_output_lumo       2.0  0.005782  0.000033  0.005759  0.005770  0.005782  0.005794  0.005805
-validation_l1_output_gap        2.0  0.007879  0.000264  0.007692  0.007786  0.007879  0.007973  0.008066
-validation_rmse_avg             2.0  0.008689  0.000094  0.008623  0.008656  0.008689  0.008723  0.008756
-validation_rmse_output_homo     2.0  0.007231  0.000269  0.007041  0.007136  0.007231  0.007326  0.007421
-validation_rmse_output_lumo     2.0  0.008019  0.000250  0.007842  0.007931  0.008019  0.008107  0.008195
-validation_rmse_output_gap      2.0  0.010819  0.000262  0.010634  0.010726  0.010819  0.010912  0.011004
-[01/17/2024 02:59:17 PM fastprop.fastprop_core] INFO: Displaying testing results:
-                        count      mean       std       min       25%       50%       75%       max
-test_mse_loss             2.0  0.062043  0.003316  0.059698  0.060870  0.062043  0.063215  0.064388
-test_mean_wmape           2.0 -0.017467  0.066770 -0.064680 -0.041073 -0.017467  0.006140  0.029747
-test_wmape_output_homo    2.0  0.021891  0.000724  0.021379  0.021635  0.021891  0.022147  0.022403
-test_wmape_output_lumo    2.0 -0.105799  0.203817 -0.249920 -0.177860 -0.105799 -0.033739  0.038321
-test_wmape_output_gap     2.0  0.031509  0.002782  0.029542  0.030525  0.031509  0.032492  0.033476
-test_l1_avg               2.0  0.006247  0.000357  0.005995  0.006121  0.006247  0.006374  0.006500
-test_l1_output_homo       2.0  0.005246  0.000161  0.005132  0.005189  0.005246  0.005302  0.005359
-test_l1_output_lumo       2.0  0.005687  0.000452  0.005367  0.005527  0.005687  0.005847  0.006007
-test_l1_output_gap        2.0  0.007810  0.000457  0.007487  0.007648  0.007810  0.007971  0.008133
-test_rmse_avg             2.0  0.008664  0.000429  0.008361  0.008513  0.008664  0.008816  0.008967
-test_rmse_output_homo     2.0  0.007164  0.000041  0.007135  0.007150  0.007164  0.007179  0.007193
-test_rmse_output_lumo     2.0  0.007932  0.000676  0.007454  0.007693  0.007932  0.008171  0.008410
-test_rmse_output_gap      2.0  0.010896  0.000651  0.010436  0.010666  0.010896  0.011126  0.011356 -->
-
+`fastprop` achieves 0.0069 $\pm$ 0.0002 mean absolute error, whereas Chemprop achieves 0.00814 $\pm$ 0.00001 and the UniMol framework manages 0.00467 $\pm$ 0.00004.
+This places the `fastprop` framework ahead of previous learned representation approaches but still trailing UniMol.
+This is not completely unexpected since UniMol encodes 3D information from the dataset whereas Chemprop and `fastprop` use only 2D.
+Future work could evaluate the use of 3D-based descriptors to improve `fastprop` performance in the same manner that UniMol has with LRs.
+<!-- [02/22/2024 02:00:05 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                              count          mean           std          min           25%           50%           75%           max
+validation_mse_loss             3.0      0.074331      0.004045     0.071092      0.072064      0.073036      0.075951      0.078866
+validation_mean_mape            3.0   8916.004822   8791.351180   685.089172   4285.491608   7885.894043  13031.462646  18177.031250
+validation_mape_output_homo     3.0      0.024943      0.000986     0.024281      0.024377      0.024472      0.025274      0.026076
+validation_mape_output_lumo     3.0  26747.952230  26374.052969  2055.206299  12856.412720  23657.619141  39094.325195  54531.031250
+validation_mape_output_gap      3.0      0.038382      0.001576     0.036933      0.037543      0.038154      0.039107      0.040060
+validation_mean_wmape           3.0      0.029807      0.001175     0.028462      0.029392      0.030322      0.030480      0.030637
+validation_wmape_output_homo    3.0      0.024363      0.001001     0.023704      0.023787      0.023871      0.024693      0.025515
+validation_wmape_output_lumo    3.0      0.029821      0.006076     0.022880      0.027640      0.032400      0.033291      0.034182
+validation_wmape_output_gap     3.0      0.035238      0.001599     0.033860      0.034361      0.034862      0.035927      0.036991
+validation_l1_avg               3.0      0.006832      0.000228     0.006605      0.006717      0.006830      0.006945      0.007061
+validation_l1_output_homo       3.0      0.005640      0.000169     0.005450      0.005572      0.005693      0.005734      0.005775
+validation_l1_output_lumo       3.0      0.006222      0.000330     0.005971      0.006036      0.006101      0.006348      0.006595
+validation_l1_output_gap        3.0      0.008634      0.000321     0.008263      0.008538      0.008813      0.008819      0.008825
+validation_rmse_avg             3.0      0.009365      0.000316     0.009006      0.009248      0.009489      0.009545      0.009600
+validation_rmse_output_homo     3.0      0.007635      0.000120     0.007498      0.007592      0.007686      0.007703      0.007720
+validation_rmse_output_lumo     3.0      0.008663      0.000514     0.008278      0.008372      0.008465      0.008856      0.009247
+validation_rmse_output_gap      3.0      0.011798      0.000523     0.011243      0.011556      0.011869      0.012075      0.012282
+[02/22/2024 02:00:05 PM fastprop.fastprop_core] INFO: Displaying testing results:
+                        count          mean           std           min           25%           50%           75%            max
+test_mse_loss             3.0      0.073060      0.000311      0.072757      0.072901      0.073045      0.073212       0.073378
+test_mean_mape            3.0  20154.996419  19143.980541   6330.125000   9229.730957  12129.336914  27067.432129   42005.527344
+test_mape_output_homo     3.0      0.023933      0.000574      0.023577      0.023601      0.023626      0.024110       0.024595
+test_mape_output_lumo     3.0  60464.930990  57431.941419  18990.316406  27689.134766  36387.953125  81202.238281  126016.523438
+test_mape_output_gap      3.0      0.038007      0.002316      0.035378      0.037136      0.038893      0.039321       0.039748
+test_mean_wmape           3.0      0.057512      0.050808      0.023704      0.028298      0.032892      0.074416       0.115940
+test_wmape_output_homo    3.0      0.023486      0.000632      0.023037      0.023124      0.023211      0.023710       0.024209
+test_wmape_output_lumo    3.0      0.114208      0.152918      0.010358      0.026408      0.042458      0.166133       0.289807
+test_wmape_output_gap     3.0      0.034843      0.001773      0.033007      0.033992      0.034976      0.035761       0.036547
+test_l1_avg               3.0      0.006873      0.000226      0.006668      0.006751      0.006834      0.006975       0.007115
+test_l1_output_homo       3.0      0.005614      0.000129      0.005511      0.005541      0.005571      0.005665       0.005759
+test_l1_output_lumo       3.0      0.006342      0.000237      0.006069      0.006265      0.006461      0.006478       0.006495
+test_l1_output_gap        3.0      0.008663      0.000406      0.008365      0.008431      0.008497      0.008811       0.009126
+test_rmse_avg             3.0      0.009353      0.000259      0.009071      0.009240      0.009410      0.009494       0.009579
+test_rmse_output_homo     3.0      0.007488      0.000155      0.007322      0.007419      0.007517      0.007572       0.007627
+test_rmse_output_lumo     3.0      0.008727      0.000372      0.008318      0.008566      0.008814      0.008931       0.009047
+test_rmse_output_gap      3.0      0.011845      0.000460      0.011377      0.011619      0.011861      0.012079       0.012296
+[02/22/2024 02:00:05 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.962>0.05.
+[02/22/2024 02:00:06 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/22/2024 02:00:06 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:56:27.500738 -->
 
 ### OCELOTv1
- - ~25k points
- - Originally described by Bhat et al. [@ocelot]; quantum mechanics descriptors and optoelectronic properties of chromophoric small molecules.
- - Literature best model is the Molecular Hypergraph Neural Network (MHNN) [@mhnn] which specializes in the prediction of optoelectronic properties, and they have comparisons to a lot of other models.
- - Uses a 70/10/20 random split with three repetitions, final performance reported is the average across those three repetitions.
- - Performance for each metric is shown in Table \ref{ocelot_results_table}.
- - `fastprop` 'trades places' with Chemprop, outperforming on some metrics and not on others. Overall geometrics mean of performance is ~6% lower. Both are worse than the MHNN across the board, though it is of course limited to this application.
- - TODO: add training time for Chemprop and possibly also the MHNN.
+The Organic Crystals in Electronic and Light-Oriented Technologies (OCELOTv1) dataset, originally described by Bhat et al. [@ocelot], maps 15 quantum mechanics descriptors and optoelectronic properties to ~25k chromophoric small molecules.
+The literature best model is the Molecular Hypergraph Neural Network (MHNN) [@mhnn] which specializes in learned representations for optoelectronic properties and also includes Chemprop as a baseline for comparison.
+They used a 70/10/20 random split with three repetitions and final performance reported is the average across those three repetitions.
 
-Table: Per-task OCELOT dataset results. \label{ocelot_results_table}
+As done in the reference study, the MAE for each task is shown in Table \ref{ocelot_results_table}.
+Meanings for each abbreviation are the same as in the original database publication [@ocelot].
+The geometric mean across all tasks, which accounts for the different scales of the target values better than the arithmetic mean, is also included as a summary statistic.
+Note also that the relative percentage performance difference between fastprop and chemprop (`fast/chem`) and fastprop and MHNN (`fast/MHNN`) are also included.
+
+Table: Per-task OCELOT dataset results. MHNN and Chemprop results are retrieved from the literature [@mhnn]. \label{ocelot_results_table}
 
 +--------+----------+----------+-----------+-------+-----------+
 | Target | fastprop | Chemprop | fast/chem | MHNN  | fast/mhnn |
 +========+==========+==========+===========+=======+===========+
-| HOMO   | 0.326    | 0.330    | -0.013    | 0.306 | 0.064     |
+| HOMO   | 0.328    | 0.330    | -0.7%     | 0.306 | 7.1%      |
 +--------+----------+----------+-----------+-------+-----------+
-| LUMO   | 0.283    | 0.289    | -0.022    | 0.258 | 0.096     |
+| LUMO   | 0.285    | 0.289    | -1.5%     | 0.258 | 10.4%     |
 +--------+----------+----------+-----------+-------+-----------+
-| H-L    | 0.554    | 0.548    | 0.011     | 0.519 | 0.067     |
+| H-L    | 0.555    | 0.548    | 1.4%      | 0.519 | 7.0%      |
 +--------+----------+----------+-----------+-------+-----------+
-| VIE    | 0.205    | 0.191    | 0.075     | 0.178 | 0.153     |
+| VIE    | 0.210    | 0.191    | 9.9%      | 0.178 | 18.0%     |
 +--------+----------+----------+-----------+-------+-----------+
-| AIE    | 0.196    | 0.173    | 0.135     | 0.162 | 0.212     |
+| AIE    | 0.201    | 0.173    | 16.2%     | 0.162 | 24.0%     |
 +--------+----------+----------+-----------+-------+-----------+
-| CR1    | 0.056    | 0.055    | 0.011     | 0.053 | 0.049     |
+| CR1    | 0.057    | 0.055    | 3.3%      | 0.053 | 7.2%      |
 +--------+----------+----------+-----------+-------+-----------+
-| CR2    | 0.055    | 0.053    | 0.047     | 0.052 | 0.067     |
+| CR2    | 0.057    | 0.053    | 7.2%      | 0.052 | 9.3%      |
 +--------+----------+----------+-----------+-------+-----------+
-| HR     | 0.106    | 0.133    | -0.204    | 0.099 | 0.070     |
+| HR     | 0.108    | 0.133    | -18.5%    | 0.099 | 9.5%      |
 +--------+----------+----------+-----------+-------+-----------+
-| VEA    | 0.190    | 0.157    | 0.211     | 0.138 | 0.377     |
+| VEA    | 0.194    | 0.157    | 23.5%     | 0.138 | 40.5%     |
 +--------+----------+----------+-----------+-------+-----------+
-| AEA    | 0.183    | 0.154    | 0.189     | 0.124 | 0.477     |
+| AEA    | 0.188    | 0.154    | 21.8%     | 0.124 | 51.3%     |
 +--------+----------+----------+-----------+-------+-----------+
-| AR1    | 0.054    | 0.051    | 0.066     | 0.050 | 0.088     |
+| AR1    | 0.055    | 0.051    | 8.2%      | 0.050 | 10.4%     |
 +--------+----------+----------+-----------+-------+-----------+
-| AR2    | 0.049    | 0.052    | -0.062    | 0.046 | 0.061     |
+| AR2    | 0.049    | 0.052    | -5.1%     | 0.046 | 7.3%      |
 +--------+----------+----------+-----------+-------+-----------+
-| ER     | 0.099    | 0.098    | 0.006     | 0.092 | 0.072     |
+| ER     | 0.100    | 0.098    | 1.9%      | 0.092 | 8.5%      |
 +--------+----------+----------+-----------+-------+-----------+
-| S0S1   | 0.281    | 0.249    | 0.130     | 0.241 | 0.167     |
+| S0S1   | 0.284    | 0.249    | 14.3%     | 0.241 | 18.0%     |
 +--------+----------+----------+-----------+-------+-----------+
-| S0T1   | 0.217    | 0.150    | 0.449     | 0.145 | 0.499     |
+| S0T1   | 0.222    | 0.150    | 48.3%     | 0.145 | 53.4%     |
 +--------+----------+----------+-----------+-------+-----------+
-| G-Mean | 0.148    | 0.140    | 0.059     | 0.128 | 0.159     |
+| G-Mean | 0.151    | 0.140    | 7.7%      | 0.128 | 17.9%     |
 +--------+----------+----------+-----------+-------+-----------+
 
-<!-- [01/27/2024 01:34:22 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                              count         mean           std       min       25%       50%           75%           max
-validation_mse_loss             3.0     0.437923      0.031080  0.408489  0.421674  0.434859      0.452641      0.470422
-validation_mean_mape            3.0   457.692561    791.853958  0.488916  0.515466  0.542015    686.294384   1372.046753
-validation_mape_output_homo     3.0     0.043952      0.000813  0.043013  0.043713  0.044413      0.044421      0.044430
-validation_mape_output_lumo     3.0  6860.512874  11878.665632  1.704524  2.362084  3.019645  10289.917049  20576.814453
-validation_mape_output_hl       3.0     0.081019      0.000771  0.080131  0.080766  0.081401      0.081462      0.081524
-validation_mape_output_vie      3.0     0.027475      0.000456  0.027014  0.027251  0.027488      0.027706      0.027924
-validation_mape_output_aie      3.0     0.027116      0.000250  0.026878  0.026985  0.027092      0.027235      0.027377
-validation_mape_output_cr1      3.0     0.320258      0.025930  0.290674  0.310865  0.331057      0.335050      0.339042
-validation_mape_output_cr2      3.0     0.289624      0.006519  0.284585  0.285943  0.287301      0.292144      0.296986
-validation_mape_output_hr       3.0     0.279492      0.007925  0.274156  0.274938  0.275721      0.282160      0.288599
-validation_mape_output_vea      3.0     1.565336      0.746833  1.087140  1.135040  1.182939      1.804434      2.425929
-validation_mape_output_aea      3.0     1.378040      0.607123  0.910523  1.034958  1.159394      1.611798      2.064202
-validation_mape_output_ar1      3.0     0.232608      0.004380  0.228735  0.230231  0.231728      0.234544      0.237361
-validation_mape_output_ar2      3.0     0.217496      0.005116  0.214423  0.214543  0.214664      0.219033      0.223402
-validation_mape_output_er       3.0     0.216211      0.003481  0.213963  0.214207  0.214451      0.217336      0.220221
-validation_mape_output_s0s1     3.0     0.083662      0.000929  0.082665  0.083241  0.083818      0.084160      0.084503
-validation_mape_output_s0t1     3.0     0.113278      0.005188  0.108385  0.110557  0.112730      0.115724      0.118718
-validation_mean_wmape           3.0     0.158738      0.001945  0.156521  0.158031  0.159542      0.159847      0.160153
-validation_wmape_output_homo    3.0     0.044866      0.001004  0.043731  0.044480  0.045228      0.045434      0.045639
-validation_wmape_output_lumo    3.0     0.220602      0.017266  0.207375  0.210835  0.214295      0.227215      0.240135
-validation_wmape_output_hl      3.0     0.083119      0.001707  0.081269  0.082362  0.083455      0.084044      0.084633
-validation_wmape_output_vie     3.0     0.027440      0.000501  0.026888  0.027226  0.027564      0.027716      0.027867
-validation_wmape_output_aie     3.0     0.026985      0.000299  0.026651  0.026864  0.027078      0.027152      0.027226
-validation_wmape_output_cr1     3.0     0.269902      0.005773  0.264228  0.266967  0.269707      0.272738      0.275770
-validation_wmape_output_cr2     3.0     0.264344      0.003076  0.261077  0.262924  0.264771      0.265978      0.267184
-validation_wmape_output_hr      3.0     0.253679      0.003357  0.251126  0.251778  0.252430      0.254956      0.257481
-validation_wmape_output_vea     3.0     0.215136      0.011052  0.208607  0.208755  0.208904      0.218400      0.227897
-validation_wmape_output_aea     3.0     0.181748      0.006029  0.177335  0.178313  0.179291      0.183954      0.188617
-validation_wmape_output_ar1     3.0     0.218091      0.003922  0.215752  0.215827  0.215902      0.219260      0.222618
-validation_wmape_output_ar2     3.0     0.205097      0.002949  0.202737  0.203444  0.204151      0.206277      0.208402
-validation_wmape_output_er      3.0     0.202633      0.003069  0.200151  0.200917  0.201683      0.203874      0.206065
-validation_wmape_output_s0s1    3.0     0.078706      0.001999  0.076408  0.078035  0.079661      0.079855      0.080049
-validation_wmape_output_s0t1    3.0     0.088727      0.000619  0.088063  0.088446  0.088829      0.089059      0.089289
-validation_l1_avg               3.0     0.190971      0.002980  0.187569  0.189898  0.192228      0.192672      0.193117
-validation_l1_output_homo       3.0     0.327876      0.008082  0.318807  0.324656  0.330505      0.332411      0.334316
-validation_l1_output_lumo       3.0     0.282298      0.003973  0.278997  0.280093  0.281188      0.283948      0.286708
-validation_l1_output_hl         3.0     0.556048      0.014018  0.541137  0.549592  0.558047      0.563503      0.568959
-validation_l1_output_vie        3.0     0.206442      0.004058  0.201922  0.204778  0.207634      0.208702      0.209771
-validation_l1_output_aie        3.0     0.197372      0.002464  0.194591  0.196417  0.198242      0.198762      0.199282
-validation_l1_output_cr1        3.0     0.056464      0.001262  0.055018  0.056025  0.057032      0.057187      0.057342
-validation_l1_output_cr2        3.0     0.056339      0.000187  0.056125  0.056274  0.056423      0.056446      0.056469
-validation_l1_output_hr         3.0     0.107138      0.001400  0.105522  0.106718  0.107914      0.107946      0.107978
-validation_l1_output_vea        3.0     0.189927      0.000915  0.189228  0.189409  0.189591      0.190277      0.190962
-validation_l1_output_aea        3.0     0.183977      0.001184  0.182842  0.183362  0.183882      0.184544      0.185205
-validation_l1_output_ar1        3.0     0.054081      0.001246  0.052930  0.053419  0.053908      0.054656      0.055404
-validation_l1_output_ar2        3.0     0.048891      0.000793  0.048298  0.048441  0.048584      0.049188      0.049792
-validation_l1_output_er         3.0     0.098550      0.001752  0.097158  0.097566  0.097974      0.099246      0.100518
-validation_l1_output_s0s1       3.0     0.280686      0.007707  0.271787  0.278418  0.285048      0.285135      0.285223
-validation_l1_output_s0t1       3.0     0.218480      0.001132  0.217562  0.217847  0.218133      0.218939      0.219745
-validation_rmse_avg             3.0     0.262428      0.007821  0.254018  0.258902  0.263785      0.266633      0.269481
-validation_rmse_output_homo     3.0     0.449266      0.016604  0.430230  0.443520  0.456810      0.458784      0.460759
-validation_rmse_output_lumo     3.0     0.381361      0.011412  0.369203  0.376120  0.383037      0.387439      0.391841
-validation_rmse_output_hl       3.0     0.762951      0.034178  0.723505  0.752551  0.781597      0.782674      0.783751
-validation_rmse_output_vie      3.0     0.279988      0.008204  0.270847  0.276628  0.282410      0.284559      0.286709
-validation_rmse_output_aie      3.0     0.266181      0.004701  0.260797  0.264535  0.268272      0.268873      0.269473
-validation_rmse_output_cr1      3.0     0.080651      0.003373  0.076759  0.079615  0.082471      0.082597      0.082722
-validation_rmse_output_cr2      3.0     0.080876      0.000333  0.080521  0.080723  0.080926      0.081054      0.081182
-validation_rmse_output_hr       3.0     0.148035      0.002827  0.144893  0.146867  0.148841      0.149606      0.150372
-validation_rmse_output_vea      3.0     0.263131      0.007303  0.255435  0.259715  0.263994      0.266979      0.269964
-validation_rmse_output_aea      3.0     0.252015      0.002363  0.249485  0.250940  0.252394      0.253280      0.254165
-validation_rmse_output_ar1      3.0     0.076508      0.004346  0.073287  0.074036  0.074786      0.078119      0.081452
-validation_rmse_output_ar2      3.0     0.070932      0.005591  0.067537  0.067706  0.067874      0.072630      0.077386
-validation_rmse_output_er       3.0     0.136559      0.010008  0.130081  0.130795  0.131509      0.139798      0.148086
-validation_rmse_output_s0s1     3.0     0.382504      0.015409  0.365091  0.376566  0.388041      0.391210      0.394379
-validation_rmse_output_s0t1     3.0     0.305466      0.007914  0.300469  0.300903  0.301338      0.307964      0.314590
-[01/27/2024 01:34:22 PM fastprop.fastprop_core] INFO: Displaying testing results:
-                        count         mean          std       min       25%       50%          75%          max
-test_mse_loss             3.0     0.414413     0.005850  0.408153  0.411748  0.415344     0.417542     0.419741
-test_mean_mape            3.0    92.198119   158.913946  0.427868  0.449110  0.470352   138.083244   275.696136
-test_mape_output_homo     3.0     0.043621     0.000397  0.043206  0.043434  0.043662     0.043829     0.043996
-test_mape_output_lumo     3.0  1378.096812  2383.949202  1.659294  1.723099  1.786904  2066.315571  4130.844238
-test_mape_output_hl       3.0     0.080582     0.001628  0.078841  0.079840  0.080839     0.081453     0.082067
-test_mape_output_vie      3.0     0.027308     0.000335  0.027082  0.027116  0.027150     0.027421     0.027693
-test_mape_output_aie      3.0     0.026981     0.000402  0.026579  0.026780  0.026980     0.027181     0.027383
-test_mape_output_cr1      3.0     0.299770     0.002900  0.296461  0.298721  0.300980     0.301424     0.301869
-test_mape_output_cr2      3.0     0.298791     0.017050  0.285199  0.289225  0.293251     0.305586     0.317922
-test_mape_output_hr       3.0     0.281513     0.004548  0.276411  0.279697  0.282984     0.284063     0.285143
-test_mape_output_vea      3.0     1.653483     0.619840  1.284069  1.295681  1.307293     1.838190     2.369087
-test_mape_output_aea      3.0     1.294828     0.186082  1.085695  1.221190  1.356684     1.399395     1.442105
-test_mape_output_ar1      3.0     0.236608     0.004589  0.232684  0.234085  0.235487     0.238570     0.241654
-test_mape_output_ar2      3.0     0.220259     0.000343  0.219870  0.220129  0.220389     0.220453     0.220518
-test_mape_output_er       3.0     0.218587     0.001987  0.216829  0.217509  0.218188     0.219465     0.220743
-test_mape_output_s0s1     3.0     0.083439     0.001196  0.082061  0.083058  0.084056     0.084129     0.084202
-test_mape_output_s0t1     3.0     0.109259     0.003797  0.106142  0.107144  0.108147     0.110817     0.113487
-test_mean_wmape           3.0     0.158096     0.000491  0.157581  0.157864  0.158147     0.158353     0.158560
-test_wmape_output_homo    3.0     0.044575     0.000320  0.044220  0.044442  0.044664     0.044752     0.044840
-test_wmape_output_lumo    3.0     0.227521     0.006413  0.220539  0.224706  0.228873     0.231012     0.233150
-test_wmape_output_hl      3.0     0.082861     0.001325  0.081355  0.082367  0.083380     0.083614     0.083848
-test_wmape_output_vie     3.0     0.027293     0.000341  0.027040  0.027098  0.027157     0.027419     0.027681
-test_wmape_output_aie     3.0     0.026852     0.000428  0.026414  0.026642  0.026870     0.027070     0.027271
-test_wmape_output_cr1     3.0     0.266528     0.001639  0.264637  0.266014  0.267392     0.267473     0.267555
-test_wmape_output_cr2     3.0     0.261581     0.002490  0.259954  0.260148  0.260342     0.262395     0.264448
-test_wmape_output_hr      3.0     0.251739     0.002153  0.250158  0.250513  0.250869     0.252530     0.254192
-test_wmape_output_vea     3.0     0.207057     0.003082  0.204025  0.205491  0.206957     0.208572     0.210188
-test_wmape_output_aea     3.0     0.178846     0.001928  0.176941  0.177871  0.178801     0.179798     0.180796
-test_wmape_output_ar1     3.0     0.220005     0.002169  0.218079  0.218830  0.219581     0.220968     0.222354
-test_wmape_output_ar2     3.0     0.205686     0.000692  0.205180  0.205291  0.205402     0.205939     0.206475
-test_wmape_output_er      3.0     0.203604     0.000542  0.203230  0.203294  0.203357     0.203792     0.204226
-test_wmape_output_s0s1    3.0     0.078924     0.001010  0.077961  0.078399  0.078837     0.079406     0.079975
-test_wmape_output_s0t1    3.0     0.088367     0.000982  0.087239  0.088036  0.088834     0.088932     0.089029
-test_l1_avg               3.0     0.190300     0.002143  0.188212  0.189202  0.190192     0.191343     0.192494
-test_l1_output_homo       3.0     0.325678     0.002570  0.322784  0.324673  0.326561     0.327126     0.327690
-test_l1_output_lumo       3.0     0.282688     0.007269  0.274615  0.279675  0.284736     0.286725     0.288714
-test_l1_output_hl         3.0     0.553871     0.008389  0.544205  0.551179  0.558153     0.558704     0.559254
-test_l1_output_vie        3.0     0.205291     0.002621  0.203425  0.203793  0.204161     0.206224     0.208288
-test_l1_output_aie        3.0     0.196372     0.003120  0.193229  0.194823  0.196417     0.197943     0.199469
-test_l1_output_cr1        3.0     0.055605     0.000020  0.055587  0.055594  0.055600     0.055613     0.055627
-test_l1_output_cr2        3.0     0.055465     0.000419  0.055011  0.055278  0.055545     0.055691     0.055838
-test_l1_output_hr         3.0     0.105898     0.000687  0.105162  0.105585  0.106009     0.106265     0.106522
-test_l1_output_vea        3.0     0.190082     0.004800  0.185522  0.187577  0.189632     0.192362     0.195091
-test_l1_output_aea        3.0     0.183167     0.003304  0.180091  0.181421  0.182751     0.184705     0.186660
-test_l1_output_ar1        3.0     0.054388     0.000906  0.053429  0.053968  0.054506     0.054868     0.055229
-test_l1_output_ar2        3.0     0.048789     0.000344  0.048499  0.048599  0.048699     0.048934     0.049169
-test_l1_output_er         3.0     0.098627     0.000701  0.097829  0.098367  0.098905     0.099026     0.099146
-test_l1_output_s0s1       3.0     0.281265     0.003726  0.278538  0.279142  0.279746     0.282628     0.285510
-test_l1_output_s0t1       3.0     0.217308     0.002805  0.214077  0.216407  0.218737     0.218924     0.219111
-test_rmse_avg             3.0     0.256080     0.002886  0.253468  0.254531  0.255595     0.257387     0.259179
-test_rmse_output_homo     3.0     0.443481     0.001835  0.442378  0.442422  0.442465     0.444032     0.445599
-test_rmse_output_lumo     3.0     0.368955     0.007154  0.361032  0.365962  0.370893     0.372917     0.374941
-test_rmse_output_hl       3.0     0.746982     0.005715  0.740997  0.744283  0.747569     0.749975     0.752382
-test_rmse_output_vie      3.0     0.278618     0.005604  0.275241  0.275384  0.275527     0.280307     0.285087
-test_rmse_output_aie      3.0     0.265085     0.005893  0.261201  0.261694  0.262187     0.267027     0.271866
-test_rmse_output_cr1      3.0     0.079453     0.000489  0.079168  0.079170  0.079173     0.079595     0.080018
-test_rmse_output_cr2      3.0     0.078827     0.000752  0.078236  0.078403  0.078570     0.079122     0.079674
-test_rmse_output_hr       3.0     0.144776     0.000900  0.144002  0.144282  0.144563     0.145163     0.145763
-test_rmse_output_vea      3.0     0.252127     0.006967  0.245065  0.248693  0.252320     0.255658     0.258995
-test_rmse_output_aea      3.0     0.244011     0.004844  0.239268  0.241541  0.243814     0.246383     0.248951
-test_rmse_output_ar1      3.0     0.074700     0.002408  0.072075  0.073646  0.075216     0.076012     0.076808
-test_rmse_output_ar2      3.0     0.067193     0.000779  0.066514  0.066768  0.067022     0.067533     0.068043
-test_rmse_output_er       3.0     0.131601     0.001616  0.129736  0.131116  0.132496     0.132534     0.132572
-test_rmse_output_s0s1     3.0     0.371995     0.003422  0.369494  0.370046  0.370597     0.373246     0.375895
-test_rmse_output_s0t1     3.0     0.293400     0.002714  0.290960  0.291938  0.292916     0.294620     0.296323
-[01/27/2024 01:34:22 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.258>0.05. -->
+`fastprop` 'trades places with Chemprop, outperforming on four of the metrics (LUMO, HR, AR2) and under-performing on others.
+Overall the geometric mean of MAE across all the tasks is ~8% higher, though this result may not be statistically significant.
+Both `fastprop` and Chemprop are outperformed by the bespoke MHNN model, which is not itself evaluated on any other common property prediction benchmarks.
+
+Although `fastprop` is not able to reach state-of-the-art accuracy on this dataset this result is still promising.
+None of the descriptors implemented in `mordred` were designed to specifically correlate to these QM-derived targets, yet the FNN is able to learn a representation which is nearly as informative as Chemprop.
+The fact that a bespoke modeling approach is the most performant is not surprising and instead demonstrates the continued importance of expert input on certain domains.
+Were some of this expertise to be oriented toward the descriptor generation software `mordredcommunity`, new descriptors could be added to address this apparent shortcoming.
+<!-- [02/22/2024 08:13:00 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                              count         mean          std       min       25%       50%          75%           max
+validation_mse_loss             3.0     0.458501     0.057164  0.413317  0.426369  0.439421     0.481093      0.522765
+validation_mean_mape            3.0   343.158319   593.544873  0.458272  0.475027  0.491782   514.508342   1028.524902
+validation_mape_output_homo     3.0     0.044271     0.000460  0.043919  0.044011  0.044103     0.044447      0.044791
+validation_mape_output_lumo     3.0  5142.822895  8903.641326  1.706457  2.303189  2.899922  7713.381114  15423.862305
+validation_mape_output_hl       3.0     0.081335     0.000831  0.080375  0.081091  0.081806     0.081815      0.081824
+validation_mape_output_vie      3.0     0.028175     0.000733  0.027661  0.027756  0.027850     0.028432      0.029014
+validation_mape_output_aie      3.0     0.027848     0.000672  0.027443  0.027460  0.027477     0.028050      0.028623
+validation_mape_output_cr1      3.0     0.327836     0.011577  0.314549  0.323875  0.333202     0.334479      0.335757
+validation_mape_output_cr2      3.0     0.299127     0.009663  0.290125  0.294022  0.297918     0.303628      0.309337
+validation_mape_output_hr       3.0     0.289242     0.009344  0.278568  0.285891  0.293213     0.294579      0.295945
+validation_mape_output_vea      3.0     1.507243     0.574370  1.087102  1.179996  1.272890     1.717313      2.161736
+validation_mape_output_aea      3.0     1.059045     0.125033  0.942062  0.993160  1.044258     1.117536      1.190814
+validation_mape_output_ar1      3.0     0.240626     0.004368  0.237916  0.238106  0.238296     0.241980      0.245664
+validation_mape_output_ar2      3.0     0.223688     0.005050  0.219446  0.220895  0.222344     0.225809      0.229274
+validation_mape_output_er       3.0     0.223191     0.004302  0.219137  0.220935  0.222733     0.225218      0.227704
+validation_mape_output_s0s1     3.0     0.084802     0.002831  0.082518  0.083219  0.083920     0.085945      0.087969
+validation_mape_output_s0t1     3.0     0.115699     0.000624  0.115008  0.115439  0.115869     0.116045      0.116221
+validation_mean_wmape           3.0     0.161395     0.003184  0.157825  0.160122  0.162420     0.163180      0.163941
+validation_wmape_output_homo    3.0     0.045143     0.000701  0.044689  0.044739  0.044789     0.045370      0.045951
+validation_wmape_output_lumo    3.0     0.220110     0.025429  0.205398  0.205428  0.205458     0.227466      0.249473
+validation_wmape_output_hl      3.0     0.083272     0.001417  0.082091  0.082486  0.082882     0.083863      0.084844
+validation_wmape_output_vie     3.0     0.028110     0.000687  0.027695  0.027713  0.027732     0.028317      0.028903
+validation_wmape_output_aie     3.0     0.027690     0.000632  0.027246  0.027329  0.027412     0.027913      0.028414
+validation_wmape_output_cr1     3.0     0.275331     0.004325  0.272819  0.272834  0.272849     0.276587      0.280325
+validation_wmape_output_cr2     3.0     0.268745     0.004291  0.264348  0.266657  0.268965     0.270944      0.272922
+validation_wmape_output_hr      3.0     0.258327     0.003611  0.254850  0.256460  0.258070     0.260065      0.262059
+validation_wmape_output_vea     3.0     0.216599     0.013251  0.207212  0.209020  0.210828     0.221292      0.231756
+validation_wmape_output_aea     3.0     0.185877     0.006514  0.178391  0.183690  0.188988     0.189620      0.190251
+validation_wmape_output_ar1     3.0     0.223806     0.005709  0.220145  0.220517  0.220889     0.225637      0.230384
+validation_wmape_output_ar2     3.0     0.209507     0.003840  0.206244  0.207391  0.208538     0.211138      0.213738
+validation_wmape_output_er      3.0     0.207492     0.004985  0.203313  0.204733  0.206153     0.209581      0.213009
+validation_wmape_output_s0s1    3.0     0.079778     0.003081  0.076763  0.078207  0.079650     0.081286      0.082922
+validation_wmape_output_s0t1    3.0     0.091143     0.003796  0.088802  0.088954  0.089106     0.092314      0.095523
+validation_l1_avg               3.0     0.193970     0.002999  0.190706  0.192653  0.194599     0.195602      0.196605
+validation_l1_output_homo       3.0     0.329893     0.005807  0.326516  0.326540  0.326565     0.331581      0.336597
+validation_l1_output_lumo       3.0     0.285641     0.003469  0.283326  0.283647  0.283969     0.286799      0.289630
+validation_l1_output_hl         3.0     0.557060     0.011627  0.548925  0.550401  0.551876     0.561127      0.570377
+validation_l1_output_vie        3.0     0.211479     0.005273  0.208258  0.208436  0.208615     0.213089      0.217564
+validation_l1_output_aie        3.0     0.202533     0.004793  0.198934  0.199813  0.200692     0.204333      0.207973
+validation_l1_output_cr1        3.0     0.057598     0.000743  0.056813  0.057252  0.057690     0.057990      0.058290
+validation_l1_output_cr2        3.0     0.057276     0.000534  0.056799  0.056988  0.057177     0.057515      0.057852
+validation_l1_output_hr         3.0     0.109095     0.000700  0.108440  0.108727  0.109013     0.109423      0.109832
+validation_l1_output_vea        3.0     0.194558     0.005324  0.191008  0.191497  0.191985     0.196332      0.200680
+validation_l1_output_aea        3.0     0.189130     0.006161  0.183656  0.185794  0.187932     0.191867      0.195801
+validation_l1_output_ar1        3.0     0.055498     0.001648  0.054153  0.054579  0.055006     0.056171      0.057337
+validation_l1_output_ar2        3.0     0.049942     0.000975  0.049336  0.049380  0.049424     0.050245      0.051067
+validation_l1_output_er         3.0     0.100913     0.002594  0.099312  0.099417  0.099522     0.101714      0.103905
+validation_l1_output_s0s1       3.0     0.284504     0.011130  0.273050  0.279117  0.285184     0.290232      0.295279
+validation_l1_output_s0t1       3.0     0.224430     0.009287  0.218065  0.219101  0.220138     0.227612      0.235087
+validation_rmse_avg             3.0     0.268082     0.015400  0.254445  0.259731  0.265016     0.274901      0.284785
+validation_rmse_output_homo     3.0     0.450869     0.014164  0.435441  0.444660  0.453879     0.458583      0.463286
+validation_rmse_output_lumo     3.0     0.389335     0.023207  0.368810  0.376743  0.384677     0.399598      0.414518
+validation_rmse_output_hl       3.0     0.767300     0.036090  0.726387  0.753642  0.780898     0.787757      0.794616
+validation_rmse_output_vie      3.0     0.286842     0.010691  0.277076  0.281130  0.285184     0.291724      0.298265
+validation_rmse_output_aie      3.0     0.271062     0.003749  0.267076  0.269334  0.271593     0.273055      0.274517
+validation_rmse_output_cr1      3.0     0.081833     0.003779  0.077840  0.080072  0.082305     0.083830      0.085354
+validation_rmse_output_cr2      3.0     0.081802     0.000914  0.081066  0.081290  0.081515     0.082170      0.082825
+validation_rmse_output_hr       3.0     0.150002     0.004057  0.146468  0.147787  0.149106     0.151769      0.154432
+validation_rmse_output_vea      3.0     0.275262     0.031631  0.256818  0.256999  0.257181     0.284483      0.311786
+validation_rmse_output_aea      3.0     0.262731     0.020956  0.247612  0.250771  0.253929     0.270291      0.286653
+validation_rmse_output_ar1      3.0     0.078577     0.006309  0.074131  0.074967  0.075803     0.080800      0.085797
+validation_rmse_output_ar2      3.0     0.072570     0.007629  0.067899  0.068169  0.068438     0.074906      0.081374
+validation_rmse_output_er       3.0     0.141838     0.017033  0.131141  0.132017  0.132893     0.147187      0.161481
+validation_rmse_output_s0s1     3.0     0.392055     0.033613  0.362017  0.373903  0.385789     0.407075      0.428360
+validation_rmse_output_s0t1     3.0     0.319151     0.033692  0.296891  0.299770  0.302648     0.330281      0.357913
+[02/22/2024 08:13:00 PM fastprop.fastprop_core] INFO: Displaying testing results:
+                        count         mean           std       min       25%       50%          75%           max
+test_mse_loss             3.0     0.426169      0.009204  0.417342  0.421399  0.425456     0.430582      0.435709
+test_mean_mape            3.0   395.660539    684.517903  0.451032  0.453944  0.456855   593.265293   1186.073730
+test_mape_output_homo     3.0     0.043939      0.000667  0.043280  0.043602  0.043923     0.044268      0.044614
+test_mape_output_lumo     3.0  5929.894403  10267.922058  1.603237  1.706839  1.810442  8894.039987  17786.269531
+test_mape_output_hl       3.0     0.081036      0.002200  0.079238  0.079809  0.080381     0.081935      0.083490
+test_mape_output_vie      3.0     0.027956      0.000631  0.027577  0.027591  0.027606     0.028145      0.028684
+test_mape_output_aie      3.0     0.027617      0.000926  0.027077  0.027083  0.027089     0.027888      0.028687
+test_mape_output_cr1      3.0     0.312857      0.012791  0.302067  0.305792  0.309517     0.318252      0.326987
+test_mape_output_cr2      3.0     0.310919      0.008263  0.305318  0.306174  0.307031     0.313720      0.320409
+test_mape_output_hr       3.0     0.293555      0.005269  0.287525  0.291697  0.295868     0.296571      0.297273
+test_mape_output_vea      3.0     1.621847      0.517986  1.265081  1.324780  1.384480     1.800230      2.215980
+test_mape_output_aea      3.0     1.405634      0.298437  1.061155  1.315473  1.569791     1.577873      1.585954
+test_mape_output_ar1      3.0     0.242464      0.004575  0.238820  0.239897  0.240974     0.244286      0.247599
+test_mape_output_ar2      3.0     0.225263      0.001945  0.223330  0.224285  0.225239     0.226229      0.227219
+test_mape_output_er       3.0     0.223549      0.002041  0.221204  0.222861  0.224518     0.224722      0.224925
+test_mape_output_s0s1     3.0     0.084606      0.001663  0.082705  0.084010  0.085315     0.085556      0.085796
+test_mape_output_s0t1     3.0     0.112468      0.003794  0.108290  0.110854  0.113417     0.114557      0.115697
+test_mean_wmape           3.0     0.160358      0.001505  0.159404  0.159491  0.159578     0.160835      0.162093
+test_wmape_output_homo    3.0     0.044842      0.000560  0.044256  0.044576  0.044897     0.045134      0.045372
+test_wmape_output_lumo    3.0     0.227117      0.014630  0.215973  0.218833  0.221693     0.232689      0.243685
+test_wmape_output_hl      3.0     0.083099      0.001810  0.081631  0.082088  0.082545     0.083833      0.085122
+test_wmape_output_vie     3.0     0.027916      0.000611  0.027529  0.027564  0.027598     0.028109      0.028620
+test_wmape_output_aie     3.0     0.027478      0.000902  0.026934  0.026957  0.026980     0.027750      0.028519
+test_wmape_output_cr1     3.0     0.272248      0.002985  0.269788  0.270588  0.271387     0.273478      0.275568
+test_wmape_output_cr2     3.0     0.268046      0.003807  0.263727  0.266612  0.269497     0.270206      0.270915
+test_wmape_output_hr      3.0     0.257790      0.002427  0.255081  0.256802  0.258522     0.259144      0.259766
+test_wmape_output_vea     3.0     0.208417      0.000352  0.208042  0.208254  0.208465     0.208604      0.208742
+test_wmape_output_aea     3.0     0.180743      0.006029  0.174713  0.177729  0.180745     0.183758      0.186771
+test_wmape_output_ar1     3.0     0.223203      0.001243  0.221771  0.222809  0.223847     0.223920      0.223992
+test_wmape_output_ar2     3.0     0.208085      0.001777  0.206370  0.207168  0.207966     0.208942      0.209918
+test_wmape_output_er      3.0     0.206107      0.001264  0.205288  0.205379  0.205470     0.206516      0.207563
+test_wmape_output_s0s1    3.0     0.079831      0.001651  0.078031  0.079109  0.080188     0.080731      0.081274
+test_wmape_output_s0t1    3.0     0.090454      0.003366  0.088019  0.088533  0.089047     0.091671      0.094295
+test_l1_avg               3.0     0.192914      0.002772  0.190113  0.191543  0.192972     0.194314      0.195656
+test_l1_output_homo       3.0     0.327626      0.004000  0.323577  0.325651  0.327725     0.329650      0.331576
+test_l1_output_lumo       3.0     0.284796      0.005949  0.277983  0.282713  0.287444     0.288202      0.288961
+test_l1_output_hl         3.0     0.555456      0.011025  0.546451  0.549308  0.552165     0.559958      0.567752
+test_l1_output_vie        3.0     0.209976      0.004657  0.207102  0.207290  0.207478     0.211414      0.215349
+test_l1_output_aie        3.0     0.200949      0.006628  0.197027  0.197123  0.197219     0.202911      0.208602
+test_l1_output_cr1        3.0     0.056798      0.000443  0.056424  0.056553  0.056682     0.056985      0.057287
+test_l1_output_cr2        3.0     0.056833      0.000437  0.056351  0.056648  0.056945     0.057074      0.057204
+test_l1_output_hr         3.0     0.108441      0.000386  0.108096  0.108233  0.108370     0.108614      0.108858
+test_l1_output_vea        3.0     0.193955      0.010548  0.185665  0.188019  0.190373     0.198100      0.205828
+test_l1_output_aea        3.0     0.187564      0.009439  0.180720  0.182180  0.183640     0.190986      0.198332
+test_l1_output_ar1        3.0     0.055178      0.000731  0.054334  0.054967  0.055600     0.055600      0.055601
+test_l1_output_ar2        3.0     0.049358      0.000558  0.048928  0.049043  0.049157     0.049573      0.049989
+test_l1_output_er         3.0     0.099840      0.001068  0.098820  0.099285  0.099750     0.100350      0.100951
+test_l1_output_s0s1       3.0     0.284490      0.005678  0.278788  0.281663  0.284539     0.287342      0.290145
+test_l1_output_s0t1       3.0     0.222443      0.008583  0.215991  0.217572  0.219154     0.225669      0.232184
+test_rmse_avg             3.0     0.259388      0.004270  0.256027  0.256986  0.257945     0.261069      0.264193
+test_rmse_output_homo     3.0     0.445763      0.001143  0.444444  0.445430  0.446415     0.446423      0.446431
+test_rmse_output_lumo     3.0     0.373126      0.006550  0.366760  0.369766  0.372772     0.376309      0.379846
+test_rmse_output_hl       3.0     0.749384      0.004661  0.745422  0.746816  0.748211     0.751365      0.754520
+test_rmse_output_vie      3.0     0.284846      0.008854  0.279273  0.279742  0.280210     0.287633      0.295055
+test_rmse_output_aie      3.0     0.270991      0.010721  0.263813  0.264829  0.265846     0.274580      0.283314
+test_rmse_output_cr1      3.0     0.080434      0.000323  0.080063  0.080326  0.080589     0.080620      0.080651
+test_rmse_output_cr2      3.0     0.080343      0.001093  0.079166  0.079852  0.080539     0.080932      0.081325
+test_rmse_output_hr       3.0     0.147213      0.001475  0.145690  0.146502  0.147314     0.147975      0.148635
+test_rmse_output_vea      3.0     0.257247      0.012767  0.247803  0.249985  0.252166     0.261969      0.271772
+test_rmse_output_aea      3.0     0.249757      0.011438  0.241501  0.243229  0.244957     0.253885      0.262814
+test_rmse_output_ar1      3.0     0.075746      0.002504  0.072856  0.074991  0.077125     0.077191      0.077256
+test_rmse_output_ar2      3.0     0.067676      0.000842  0.067045  0.067198  0.067351     0.067992      0.068632
+test_rmse_output_er       3.0     0.132936      0.002416  0.130385  0.131809  0.133232     0.134211      0.135190
+test_rmse_output_s0s1     3.0     0.376503      0.006149  0.371012  0.373181  0.375351     0.379249      0.383147
+test_rmse_output_s0t1     3.0     0.298857      0.008914  0.292517  0.293760  0.295003     0.302026      0.309050
+[02/22/2024 08:13:00 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.399>0.05.
+[02/22/2024 08:13:00 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/22/2024 08:13:00 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:06:22.415257 -->
 
 ### QM8
- - ~22k points
- - Predecessor to QM9 first described in 2015 [@qm8], follows the same procedure but includes only up to eight heavy atoms. Again used the data as prepared by MoleculeNet [@moleculenet].
- - Again comparing to the UniMol study [@unimol].
- - UniMol got 0.00156, `fastprop` got 0.0166, and Chemprop got 0.0190.
- - Of note is that this looks good, but by looking at the weighted mean absolute percentage error (wMAPE) (see Table \ref{qm8_results_table}) we see a different story. Despite being among the 'most accurate' of existing literature models, `fastprop` has large errors.
+Quantum Machine 8 (QM8) is the predecessor to QM9 first described in 2015 [@qm8].
+It follows the same generation procedure as QM9 but includes only up to eight heavy atoms for a total of approximately 22k molecules.
+Again, this study used the dataset as prepared by MoleculeNet [@moleculenet] and compares to the UniMol [@unimol] set of benchmarks as a reference point, wherein they used the same data splitting procedure described previously but regressed all 12 targets in QM8.
+
+UniMol achieved an average MAE across all tasks of 0.00156 $\pm$ 0.0001, `fastprop` approaches that performance with 0.0178 $\pm$ 0.003, and Chemprop trails both frameworks with 0.0190 $\pm$ 0.0001.
+Much like with QM9 `fastprop` outperforms LR frameworks until 3D information is encoded with UniMol.
+As previously stated this is achieved despite the targets being predicted not being directly intended for correlation with the `mordred` descriptors.
+
+Of note is that even though `fastprop` is approaching the leading performance on this benchmark, other performance metrics cast doubt on the model performance.
+The weighted mean absolute percentage error (wMAPE) on a per-task basis is shown in Table \ref{qm8_results_table}.
 
 Table: Per-task QM8 dataset results. \label{qm8_results_table}
 
 +---------+-------+
 | Metric  | wMAPE |
 +=========+=======+
-| E1-CC2  | 3.7%  |
+| E1-CC2  | 3.6%  |
 +---------+-------+
-| E2-CC2  | 3.4%  |
+| E2-CC2  | 3.3%  |
 +---------+-------+
-| f1-CC2  | 73.2% |
+| f1-CC2  | 83.0% |
 +---------+-------+
-| f2-CC2  | 81.0% |
+| f2-CC2  | 86.7% |
 +---------+-------+
 | E1-PBE0 | 3.6%  |
 +---------+-------+
-| E2-PBE0 | 3.4%  |
+| E2-PBE0 | 3.3%  |
 +---------+-------+
-| f1-PBE0 | 68.6% |
+| f1-PBE0 | 80.6% |
 +---------+-------+
-| F2-PBE0 | 79.0% |
+| F2-PBE0 | 86.4% |
 +---------+-------+
 | E1-CAM  | 3.4%  |
 +---------+-------+
-| E2-CAM  | 3.1%  |
+| E2-CAM  | 3.0%  |
 +---------+-------+
-| f1-CAM  | 69.4% |
+| f1-CAM  | 77.3% |
 +---------+-------+
-| f2-CAM  | 71.1% |
+| f2-CAM  | 81.2% |
 +---------+-------+
-| Average | 38.6% |
+| Average | 43.0% |
 +---------+-------+
 
-<!-- [01/16/2024 10:23:52 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                                         count      mean       std       min       25%       50%       75%       max
-validation_mse_loss                        2.0  0.200573  0.005814  0.196462  0.198518  0.200573  0.202629  0.204684
-unitful_validation_mean_wmape              2.0  0.313240  0.007304  0.308075  0.310657  0.313240  0.315822  0.318404
-unitful_validation_wmape_output_E1-CC2     2.0  0.028929  0.002025  0.027497  0.028213  0.028929  0.029645  0.030360
-unitful_validation_wmape_output_E2-CC2     2.0  0.027545  0.001336  0.026601  0.027073  0.027545  0.028017  0.028490
-unitful_validation_wmape_output_f1-CC2     2.0  0.583290  0.009481  0.576585  0.579938  0.583290  0.586642  0.589994
-unitful_validation_wmape_output_f2-CC2     2.0  0.670674  0.021927  0.655169  0.662922  0.670674  0.678427  0.686179
-unitful_validation_wmape_output_E1-PBE0    2.0  0.029330  0.002092  0.027850  0.028590  0.029330  0.030070  0.030810
-unitful_validation_wmape_output_E2-PBE0    2.0  0.027064  0.001307  0.026140  0.026602  0.027064  0.027527  0.027989
-unitful_validation_wmape_output_f1-PBE0    2.0  0.544427  0.000538  0.544047  0.544237  0.544427  0.544617  0.544807
-unitful_validation_wmape_output_f2-PBE0    2.0  0.663062  0.014573  0.652758  0.657910  0.663062  0.668214  0.673366
-unitful_validation_wmape_output_E1-CAM     2.0  0.027375  0.001852  0.026066  0.026721  0.027375  0.028030  0.028684
-unitful_validation_wmape_output_E2-CAM     2.0  0.024817  0.001599  0.023686  0.024252  0.024817  0.025382  0.025948
-unitful_validation_wmape_output_f1-CAM     2.0  0.524005  0.033400  0.500388  0.512197  0.524005  0.535814  0.547623
-unitful_validation_wmape_output_f2-CAM     2.0  0.608355  0.027743  0.588738  0.598547  0.608355  0.618164  0.627972
-unitful_validation_l1_avg                  2.0  0.012361  0.000345  0.012116  0.012239  0.012361  0.012483  0.012605
-unitful_validation_l1_output_E1-CC2        2.0  0.006372  0.000434  0.006065  0.006219  0.006372  0.006526  0.006679
-unitful_validation_l1_output_E2-CC2        2.0  0.006857  0.000319  0.006632  0.006744  0.006857  0.006970  0.007082
-unitful_validation_l1_output_f1-CC2        2.0  0.013471  0.000090  0.013407  0.013439  0.013471  0.013502  0.013534
-unitful_validation_l1_output_f2-CC2        2.0  0.027845  0.000268  0.027656  0.027750  0.027845  0.027940  0.028035
-unitful_validation_l1_output_E1-PBE0       2.0  0.006366  0.000447  0.006050  0.006208  0.006366  0.006524  0.006682
-unitful_validation_l1_output_E2-PBE0       2.0  0.006561  0.000306  0.006345  0.006453  0.006561  0.006669  0.006778
-unitful_validation_l1_output_f1-PBE0       2.0  0.011277  0.000167  0.011159  0.011218  0.011277  0.011336  0.011395
-unitful_validation_l1_output_f2-PBE0       2.0  0.021629  0.000048  0.021595  0.021612  0.021629  0.021646  0.021663
-unitful_validation_l1_output_E1-CAM        2.0  0.005944  0.000393  0.005666  0.005805  0.005944  0.006083  0.006222
-unitful_validation_l1_output_E2-CAM        2.0  0.006071  0.000387  0.005798  0.005934  0.006071  0.006208  0.006345
-unitful_validation_l1_output_f1-CAM        2.0  0.012031  0.000483  0.011690  0.011861  0.012031  0.012202  0.012373
-unitful_validation_l1_output_f2-CAM        2.0  0.023903  0.001135  0.023101  0.023502  0.023903  0.024305  0.024706
-unitful_validation_rmse_avg                2.0  0.022372  0.000161  0.022258  0.022315  0.022372  0.022429  0.022486
-unitful_validation_rmse_output_E1-CC2      2.0  0.008769  0.000628  0.008325  0.008547  0.008769  0.008991  0.009213
-unitful_validation_rmse_output_E2-CC2      2.0  0.009572  0.000393  0.009294  0.009433  0.009572  0.009711  0.009851
-unitful_validation_rmse_output_f1-CC2      2.0  0.030954  0.000267  0.030765  0.030859  0.030954  0.031048  0.031143
-unitful_validation_rmse_output_f2-CC2      2.0  0.047789  0.001568  0.046680  0.047235  0.047789  0.048343  0.048897
-unitful_validation_rmse_output_E1-PBE0     2.0  0.008498  0.000638  0.008047  0.008273  0.008498  0.008724  0.008950
-unitful_validation_rmse_output_E2-PBE0     2.0  0.008659  0.000346  0.008414  0.008537  0.008659  0.008782  0.008904
-unitful_validation_rmse_output_f1-PBE0     2.0  0.027808  0.002149  0.026288  0.027048  0.027808  0.028567  0.029327
-unitful_validation_rmse_output_f2-PBE0     2.0  0.038761  0.000817  0.038183  0.038472  0.038761  0.039050  0.039338
-unitful_validation_rmse_output_E1-CAM      2.0  0.008049  0.000568  0.007648  0.007849  0.008049  0.008250  0.008451
-unitful_validation_rmse_output_E2-CAM      2.0  0.008016  0.000489  0.007670  0.007843  0.008016  0.008189  0.008362
-unitful_validation_rmse_output_f1-CAM      2.0  0.029131  0.000161  0.029017  0.029074  0.029131  0.029188  0.029245
-unitful_validation_rmse_output_f2-CAM      2.0  0.042460  0.000357  0.042208  0.042334  0.042460  0.042586  0.042713
-[01/16/2024 10:23:52 AM fastprop.fastprop_core] INFO: Displaying testing results:
-                                   count      mean       std       min       25%       50%       75%       max
-test_mse_loss                        2.0  0.221585  0.001861  0.220269  0.220927  0.221585  0.222243  0.222901
-unitful_test_mean_wmape              2.0  0.308316  0.006083  0.304015  0.306166  0.308316  0.310467  0.312617
-unitful_test_wmape_output_E1-CC2     2.0  0.028781  0.001292  0.027868  0.028325  0.028781  0.029238  0.029695
-unitful_test_wmape_output_E2-CC2     2.0  0.027396  0.000766  0.026854  0.027125  0.027396  0.027666  0.027937
-unitful_test_wmape_output_f1-CC2     2.0  0.580761  0.012467  0.571945  0.576353  0.580761  0.585169  0.589577
-unitful_test_wmape_output_f2-CC2     2.0  0.683063  0.023970  0.666113  0.674588  0.683063  0.691538  0.700013
-unitful_test_wmape_output_E1-PBE0    2.0  0.029097  0.001363  0.028133  0.028615  0.029097  0.029579  0.030061
-unitful_test_wmape_output_E2-PBE0    2.0  0.026556  0.001226  0.025689  0.026122  0.026556  0.026989  0.027422
-unitful_test_wmape_output_f1-PBE0    2.0  0.501698  0.009261  0.495150  0.498424  0.501698  0.504972  0.508246
-unitful_test_wmape_output_f2-PBE0    2.0  0.666396  0.035308  0.641429  0.653912  0.666396  0.678879  0.691363
-unitful_test_wmape_output_E1-CAM     2.0  0.027505  0.001035  0.026774  0.027140  0.027505  0.027871  0.028237
-unitful_test_wmape_output_E2-CAM     2.0  0.024964  0.001391  0.023980  0.024472  0.024964  0.025455  0.025947
-unitful_test_wmape_output_f1-CAM     2.0  0.485728  0.031679  0.463328  0.474528  0.485728  0.496928  0.508129
-unitful_test_wmape_output_f2-CAM     2.0  0.617848  0.003311  0.615507  0.616677  0.617848  0.619019  0.620189
-unitful_test_l1_avg                  2.0  0.012821  0.000111  0.012742  0.012781  0.012821  0.012860  0.012899
-unitful_test_l1_output_E1-CC2        2.0  0.006333  0.000271  0.006141  0.006237  0.006333  0.006429  0.006525
-unitful_test_l1_output_E2-CC2        2.0  0.006813  0.000192  0.006678  0.006746  0.006813  0.006881  0.006949
-unitful_test_l1_output_f1-CC2        2.0  0.013935  0.000044  0.013904  0.013920  0.013935  0.013951  0.013966
-unitful_test_l1_output_f2-CC2        2.0  0.030965  0.001010  0.030252  0.030608  0.030965  0.031322  0.031679
-unitful_test_l1_output_E1-PBE0       2.0  0.006308  0.000280  0.006110  0.006209  0.006308  0.006407  0.006507
-unitful_test_l1_output_E2-PBE0       2.0  0.006435  0.000287  0.006232  0.006333  0.006435  0.006536  0.006638
-unitful_test_l1_output_f1-PBE0       2.0  0.010951  0.000118  0.010867  0.010909  0.010951  0.010992  0.011034
-unitful_test_l1_output_f2-PBE0       2.0  0.022884  0.000532  0.022508  0.022696  0.022884  0.023072  0.023260
-unitful_test_l1_output_E1-CAM        2.0  0.005963  0.000206  0.005817  0.005890  0.005963  0.006036  0.006108
-unitful_test_l1_output_E2-CAM        2.0  0.006104  0.000336  0.005866  0.005985  0.006104  0.006222  0.006341
-unitful_test_l1_output_f1-CAM        2.0  0.012307  0.000473  0.011973  0.012140  0.012307  0.012474  0.012641
-unitful_test_l1_output_f2-CAM        2.0  0.024849  0.000393  0.024571  0.024710  0.024849  0.024988  0.025127
-unitful_test_rmse_avg                2.0  0.023458  0.000069  0.023409  0.023433  0.023458  0.023482  0.023507
-unitful_test_rmse_output_E1-CC2      2.0  0.009032  0.000668  0.008560  0.008796  0.009032  0.009268  0.009504
-unitful_test_rmse_output_E2-CC2      2.0  0.009409  0.000341  0.009168  0.009289  0.009409  0.009530  0.009651
-unitful_test_rmse_output_f1-CC2      2.0  0.033309  0.000596  0.032888  0.033098  0.033309  0.033519  0.033730
-unitful_test_rmse_output_f2-CC2      2.0  0.053217  0.001793  0.051949  0.052583  0.053217  0.053851  0.054485
-unitful_test_rmse_output_E1-PBE0     2.0  0.008815  0.000729  0.008299  0.008557  0.008815  0.009073  0.009330
-unitful_test_rmse_output_E2-PBE0     2.0  0.008670  0.000515  0.008306  0.008488  0.008670  0.008852  0.009034
-unitful_test_rmse_output_f1-PBE0     2.0  0.026180  0.000683  0.025697  0.025939  0.026180  0.026421  0.026663
-unitful_test_rmse_output_f2-PBE0     2.0  0.041940  0.001727  0.040718  0.041329  0.041940  0.042550  0.043161
-unitful_test_rmse_output_E1-CAM      2.0  0.008418  0.000657  0.007953  0.008186  0.008418  0.008650  0.008883
-unitful_test_rmse_output_E2-CAM      2.0  0.008094  0.000492  0.007746  0.007920  0.008094  0.008268  0.008442
-unitful_test_rmse_output_f1-CAM      2.0  0.030481  0.001667  0.029303  0.029892  0.030481  0.031071  0.031660
-unitful_test_rmse_output_f2-CAM      2.0  0.043930  0.001995  0.042519  0.043224  0.043930  0.044635  0.045340 -->
+At each level of theory (CC2, PBE0, and CAM) `fastprop` is reaching the limit of chemical accuracy on excitation energies (E1 and E2) but is significantly less accurate on oscillator strengths (f1 and f2).
+This can at least partially be attributed to dataset itself.
+Manual analysis reveals that nearly 90% of the molecules in the dataset fall within only 10% of the total range of f1 values, which is highly imbalanced.
+Additionally that 90% of molecules actual f1 values are all near-zero or zero, which are intentionally less represented in the wMAPE metric.
+Future literature studies should take this observation into account and perhaps move away from this splitting approach toward one which accounts for this imbalance.
+
+<!-- [02/22/2024 08:17:34 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                                 count          mean           std           min           25%           50%           75%           max
+validation_mse_loss                3.0  2.961224e-01  2.147881e-02  2.737574e-01  2.858891e-01  2.980208e-01  3.073049e-01  3.165890e-01
+validation_mean_mape               3.0  3.726341e+05  2.042732e+05  1.627118e+05  2.735783e+05  3.844448e+05  4.775952e+05  5.707458e+05
+validation_mape_output_E1-CC2      3.0  3.319096e-02  9.908976e-04  3.218177e-02  3.270519e-02  3.322861e-02  3.369555e-02  3.416249e-02
+validation_mape_output_E2-CC2      3.0  3.095054e-02  1.307501e-03  2.995400e-02  3.021030e-02  3.046659e-02  3.144881e-02  3.243102e-02
+validation_mape_output_f1-CC2      3.0  2.465183e+05  2.729970e+05  5.374423e+04  9.032484e+04  1.269055e+05  3.429054e+05  5.589053e+05
+validation_mape_output_f2-CC2      3.0  2.003174e+05  2.170272e+05  3.900190e+03  8.382240e+04  1.637446e+05  2.985260e+05  4.333074e+05
+validation_mape_output_E1-PBE0     3.0  3.399180e-02  7.291666e-04  3.355667e-02  3.357089e-02  3.358512e-02  3.420936e-02  3.483361e-02
+validation_mape_output_E2-PBE0     3.0  3.149488e-02  2.512730e-03  2.946717e-02  3.008932e-02  3.071148e-02  3.250873e-02  3.430598e-02
+validation_mape_output_f1-PBE0     3.0  2.126848e+04  2.123202e+03  1.901504e+04  2.028694e+04  2.155884e+04  2.239520e+04  2.323156e+04
+validation_mape_output_f2-PBE0     3.0  1.153059e+05  1.098323e+05  6.536243e+03  5.987344e+04  1.132106e+05  1.696908e+05  2.261709e+05
+validation_mape_output_E1-CAM      3.0  3.279775e-02  8.746607e-04  3.227762e-02  3.229284e-02  3.230806e-02  3.305782e-02  3.380757e-02
+validation_mape_output_E2-CAM      3.0  2.926853e-02  1.722292e-03  2.743344e-02  2.847786e-02  2.952229e-02  3.018608e-02  3.084986e-02
+validation_mape_output_f1-CAM      3.0  1.377005e+06  3.397459e+05  1.116488e+06  1.184867e+06  1.253245e+06  1.507264e+06  1.761282e+06
+validation_mape_output_f2-CAM      3.0  2.511194e+06  1.899370e+06  6.754806e+05  1.532596e+06  2.389712e+06  3.429051e+06  4.468390e+06
+validation_mean_wmape              3.0  4.475308e-01  4.980988e-02  3.906429e-01  4.296396e-01  4.686364e-01  4.759747e-01  4.833130e-01
+validation_wmape_output_E1-CC2     3.0  3.152936e-02  4.848671e-04  3.097065e-02  3.137404e-02  3.177742e-02  3.180872e-02  3.184001e-02
+validation_wmape_output_E2-CC2     3.0  2.929318e-02  8.359605e-04  2.863467e-02  2.882293e-02  2.901120e-02  2.962243e-02  3.023366e-02
+validation_wmape_output_f1-CC2     3.0  8.989161e-01  2.181237e-01  6.487983e-01  8.235534e-01  9.983085e-01  1.023975e+00  1.049641e+00
+validation_wmape_output_f2-CC2     3.0  8.460621e-01  1.648189e-02  8.294763e-01  8.378741e-01  8.462719e-01  8.543550e-01  8.624381e-01
+validation_wmape_output_E1-PBE0    3.0  3.218072e-02  3.220693e-04  3.196875e-02  3.199541e-02  3.202206e-02  3.228670e-02  3.255133e-02
+validation_wmape_output_E2-PBE0    3.0  2.950394e-02  1.974154e-03  2.791693e-02  2.839861e-02  2.888028e-02  3.029744e-02  3.171460e-02
+validation_wmape_output_f1-PBE0    3.0  9.767324e-01  2.569331e-01  6.813912e-01  8.907032e-01  1.100015e+00  1.124403e+00  1.148791e+00
+validation_wmape_output_f2-PBE0    3.0  7.976509e-01  7.779241e-02  7.323164e-01  7.546236e-01  7.769308e-01  8.303182e-01  8.837056e-01
+validation_wmape_output_E1-CAM     3.0  3.121153e-02  4.874624e-04  3.080885e-02  3.094056e-02  3.107227e-02  3.141287e-02  3.175347e-02
+validation_wmape_output_E2-CAM     3.0  2.774681e-02  1.256585e-03  2.636963e-02  2.720469e-02  2.803975e-02  2.843540e-02  2.883104e-02
+validation_wmape_output_f1-CAM     3.0  8.246486e-01  2.343411e-01  5.753399e-01  7.167703e-01  8.582007e-01  9.493030e-01  1.040405e+00
+validation_wmape_output_f2-CAM     3.0  8.448935e-01  5.543766e-02  7.834639e-01  8.217396e-01  8.600153e-01  8.756082e-01  8.912012e-01
+validation_l1_avg                  3.0  1.629429e-02  2.897021e-04  1.596688e-02  1.618273e-02  1.639857e-02  1.645799e-02  1.651742e-02
+validation_l1_output_E1-CC2        3.0  7.100401e-03  7.142299e-05  7.028310e-03  7.065033e-03  7.101756e-03  7.136446e-03  7.171136e-03
+validation_l1_output_E2-CC2        3.0  7.434885e-03  1.783032e-04  7.275512e-03  7.338601e-03  7.401689e-03  7.514571e-03  7.627453e-03
+validation_l1_output_f1-CC2        3.0  1.741747e-02  8.539097e-05  1.731925e-02  1.738915e-02  1.745906e-02  1.746657e-02  1.747409e-02
+validation_l1_output_f2-CC2        3.0  3.718752e-02  1.168312e-03  3.585434e-02  3.676488e-02  3.767541e-02  3.785411e-02  3.803280e-02
+validation_l1_output_E1-PBE0       3.0  7.158640e-03  2.485383e-06  7.155819e-03  7.157707e-03  7.159595e-03  7.160051e-03  7.160507e-03
+validation_l1_output_E2-PBE0       3.0  7.303289e-03  4.086059e-04  6.984135e-03  7.073031e-03  7.161927e-03  7.462866e-03  7.763805e-03
+validation_l1_output_f1-PBE0       3.0  1.673976e-02  1.718111e-03  1.486630e-02  1.598876e-02  1.711122e-02  1.767649e-02  1.824175e-02
+validation_l1_output_f2-PBE0       3.0  3.034832e-02  3.612462e-04  2.998723e-02  3.016761e-02  3.034799e-02  3.052886e-02  3.070972e-02
+validation_l1_output_E1-CAM        3.0  6.896892e-03  5.910892e-05  6.829844e-03  6.874599e-03  6.919354e-03  6.930415e-03  6.941477e-03
+validation_l1_output_E2-CAM        3.0  6.903027e-03  2.249583e-04  6.652694e-03  6.810417e-03  6.968140e-03  7.028193e-03  7.088246e-03
+validation_l1_output_f1-CAM        3.0  1.652058e-02  6.021240e-04  1.583881e-02  1.629109e-02  1.674338e-02  1.686147e-02  1.697955e-02
+validation_l1_output_f2-CAM        3.0  3.452070e-02  1.085045e-03  3.354906e-02  3.393527e-02  3.432149e-02  3.500652e-02  3.569154e-02
+validation_rmse_avg                3.0  2.675085e-02  1.974986e-04  2.658495e-02  2.664162e-02  2.669829e-02  2.683380e-02  2.696931e-02
+validation_rmse_output_E1-CC2      3.0  9.345020e-03  2.487710e-04  9.074190e-03  9.235854e-03  9.397519e-03  9.480435e-03  9.563352e-03
+validation_rmse_output_E2-CC2      3.0  9.925613e-03  3.957831e-04  9.574250e-03  9.711229e-03  9.848208e-03  1.010129e-02  1.035438e-02
+validation_rmse_output_f1-CC2      3.0  3.576659e-02  1.570254e-03  3.408876e-02  3.504949e-02  3.601022e-02  3.660551e-02  3.720079e-02
+validation_rmse_output_f2-CC2      3.0  5.798666e-02  9.846731e-04  5.737245e-02  5.741878e-02  5.746512e-02  5.829376e-02  5.912240e-02
+validation_rmse_output_E1-PBE0     3.0  9.352506e-03  5.767230e-05  9.314917e-03  9.319306e-03  9.323695e-03  9.371301e-03  9.418908e-03
+validation_rmse_output_E2-PBE0     3.0  9.616460e-03  5.632452e-04  9.188814e-03  9.297367e-03  9.405920e-03  9.830283e-03  1.025465e-02
+validation_rmse_output_f1-PBE0     3.0  3.341870e-02  3.574904e-03  2.959571e-02  3.178869e-02  3.398167e-02  3.533019e-02  3.667871e-02
+validation_rmse_output_f2-PBE0     3.0  5.026540e-02  1.736561e-03  4.888441e-02  4.929061e-02  4.969682e-02  5.095590e-02  5.221498e-02
+validation_rmse_output_E1-CAM      3.0  8.984338e-03  1.736023e-04  8.793610e-03  8.909941e-03  9.026271e-03  9.079702e-03  9.133133e-03
+validation_rmse_output_E2-CAM      3.0  9.135396e-03  4.365519e-04  8.658140e-03  8.945819e-03  9.233499e-03  9.374024e-03  9.514550e-03
+validation_rmse_output_f1-CAM      3.0  3.322607e-02  2.386448e-03  3.184022e-02  3.184826e-02  3.185629e-02  3.391899e-02  3.598168e-02
+validation_rmse_output_f2-CAM      3.0  5.398743e-02  6.594950e-04  5.323720e-02  5.374329e-02  5.424938e-02  5.436254e-02  5.447570e-02
+[02/22/2024 08:17:34 PM fastprop.fastprop_core] INFO: Displaying testing results:
+                           count          mean           std            min           25%           50%           75%           max
+test_mse_loss                3.0  4.381792e-01  2.735942e-01       0.184084  2.933683e-01  4.026529e-01  5.652271e-01  7.278012e-01
+test_mean_mape               3.0  4.687784e+05  3.344268e+05  113314.453125  3.145762e+05  5.158379e+05  6.465104e+05  7.771829e+05
+test_mape_output_E1-CC2      3.0  3.856048e-02  3.650709e-03       0.034786  3.680392e-02  3.882163e-02  4.044762e-02  4.207360e-02
+test_mape_output_E2-CC2      3.0  3.435893e-02  2.072672e-03       0.032024  3.354772e-02  3.507146e-02  3.552641e-02  3.598135e-02
+test_mape_output_f1-CC2      3.0  9.124813e+04  4.736281e+04   47827.578125  6.599484e+04  8.416209e+04  1.129584e+05  1.417547e+05
+test_mape_output_f2-CC2      3.0  4.789280e+05  5.331655e+05  159846.453125  1.711743e+05  1.825022e+05  6.384688e+05  1.094436e+06
+test_mape_output_E1-PBE0     3.0  3.868797e-02  2.537570e-03       0.035766  3.786128e-02  3.995628e-02  4.014881e-02  4.034134e-02
+test_mape_output_E2-PBE0     3.0  3.448371e-02  1.759188e-03       0.032453  3.395644e-02  3.546001e-02  3.549913e-02  3.553824e-02
+test_mape_output_f1-PBE0     3.0  4.193003e+04  3.497132e+04   15974.560547  2.204593e+04  2.811730e+04  5.490776e+04  8.169822e+04
+test_mape_output_f2-PBE0     3.0  1.524934e+05  1.516542e+05   49095.953125  6.544622e+04  8.179648e+04  2.041922e+05  3.265879e+05
+test_mape_output_E1-CAM      3.0  3.672770e-02  3.258540e-03       0.033062  3.544453e-02  3.782748e-02  3.856077e-02  3.929405e-02
+test_mape_output_E2-CAM      3.0  3.142536e-02  8.549778e-04       0.030506  3.104016e-02  3.157481e-02  3.188528e-02  3.219575e-02
+test_mape_output_f1-CAM      3.0  1.659797e+06  9.323249e+05  586385.687500  1.355839e+06  2.125293e+06  2.196503e+06  2.267712e+06
+test_mape_output_f2-CAM      3.0  3.200944e+06  2.781384e+06  398584.843750  1.820982e+06  3.243380e+06  4.602124e+06  5.960868e+06
+test_mean_wmape              3.0  4.299038e-01  2.291268e-02       0.403447  4.232573e-01  4.430680e-01  4.431324e-01  4.431967e-01
+test_wmape_output_E1-CC2     3.0  3.617709e-02  3.006597e-03       0.032971  3.479847e-02  3.662544e-02  3.777988e-02  3.893432e-02
+test_wmape_output_E2-CC2     3.0  3.289112e-02  1.902959e-03       0.030732  3.217480e-02  3.361768e-02  3.397072e-02  3.432377e-02
+test_wmape_output_f1-CC2     3.0  8.303049e-01  1.196323e-01       0.693788  7.870345e-01  8.802810e-01  8.985633e-01  9.168456e-01
+test_wmape_output_f2-CC2     3.0  8.666274e-01  2.331281e-02       0.845110  8.542436e-01  8.633767e-01  8.773858e-01  8.913949e-01
+test_wmape_output_E1-PBE0    3.0  3.601028e-02  2.221194e-03       0.033509  3.514003e-02  3.677150e-02  3.726114e-02  3.775077e-02
+test_wmape_output_E2-PBE0    3.0  3.251999e-02  1.746795e-03       0.030506  3.196550e-02  3.342459e-02  3.352678e-02  3.362897e-02
+test_wmape_output_f1-PBE0    3.0  8.062086e-01  2.029557e-01       0.579097  7.243990e-01  8.697007e-01  9.197643e-01  9.698279e-01
+test_wmape_output_f2-PBE0    3.0  8.636080e-01  7.747852e-02       0.790110  8.231459e-01  8.561819e-01  9.003570e-01  9.445322e-01
+test_wmape_output_E1-CAM     3.0  3.447643e-02  2.755010e-03       0.031315  3.353421e-02  3.575383e-02  3.605735e-02  3.636087e-02
+test_wmape_output_E2-CAM     3.0  3.014137e-02  8.420717e-04       0.029265  2.973993e-02  3.021491e-02  3.057959e-02  3.094426e-02
+test_wmape_output_f1-CAM     3.0  7.729732e-01  9.299355e-02       0.666509  7.402989e-01  8.140889e-01  8.262054e-01  8.383218e-01
+test_wmape_output_f2-CAM     3.0  8.169068e-01  4.658062e-02       0.765002  7.978232e-01  8.306439e-01  8.428590e-01  8.550741e-01
+test_l1_avg                  3.0  1.778473e-02  3.294640e-03       0.014050  1.653818e-02  1.902676e-02  1.965229e-02  2.027782e-02
+test_l1_output_E1-CC2        3.0  8.082521e-03  4.642318e-04       0.007579  7.876624e-03  8.173829e-03  8.334071e-03  8.494314e-03
+test_l1_output_E2-CC2        3.0  8.154445e-03  2.499915e-04       0.007867  8.073411e-03  8.280284e-03  8.298398e-03  8.316512e-03
+test_l1_output_f1-CC2        3.0  2.258022e-02  6.679852e-03       0.015156  1.981858e-02  2.448124e-02  2.629237e-02  2.810350e-02
+test_l1_output_f2-CC2        3.0  3.735737e-02  6.311071e-03       0.030143  3.510876e-02  4.007474e-02  4.096466e-02  4.185458e-02
+test_l1_output_E1-PBE0       3.0  7.995282e-03  3.462088e-04       0.007678  7.810767e-03  7.943894e-03  8.154104e-03  8.364313e-03
+test_l1_output_E2-PBE0       3.0  7.965509e-03  2.191819e-04       0.007721  7.875546e-03  8.029693e-03  8.087563e-03  8.145433e-03
+test_l1_output_f1-PBE0       3.0  1.934730e-02  5.816009e-03       0.012760  1.713414e-02  2.150811e-02  2.264087e-02  2.377363e-02
+test_l1_output_f2-PBE0       3.0  3.059776e-02  6.344825e-03       0.023330  2.838006e-02  3.343004e-02  3.423160e-02  3.503316e-02
+test_l1_output_E1-CAM        3.0  7.648244e-03  4.291877e-04       0.007155  7.503542e-03  7.851947e-03  7.894798e-03  7.937648e-03
+test_l1_output_E2-CAM        3.0  7.428072e-03  1.471595e-05       0.007411  7.423786e-03  7.436492e-03  7.436568e-03  7.436645e-03
+test_l1_output_f1-CAM        3.0  2.155573e-02  5.545887e-03       0.015279  1.943762e-02  2.359668e-02  2.469431e-02  2.579194e-02
+test_l1_output_f2-CAM        3.0  3.470427e-02  7.302494e-03       0.026491  3.182419e-02  3.715729e-02  3.881085e-02  4.046442e-02
+test_rmse_avg                3.0  3.185575e-02  1.031976e-02       0.022384  2.635676e-02  3.032929e-02  3.659150e-02  4.285372e-02
+test_rmse_output_E1-CC2      3.0  1.487295e-02  6.926924e-03       0.010234  1.089178e-02  1.154994e-02  1.719262e-02  2.283529e-02
+test_rmse_output_E2-CC2      3.0  1.216436e-02  2.578497e-03       0.010253  1.069805e-02  1.114347e-02  1.312023e-02  1.509700e-02
+test_rmse_output_f1-CC2      3.0  4.361295e-02  1.590910e-02       0.027542  3.574183e-02  4.394157e-02  5.164838e-02  5.935519e-02
+test_rmse_output_f2-CC2      3.0  5.992159e-02  1.121479e-02       0.048110  5.466965e-02  6.122885e-02  6.582715e-02  7.042545e-02
+test_rmse_output_E1-PBE0     3.0  1.701016e-02  1.132822e-02       0.010158  1.047232e-02  1.078662e-02  2.043622e-02  3.008583e-02
+test_rmse_output_E2-PBE0     3.0  1.464896e-02  7.345711e-03       0.010035  1.041355e-02  1.079200e-02  1.695590e-02  2.311979e-02
+test_rmse_output_f1-PBE0     3.0  3.739808e-02  1.205368e-02       0.023940  3.249615e-02  4.105211e-02  4.412702e-02  4.720194e-02
+test_rmse_output_f2-PBE0     3.0  5.742946e-02  2.286472e-02       0.037340  4.498903e-02  5.263777e-02  6.747403e-02  8.231030e-02
+test_rmse_output_E1-CAM      3.0  1.804341e-02  1.395300e-02       0.009402  9.994914e-03  1.058777e-02  2.236408e-02  3.414039e-02
+test_rmse_output_E2-CAM      3.0  1.024229e-02  9.905677e-04       0.009568  9.673655e-03  9.779445e-03  1.057950e-02  1.137956e-02
+test_rmse_output_f1-CAM      3.0  3.997855e-02  9.811658e-03       0.028876  3.622661e-02  4.357764e-02  4.553003e-02  4.748242e-02
+test_rmse_output_f2-CAM      3.0  5.694622e-02  1.382938e-02       0.043153  5.001361e-02  5.687426e-02  6.384285e-02  7.081144e-02
+[02/22/2024 08:17:34 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.440>0.05.
+[02/22/2024 08:17:34 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/22/2024 08:17:34 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:10:48.739306 -->
 
 ### ESOL
- - ~1.1k points
- - First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular proeprty prediction studies; includes molecular structure for some simple organic molecules are their corresponding experimentally measured free energy of solvation.
- - Reference against the CMPNN paper [@cmpnn], but speficially the amended results shown on their GitHub page: https://github.com/SY575/CMPNN/blob/b647df22ec8fde81785c5a86138ac1efd9ccf9c1/README.md and TODO: run both Chemprop and CMPNN on this dataset again with repeitions (and withold data, unlike in the CMPNN study)
- - `fastprop` achieves RMSE of 0.566 kcal/mol on an 80/10/10 random split, on a different split (5-fold CV w/o holdout) the CMPNN and Chemprop get 0.547 and 0.665, respectively.
-<!-- [01/16/2024 11:55:48 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                          count      mean       std       min       25%       50%       75%       max
-validation_mse_loss         2.0  0.072686  0.000135  0.072591  0.072639  0.072686  0.072734  0.072781
-unitful_validation_wmape    2.0  0.119234  0.017337  0.106975  0.113104  0.119234  0.125363  0.131493
-unitful_validation_l1       2.0  0.415738  0.031417  0.393523  0.404630  0.415738  0.426846  0.437953
-unitful_validation_rmse     2.0  0.564958  0.000524  0.564587  0.564773  0.564958  0.565143  0.565328
-[01/16/2024 11:55:48 AM fastprop.fastprop_core] INFO: Displaying testing results:
-                    count      mean       std       min       25%       50%       75%       max
-test_mse_loss         2.0  0.072983  0.001132  0.072182  0.072583  0.072983  0.073383  0.073783
-unitful_test_wmape    2.0  0.117443  0.011269  0.109475  0.113459  0.117443  0.121428  0.125412
-unitful_test_l1       2.0  0.427814  0.005198  0.424139  0.425976  0.427814  0.429652  0.431489
-unitful_test_rmse     2.0  0.566101  0.004390  0.562997  0.564549  0.566101  0.567653  0.569205
-[01/16/2024 11:55:48 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing L1 yielded p value of p=0.645>0.05. -->
+First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular property prediction studies.
+The dataset includes molecular structure for approximately 1.1k simple organic molecules are their corresponding experimentally measured free energy of solvation.
+This property is a classic target of QSPR studies and is especially well suited for `fastprop`.
+
+The CMPNN [@cmpnn] model, a derivative of Chemprop, is used for comparison.
+The performance values are _not_ those from the original paper but instead the _corrected_ results shown on the CMPNN GitHub page [@cmpnn_amended_results].
+These numbers are the average and standard deviation across 5 repetitions, each including 5-fold cross validation (60/20/20 random split), for a total of 25 models.
+`fastprop` performance is reported using the same split sizes across 8 repetitions _without_ cross validation; increasing the number of repetitions further did not meaningfully change model performance.
+
+`fastprop` achieves an RMSE of 0.643 $\pm$ 0.048 trailing the CMPNN at 0.547 $\pm$ 0.011 but matching Chemprop at 0.665 $\pm$ 0.052.
+The same pattern from previous benchmarks is repeated - `fastprop` matches the performance of generic learned representation approaches but is outperformed by bespoke modeling techniques.
+In this case the CMPNN has been designed to perform better on these benchmark datasets specifically and at an increased cost in both execution time and complexity.
+<!-- [02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                     count         mean           std       min       25%       50%         75%           max
+validation_mse_loss    8.0     0.095556      0.021735  0.071144  0.084887  0.090992    0.098194      0.144221
+validation_r2          8.0     0.906880      0.019380  0.863877  0.905810  0.912962    0.919242      0.921702
+validation_mape        8.0  4852.799028  13378.896109  0.354641  0.430600  0.545640  216.635182  37955.437500
+validation_wmape       8.0     0.119274      0.008751  0.108916  0.111683  0.117584    0.127764      0.130299
+validation_l1          8.0     0.452131      0.032328  0.415299  0.436033  0.443621    0.463682      0.514942
+validation_mdae        8.0     0.318440      0.017449  0.288106  0.311116  0.322926    0.330057      0.339814
+validation_rmse        8.0     0.639168      0.068747  0.559729  0.609307  0.620219    0.648583      0.792154
+[02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: Displaying testing results:
+               count         mean          std       min       25%       50%          75%           max
+test_mse_loss    8.0     0.096117     0.013415  0.082148  0.087325  0.096219     0.098967      0.124506
+test_r2          8.0     0.907555     0.015811  0.876043  0.899289  0.910924     0.920941      0.922190
+test_mape        8.0  4107.554610  7206.676462  0.297727  0.398541  0.606253  5138.838989  20146.849609
+test_wmape       8.0     0.123171     0.018052  0.098788  0.110336  0.124274     0.130009      0.158073
+test_l1          8.0     0.463413     0.033499  0.411660  0.447721  0.459838     0.481340      0.520428
+test_mdae        8.0     0.335356     0.021130  0.303247  0.323648  0.333049     0.346739      0.370731
+test_rmse        8.0     0.643311     0.048021  0.592616  0.603093  0.648945     0.654420      0.742377
+[02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.891>0.05.
+[02/22/2024 10:40:29 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/22/2024 10:40:29 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:51.805718 -->
 
 ### FreeSolv
- - ~0.6k points
- - Another classical benchmark, but among the smallest recognized.
- - Reference results are from the paper presenting the DeepDelta architecture [@deepdelta], which also includes results for other architectures. They do not use a validation set, and report the performance on 10 fold cross-validation, meaning each time the model trains on 90% of the data, has no validation data for early stopping, and then is evaluated based on the performance on the remaining 10%. It is not explained in the paper, but is shown in the repository that the smaller set is witheld.
- - Chemprop got 1.372 RMSE, DeepDelta got 1.290, and `fastprop` gets 1.06, which is approaching the conventionally agreed upon irreducible error of this dataset. TODO: fix this comparison - DeepDelta was doing property differences.
+The Free Energy of Solvation (FreeSolv) database is a more curated alternative to ESOL developed and maintained by Mobley et al. in 2014 [@freesolv].
+It contains approximately 0.6k molecules and their experimental _and_ calculated hydration free energy.
+This benchmark is the smallest 'recognized' benchmark often reported in the molecular property prediction literature.
 
-<!-- [01/14/2024 02:25:31 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                          count      mean       std       min       25%       50%       75%       max
-validation_mse_loss         8.0  0.077811  0.021239  0.045162  0.066696  0.076949  0.082898  0.117327
-unitful_validation_wmape    8.0  0.150100  0.028615  0.105746  0.126448  0.156406  0.172733  0.184089
-unitful_validation_l1       8.0  0.689524  0.069588  0.607875  0.634752  0.682801  0.723501  0.816781
-unitful_validation_rmse     8.0  1.063753  0.146103  0.817076  0.992939  1.066451  1.106214  1.316967
-[01/14/2024 02:25:31 PM fastprop.fastprop_core] INFO: Displaying testing results:
-                    count      mean       std       min       25%       50%       75%       max
-test_mse_loss         8.0  0.078353  0.028153  0.048043  0.052906  0.074801  0.101876  0.114290
-unitful_test_wmape    8.0  0.134703  0.010428  0.120989  0.126518  0.135097  0.141009  0.151088
-unitful_test_l1       8.0  0.657234  0.073684  0.559451  0.595808  0.666151  0.720486  0.737936
-unitful_test_rmse     8.0  1.060747  0.194462  0.842738  0.884339  1.045691  1.226791  1.299813 -->
+Again the CMPNN study is used as a reference and the same procedure described in [ESOL](#esol) is followed.
+`fastprop` achieves an RMSE of 1.33 $\pm$ 0.21, once again trailing trailing the CMPNN at 0.82 $\pm$ 0.15 but matching Chemprop at 1.26 $\pm$ 0.11.
+<!-- [02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                     count          mean           std       min       25%       50%           75%           max
+validation_mse_loss    8.0      0.105076      0.021142  0.071070  0.094144  0.108995      0.122287      0.128179
+validation_r2          8.0      0.887782      0.031946  0.829467  0.872631  0.887708      0.916983      0.921358
+validation_mape        8.0  16893.051336  32489.402467  0.267785  0.288608  0.486189  12784.332201  84006.593750
+validation_wmape       8.0      0.168538      0.028897  0.140509  0.149993  0.162564      0.172264      0.229460
+validation_l1          8.0      0.793325      0.104319  0.671217  0.725321  0.760419      0.853767      0.973832
+validation_mdae        8.0      0.450124      0.073153  0.378300  0.410038  0.427426      0.464366      0.597248
+validation_rmse        8.0      1.248167      0.154767  0.977231  1.163309  1.258965      1.383154      1.423775
+[02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: Displaying testing results:
+               count          mean           std       min       25%       50%          75%            max
+test_mse_loss    8.0      0.122054      0.038057  0.068932  0.086034  0.135498     0.146974       0.172368
+test_r2          8.0      0.871179      0.041758  0.820861  0.834757  0.872354     0.904700       0.929744
+test_mape        8.0  17740.199359  43945.869444  0.326405  0.664482  0.713992  7779.158203  126142.187500
+test_wmape       8.0      0.161002      0.012844  0.144911  0.152154  0.159423     0.166615       0.184403
+test_l1          8.0      0.793003      0.073708  0.689533  0.728003  0.811125     0.836852       0.881987
+test_mdae        8.0      0.438812      0.037666  0.378906  0.416421  0.439448     0.456648       0.505403
+test_rmse        8.0      1.332239      0.212225  1.024511  1.144719  1.421061     1.430947       1.649917
+[02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.381>0.05.
+[02/22/2024 11:08:31 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/22/2024 11:08:31 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:38.625761 -->
 
 ### Flash
- - ~0.6k points (total dataset is ~1k, but only a subset have the flash point)
- - Assembled and fitted to by Saldana and coauthors [@flash], includes primarily alkanes and some oxygen containing compounds and their literature-reported flash point.
- - The reference study reports the performance on only one fold but manuualy confirms that the distribution of poitns in the three splits follow the parent dataset. Used a 70/20/10 random split, as is done here.
- - Reference study achieved an RMSE of 13.2, an MAE of 8.4, and an MAPE of 2.5% using a complex multi-model ensembling method.
- - `fastprop` achieves 13.5, 9.0, and 2.7% with a total execution time of 1m20s (9s for descriptor calculation).
- - Chemprop achieves an RMSE of 21.2 and an MAE of 13.8 (Chemprop does not report MAPE), taking 5m44s to do so.
+First assembled and fitted to by Saldana and coauthors [@flash] the dataset (Flash) includes around 0.6k entries, primarily alkanes and some oxygen-containing compounds, and their literature-reported flash point.
+The reference study reports the performance on only one repetition, but manually confirms that the distribution of points in the three splits follows the parent dataset.
+The split itself was a 70/20/10 random split, which is repeated four times for this study.
 
+Using a complex multi-model ensembling method, the reference study achieved an RMSE of 13.2, an MAE of 8.4, and an MAPE of 2.5%.
+`fastprop` matches this performance, achieving 13.3 $\pm$ 2.1 RMSE, 9.4 $\pm$ 0.8 MAE, and 2.6% $\pm$ 0.1% MAPE.
+Chemprop, however, struggles to match the accuracy of either method.
+It manages an RMSE of 21.2 $\pm$ 2.2 and an MAE of 13.8 $\pm$ 2.1 and does not report MAPE.
+
+Critically, `fastprop` dramatically outperforms both methods in terms of training time.
+The reference model required significant manual intervention to create a model ensemble, so no single training time can be fairly identified.
+`fastprop` arrived at the indicated performance without any manual intervention in only 30 seconds, 13 of which were spent calculating descriptors.
+Chemprop, in addition to not reaching the same level of accuracy, took 5 minutes and 44 seconds to do so - more than ten times the execution time of `fastprop`.
 <!-- fastprop:
-[01/24/2024 03:05:17 PM fastprop.fastprop_core] INFO: Displaying validation results:
+[02/23/2024 09:18:43 AM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:00:13.064044
+[02/23/2024 09:19:00 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count       mean       std        min        25%        50%        75%        max
-validation_mse_loss    4.0   0.087003  0.024714   0.058950   0.073606   0.085720   0.099118   0.117622
-validation_mape        4.0   0.027867  0.004092   0.024257   0.025059   0.026918   0.029725   0.033375
-validation_wmape       4.0   0.029241  0.003804   0.026191   0.026319   0.028269   0.031191   0.034236
-validation_l1          4.0   9.516333  1.362214   8.333776   8.489315   9.234716  10.261735  11.262125
-validation_mdae        4.0   5.761031  0.973835   5.056880   5.269190   5.393213   5.885053   7.200817
-validation_rmse        4.0  16.437566  2.365327  13.635116  15.208911  16.427479  17.656134  19.260189
-[01/24/2024 03:05:17 PM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_mse_loss    4.0   0.090098  0.026493   0.060769   0.075516   0.088016   0.102597   0.123590
+validation_r2          4.0   0.917885  0.021549   0.897762   0.900850   0.915766   0.932801   0.942246
+validation_mape        4.0   0.027317  0.001630   0.025457   0.026290   0.027335   0.028362   0.029143
+validation_wmape       4.0   0.028937  0.001957   0.026410   0.027961   0.029222   0.030198   0.030894
+validation_l1          4.0   9.414462  0.798012   8.348911   9.052492   9.572168   9.934138  10.164599
+validation_mdae        4.0   5.695499  0.645852   4.788015   5.455719   5.916547   6.156327   6.160889
+validation_rmse        4.0  16.504705  2.382902  13.781378  15.145635  16.432622  17.791692  19.372200
+[02/23/2024 09:19:00 AM fastprop.fastprop_core] INFO: Displaying testing results:
                count       mean       std        min        25%        50%        75%        max
-test_mse_loss    4.0   0.058840  0.018530   0.037408   0.047539   0.059112   0.070412   0.079728
-test_mape        4.0   0.026840  0.005151   0.022082   0.023411   0.025781   0.029210   0.033716
-test_wmape       4.0   0.027709  0.004336   0.023308   0.024553   0.027416   0.030573   0.032696
-test_l1          4.0   8.959434  1.304854   7.811850   7.894664   8.784337   9.849107  10.457213
-test_mdae        4.0   5.940652  1.709536   4.338257   4.868059   5.583856   6.656449   8.256640
-test_rmse        4.0  13.490086  2.186714  10.861741  12.219429  13.620798  14.891455  15.857007
-[01/24/2024 03:05:17 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.117>0.05.
-
-Took 9 seconds to calculate descriptors
-
-real    1m19.858s
-user    2m0.425s
-sys     0m30.173s
+test_mse_loss    4.0   0.058217  0.016954   0.039205   0.048582   0.057268   0.066903   0.079126
+test_r2          4.0   0.942541  0.019644   0.914494   0.936482   0.948702   0.954760   0.958264
+test_mape        4.0   0.025690  0.001227   0.024379   0.025206   0.025520   0.026004   0.027344
+test_wmape       4.0   0.027063  0.001818   0.025431   0.026131   0.026586   0.027518   0.029650
+test_l1          4.0   8.765777  0.658962   8.069209   8.341405   8.708392   9.132764   9.577113
+test_mdae        4.0   5.984409  0.172704   5.746712   5.941282   6.015377   6.058504   6.160168
+test_rmse        4.0  13.285306  2.057740  10.910849  12.108939  13.252343  14.428709  15.725688
+[02/23/2024 09:19:00 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.087>0.05.
+[02/23/2024 09:19:01 AM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/23/2024 09:19:01 AM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:30.493815
 
 
 chemprop:
@@ -702,63 +815,68 @@ Mean	21.17199532359917
 Standard Error	1.1064790292313673 -->
 
 ### YSI
- - ~0.4k compounds
- - Assembled by Das an coauthors [@ysi] from a collection of other smaller datasets, maps molecular structure to a unified-scale Yield Sooting Index, a molecular property of interest to the combustion community.
- - Reference study performs leave-one-out cross validation, allowing the model to train on all but one of the data points (effective training size >99%) and reported accuracy is the average performance on all individual points (which is also data leakage). They report Median Absolute Deviation (MdAE) on the "high scale" and "low scale" molecules (see the paper for more details) of 28.6 and 2.35, respectively.
- - `fastprop`, using a more typical 80/10/10 random split and 4 repeitions, achieves an MdAE of 8.29 across the entire dataset, an RMSE of 36.5, and an MAE of 20.2 in 2m15s (13 seconds for feature generation).
- - Chemprop on the same splitting approach achieves an MAE of 21.8 and an RMSE of 48.4 in 4m3s.
- - While an "apples-to-apples" comparison is difficult owing to the lack of standard error metric reporting, the MdAE of `fastprop` is seemingly competitive with the bespoke model in the study. MAE is similar between `fastprop` and Chemprop, though RMSE shows that Chemprop is significantly less accurate on 'outlier' compounds than `fastprop`.
+Assembled by Das and coauthors [@ysi] from a collection of other smaller datasets, this dataset maps ~0.4k molecular structures to a unified-scale Yield Sooting Index (YSI), a molecular property of interest to the combustion community.
+The reference study performs leave-one-out cross validation to fit a per-fragment contribution model, effectively a training size of >99%, without a holdout set.
+Though this is not standard practice and can lead to overly optimistic reported performance, the results will be carried forward regardless.
+The original study did not report overall performance metrics, so they have been re-calculated for this study using the predictions made by the reference model as provided on GitHub [^3].
+For comparison `fastprop` and Chemprop use a more typical 60/20/20 random split and 8 repetitions.
+Results are summarized in Table \ref{ysi_results_table}.
 
-<!-- chemprop:
-Task,Mean mae,Standard deviation mae,Fold 0 mae,Mean rmse,Standard deviation rmse,Fold 0 rmse
-YSI,25.01130964102828,0.0,25.01130964102828,53.687524865608594,0.0,53.687524865608594
-YSI,22.742283113235967,0.0,22.742283113235967,67.50147227703528,0.0,67.50147227703528
-YSI,19.103583744925203,0.0,19.103583744925203,40.036306419637036,0.0,40.036306419637036
-YSI,20.190894554613426,0.0,20.190894554613426,32.30321545955367,0.0,32.30321545955367
+Table: YSI results. \label{ysi_results_table}
 
-for mae: 
-Mean	21.762017763450718
-Standard Error	1.3245916801629232
++------------+----------------+----------------+----------------+
+| Model      | MAE            | RMSE           | WMAPE          |
++============+================+================+================+
+| Reference  | 22.3           | 50             | 0.3            |
++------------+----------------+----------------+----------------+
+| `fastprop` | 13.6 $\pm$ 2.1 | 54 $\pm$ 13    | 14.5 $\pm$ 2.2 |
++------------+----------------+----------------+----------------+
+| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~              |
++------------+----------------+----------------+----------------+
 
-for rmse:
-Mean	48.38212975545864
-Standard Error	7.756076799409034
+`fastprop` significantly outperforms both other models when considering MAE, especially impressive in the case of the reference model which was trained on far more data.
+When considering RMSE, which penalizes large errors more than MAE, all models are similarly performant.
+Finally the WMAPE shows that the reference model makes much smaller errors on the highest YSI molecules compared to `fastprop`.
+Taken in combination with the MAE and RMSE values, which are respectively worse and competitive with `fastprop`, the model is likely highly overfit to the training data due to the cross-validation strategy.
 
-real    4m3.257s
-user    3m56.623s
-sys     0m16.604s
-
-fastprop:
-feature generation took 13 seconds
-[01/24/2024 02:07:47 PM fastprop.fastprop_core] INFO: Displaying validation results:
+Also notable is the difference in training times.
+Chemprop takes 7 minutes and 2 seconds while `fastprop` completes in only 38 seconds, again a factor of ten faster.
+<!-- 
+[02/23/2024 10:35:08 AM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:00:13.469800
+[02/23/2024 10:35:32 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count       mean        std        min        25%        50%        75%        max
-validation_mse_loss    4.0   0.020897   0.017674   0.008690   0.008998   0.014284   0.026183   0.046330
-validation_mape        4.0   0.186855   0.049963   0.131290   0.151384   0.192094   0.227565   0.231940
-validation_wmape       4.0   0.108513   0.032333   0.074570   0.084766   0.108441   0.132188   0.142600
-validation_l1          4.0  18.396958   5.283186  14.691376  14.714375  16.492038  20.174621  25.912382
-validation_mdae        4.0   7.258557   1.945397   5.755852   6.053782   6.610182   7.814957  10.058012
-validation_rmse        4.0  37.921621  15.931041  26.023083  26.477633  32.788874  44.232862  60.085655
-[01/24/2024 02:07:47 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count       mean       std        min        25%        50%        75%        max
-test_mse_loss    4.0   0.017690  0.007267   0.008951   0.013776   0.017897   0.021811   0.026017
-test_mape        4.0   0.206968  0.049201   0.142847   0.182325   0.215643   0.240286   0.253739
-test_wmape       4.0   0.102447  0.009450   0.093839   0.097580   0.100054   0.104921   0.115840
-test_l1          4.0  20.241003  4.845866  15.046371  16.646652  20.728768  24.323120  24.460104
-test_mdae        4.0   8.287672  1.886135   6.668498   6.888764   7.866325   9.265233  10.749538
-test_rmse        4.0  36.485026  7.946628  26.409878  32.570827  37.251917  41.166116  45.026394
-[01/24/2024 02:07:47 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.877>0.05.
+validation_mse_loss    8.0   0.036643   0.019237   0.012729   0.021392   0.037871   0.045183   0.063212
+validation_r2          8.0   0.966243   0.014797   0.945855   0.951829   0.972803   0.977200   0.981882
+validation_mape        8.0   0.372979   0.081809   0.248658   0.321690   0.373215   0.441305   0.474303
+validation_wmape       8.0   0.136332   0.018603   0.104015   0.129864   0.132160   0.145879   0.166829
+validation_l1          8.0  26.069149   5.297644  19.002356  21.609965  27.703727  29.095233  33.730484
+validation_mdae        8.0  12.093825   3.300378   9.047251  10.052302  10.310852  13.844950  18.330185
+validation_rmse        8.0  50.956718  13.520214  32.470043  41.267647  51.488636  60.079863  70.025093
+[02/23/2024 10:35:32 AM fastprop.fastprop_core] INFO: Displaying testing results:
+               count       mean        std        min        25%        50%        75%        max
+test_mse_loss    8.0   0.042176   0.022037   0.020046   0.022840   0.041158   0.054149   0.080890
+test_r2          8.0   0.959092   0.021130   0.912329   0.955399   0.964561   0.974354   0.975917
+test_mape        8.0   0.316280   0.084775   0.221780   0.267679   0.305300   0.321705   0.503944
+test_wmape       8.0   0.144770   0.022861   0.118888   0.129254   0.140225   0.155006   0.184557
+test_l1          8.0  26.282091   4.350020  21.104954  21.874824  26.894576  29.279588  31.678127
+test_mdae        8.0  11.012740   2.510058   8.953960   9.321275  10.470964  11.237217  16.699636
+test_rmse        8.0  54.804913  13.585199  39.491203  43.347728  52.980692  65.513039  73.887115
+[02/23/2024 10:35:32 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.579>0.05.
+[02/23/2024 10:35:32 AM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/23/2024 10:35:32 AM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:37.730220
+-->
 
-real    2m14.937s
-user    1m52.823s
-sys     1m1.971s -->
+[^3]: Predictions are available at this [permalink](https://github.com/pstjohn/ysi-fragment-prediction/blob/bdf8b16a792a69c3e3e63e64fba6f1d190746abe/data/ysi_predictions.csv) to the CSV file on GitHub.
 
 ### HOPV15 Subset
- - ~0.3k Organic Photovoltaic Compounds
- - This study [@hopv15_subset] trained on a subset of HOPV15 [cite original hopv15 study] matching some criteria described in the paper, and they saw SVR give an accuracy 1.32 L1 averaged across 5 randomly selected folds of 60/20/20 data splits.
- - Due to the very small size of this dataset and as a point of comparison to the reference study, 5 repetitions are used.
- - `fastprop` reports an average L1 of 1.44 across the same number of repetitions, though the standard deviation is 0.18 and accuracy across the repeitions ranged from as low as 1.12 to as high as 1.57.
- - WIP on detailed comparison with Chemprop.
+The HOPV15 Subset is a collection of ~0.3k organic photovoltaic compounds curated by Eibeck and coworkers from the larger Harvard Organic Photovoltaic (HOPV15 [@hopv15_original]) based on criteria described in their paper [@hopv15_subset].
+This dataset is unique in that the target property Power Conversion Efficiency is both experimentally measurable or can be derived from quantum mechanics simulations, but regardless is not a 'classical' target of QSPR.
+After applying a variety of established modeling techniques Eibeck et al. achieved a best-case MAE of 1.32 $\pm$ 0.10 averaged across 5 randomly selected 60/20/20 data splits by using a simple molecular fingerprint representation and support vector regression.
 
+In the course of this study it was found that changing the random seed when using only 5 repetitions would lead to dramatically different model performance.
+Thus, for this benchmark the number of repetitions was set _higher_ than the reference study at 15.
+`fastprop` reports an average MAE of 1.55 $\pm$ 0.20 and an RMSE of 1.93 $\pm$ 0.20, in line with the performance of Chemprop at an MAE of 1.60 $\pm$ 0.15 and an RMSE of 1.97 $\pm$ 0.16.
+Execution time is again dramatically different with Chemprop taking 11 minutes and 35 seconds whereas `fastprop` took only 2 minutes and 3 seconds of which 1 minute and 47 seconds was spent calculating descriptors for the abnormally large molecules in HOPV15.
 <!-- [01/23/2024 11:22:14 AM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
 validation_mse_loss    5.0  0.769138  0.193359  0.524239  0.630217  0.783427  0.923952  0.983856
@@ -774,27 +892,53 @@ test_rmse        5.0  1.776624  0.185695  1.449138  1.806064  1.864390  1.880140
 [01/23/2024 11:22:14 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.254>0.05. -->
 
 ### Fubrain
- - ~0.3k small molecule drugs
- - First described by Esaki and coauthors, the fubrain dataset is a collection of small molecule drugs and their corresponding unbound fraction in the brain, a critical metric for drug development [@fubrain].
- - The study that first generated this dataset got 0.44 RMSE with 10-fold CV (using Mordred descriptors, like `fastprop`, but with a different model architecture), and then DeepDelta reported 0.830+/-0.023 RMSE using the same approach.
- - In both studies 10-fold cross validation using the default settings in scikit-learn (CITE, then cite specific KFold page) will result in a 90/10 train/test split, and a separate holdout set is identified afterward for reporting performance.
- - OOB performance is twice as good as the reference study and dramatically better than DeepDelta, which also suffers from scaling issues: `fastprop` RMSE 0.19 (54s to train, 30s descriptor generation), Chemprop RMSE 0.22 (5m11s to train).
- - TODO: add the delta_fubrain study
-<!-- [01/23/2024 12:18:36 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_mse_loss    4.0  0.459971  0.195559  0.198392  0.394382  0.486529  0.552118  0.668435
-validation_wmape       4.0  0.625896  0.158742  0.455302  0.528967  0.612142  0.709071  0.823997
-validation_l1          4.0  0.121224  0.025237  0.086006  0.112100  0.127828  0.136952  0.143232
-validation_rmse        4.0  0.173373  0.041073  0.116233  0.161759  0.181953  0.193566  0.213353
-[01/23/2024 12:18:36 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_mse_loss    4.0  0.528621  0.127916  0.411545  0.422581  0.522131  0.628171  0.658675
-test_wmape       4.0  0.696168  0.032418  0.668985  0.678049  0.686482  0.704602  0.742725
-test_l1          4.0  0.126220  0.012108  0.111144  0.119120  0.128339  0.135438  0.137059
-test_rmse        4.0  0.188680  0.023042  0.167408  0.169634  0.187761  0.206807  0.211790
-[01/23/2024 12:18:36 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.540>0.05. -->
+First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimental experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
+This specific target in combination with this dataset size makes this benchmark highly relevant for typical QSPR studies.
 
-<!-- Chemprop:
+The study that first generated this dataset used `mordred` descriptors but as is convention they strictly applied linear modeling methods.
+Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
+All told, their model achieved an RMSE of 0.53 averaged across all testing data.
+
+In only 44 seconds, of which 36 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.19 $\pm$ 0.03 
+Under the same conditions Chemprop approaches `fastprop`'s performance with an RMSE of 0.22 $\pm$ 0.04 but requires 5 minutes and 11 seconds to do so, in this case a 7 times performance improvement for `fastprop` over Chemprop.
+
+#### Delta-Fubrain
+Also noteworthy for the Fubrain dataset is that it has been subject to the delta-learning approach to small dataset limitations.
+DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were used to generate all possible pairs and then the differences in the property [^4] were predicted rather than absolute values.
+They reported an RMSE of 0.830 $\pm$ 0.023, whereas a Chemprop model trained to directly predict property values was only able to reach an accuracy of 0.965 $\pm$ 0.019 when evaluated on its capacity to predict property differences.
+
+`fastprop` is able to overcome these limitations.
+Using the same model from above (re-trained to predict log-transformed values), which has _less_ training data than DeepDelta even _before_ the augmentation, `fastprop` achieves 0.740 $\pm$ 0.087 RMSE after pairing all withheld test molecules.
+Increasing the amount of training data while retaining some samples for early stopping yields only small improvements, showing that `fastprop` may be approaching the irreducible error of Fubrain.
+With an 89/1/10 split the RMSE of `fastprop` decreases to 0.7118 $\pm$ 0.1381, though with significantly increased variance due to small size of the testing data.
+Regardless, the execution time and scaling issues of DeepDelta and the inaccuracy of Chemprop are effectively circumvented by `fastprop`.
+
+[^4]: Although the original Fubrain study reported untransformed fractions, the DeepDelta authors confirmed [via GitHub](https://github.com/RekerLab/DeepDelta/issues/2#issuecomment-1917936697) that DeepDelta was trained on log base-10 transformed fraction values, which is replicated here.
+<!-- [02/26/2024 11:07:47 PM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:00:36.317700
+[02/26/2024 11:07:55 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                     count      mean       std       min       25%       50%       75%       max
+validation_mse_loss    4.0  0.528255  0.112356  0.461545  0.462805  0.478035  0.543484  0.695403
+validation_r2          4.0  0.520937  0.127055  0.332428  0.502369  0.573573  0.592141  0.604174
+validation_mape        4.0  4.051855  0.726136  3.493797  3.521063  3.833108  4.363900  5.047408
+validation_wmape       4.0  0.652842  0.125646  0.531584  0.573018  0.629971  0.709794  0.819841
+validation_l1          4.0  0.126917  0.021673  0.100416  0.116020  0.127700  0.138596  0.151851
+validation_mdae        4.0  0.073359  0.020653  0.047181  0.063825  0.074977  0.084511  0.096301
+validation_rmse        4.0  0.188302  0.024534  0.170276  0.174478  0.179318  0.193142  0.224298
+[02/26/2024 11:07:55 PM fastprop.fastprop_core] INFO: Displaying testing results:
+               count      mean       std       min       25%       50%       75%        max
+test_mse_loss    4.0  0.581702  0.210334  0.386589  0.406386  0.588264  0.763580   0.763693
+test_r2          4.0  0.433427  0.051082  0.389265  0.390404  0.427765  0.470788   0.488912
+test_mape        4.0  7.624890  2.673862  4.914618  6.157446  7.179506  8.646950  11.225932
+test_wmape       4.0  0.721044  0.043162  0.682854  0.689614  0.712062  0.743492   0.777199
+test_l1          4.0  0.130729  0.013527  0.116302  0.120649  0.131922  0.142002   0.142768
+test_mdae        4.0  0.080191  0.010658  0.071635  0.072877  0.077059  0.084373   0.095009
+test_rmse        4.0  0.194436  0.028416  0.167237  0.171230  0.195749  0.218955   0.219010
+[02/26/2024 11:07:55 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.755>0.05.
+[02/26/2024 11:07:55 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/26/2024 11:07:55 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:44.299743
+
+
+Chemprop:
 RMSE:
 	Column 1
 Mean	0.22348309487917928
@@ -833,245 +977,190 @@ sys     0m15.378s
 
 Timing for fastprop: descriptor generation was 30 seconds, total was 54s. -->
 
- - Chemprop's performance on this dataset is still much better than the reference dataset, but worse than `fastprop`. More importantly, Chemprop also significantly overfits to the validation/training data, as can be seen by the severly diminished performance on the witheld testing set.
- - As stated earlier, this is likely to blame on the 'start from almost-nothing' strategy in Chemprop, where the initial representation is only a combination of simple atomic descrtiptors based on the connectivity and not the human-designed high-level molecular descriptors used in `fastprop`.
-This will also become clear in the later ARA classification dataset (see [ARA](#ara)).
-
-
 ### PAHs
- - Only 55 molecules.
- - Originally compiled by Arockiaraj et al. [@pah], contains water/octanol partition coefficients (logP, among some other properties for some molecules) for polyclicic aromatic hydrocarbons ranging from napthalene up to circumcoronene.
- - Reference study designed a new set of molecular descriptors that show a strong correlation to logP, with correlation coefficients between 96 to 99%.
- - `fastprop`, using a 4-repetition 80/10/10 random split, is able to achieve a correlation coefficient of 0.960+/-0.027 in 2m12s (17s descriptor calculation). This is an L1 error of 0.230 and an MAPE of 3.1%.
- - Chemprop using the same scheme achieves only 0.746+/-0.085 in 36s. This is an L1 error 1.07+/-0.20.
- - `fastprop` is able to correlate structure directly to property without expert knowledge in only minutes while having only 44 training points.
+Originally compiled by Arockiaraj et al. [@pah] the Polycyclic Aromatic Hydrocarbons (PAH) dataset contains water/octanol partition coefficients (logP) for exactly 55 polycyclic aromatic hydrocarbons ranging in size from napthalene to circumcoronene.
+This size of this benchmark is an ideal case study for the application of `fastprop`.
+Using expert insight the reference study designed a novel set of molecular descriptors that show a strong correlation to logP, with correlation coefficients ranging from 0.96 to 0.99 among the various new descriptors.
+
+For comparison, `fastprop` and Chemprop are trained using 8 repetitions of a typical 80/10/10 random split - only _44_ molecules in the training data.
+`fastprop`matches the performance of the bespoke descriptors with a correlation coefficient of 0.976 $\pm$ 0.027.
+This corresponds to an MAE of 0.160 $\pm$ 0.035 and an MAPE of 2.229 $\pm$ 0.061%.
+Chemprop effectively fails on this dataset, achieving a correlation coefficient of only 0.59 $\pm$ 0.24, an MAE of 1.04 $\pm$ 0.33 (one anti-correlated outlier replicate removed).
+Despite the large parameter size of the `fastprop` model, it readily outperforms Chemprop in the small-data limit.
+
+For this unique dataset, execution time trends are inverted.
+`fastprop` takes 2 minutes and 44 seconds, of which 1 minute and 44 seconds were spent calculating descriptors for these unusually large molecules.
+Chemprop completes in 1 minute and 17 seconds, on par with the training time of `fastprop` without considering descriptor calculation.
 <!--
 On only the 21 points that have a retention index, mape: 0.024147   0.008081 
 Similar good story on the boiling point, acentric factor only has 12 points left after removing unvalued entries - difficult to call it anything.
--->
 
-<!-- fastprop: about 17 seconds calculating descriptors
-
-[01/25/2024 11:26:04 AM fastprop.fastprop_core] INFO: Displaying validation results:
+[02/27/2024 01:04:31 PM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:01:43.992341
+[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
-validation_mse_loss    4.0  0.010593  0.006000  0.003780  0.008306  0.010096  0.012382  0.018399
-validation_r2          4.0  0.967020  0.044817  0.900350  0.961918  0.985614  0.990716  0.996501
-validation_mape        4.0  0.023903  0.008261  0.013881  0.018817  0.025077  0.030163  0.031579
-validation_wmape       4.0  0.022955  0.006833  0.014001  0.019613  0.024176  0.027519  0.029467
-validation_l1          4.0  0.175690  0.051109  0.104058  0.165468  0.186700  0.196922  0.225304
-validation_mdae        4.0  0.146728  0.045694  0.086612  0.123915  0.156485  0.179298  0.187331
-validation_rmse        4.0  0.213124  0.064931  0.131663  0.192047  0.215169  0.236246  0.290493
-[01/25/2024 11:26:04 AM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_mse_loss    8.0  0.011793  0.007565  0.002760  0.007052  0.010122  0.016038  0.023678
+validation_r2          8.0  0.967643  0.041480  0.887329  0.962079  0.990051  0.991525  0.995362
+validation_mape        8.0  0.023872  0.007336  0.012750  0.019830  0.021311  0.030370  0.034264
+validation_wmape       8.0  0.023179  0.006904  0.011766  0.019547  0.022500  0.027003  0.033757
+validation_l1          8.0  0.180293  0.063113  0.097302  0.142936  0.159853  0.216696  0.297467
+validation_mdae        8.0  0.163112  0.076687  0.048465  0.120278  0.155380  0.203896  0.286865
+validation_rmse        8.0  0.216918  0.074785  0.119338  0.176945  0.189857  0.275287  0.328269
+[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: Displaying testing results:
                count      mean       std       min       25%       50%       75%       max
-test_mse_loss    4.0  0.022717  0.015894  0.009908  0.011239  0.018316  0.029795  0.044327
-test_r2          4.0  0.960160  0.027347  0.922591  0.948588  0.968076  0.979649  0.981897
-test_mape        4.0  0.031277  0.012971  0.023626  0.024545  0.025400  0.032131  0.050680
-test_wmape       4.0  0.027624  0.004221  0.023829  0.024298  0.027011  0.030337  0.032647
-test_l1          4.0  0.229951  0.052396  0.177245  0.192995  0.224651  0.261607  0.293254
-test_mdae        4.0  0.174251  0.047216  0.130138  0.141541  0.165600  0.198310  0.235666
-test_rmse        4.0  0.308459  0.109823  0.213177  0.226902  0.284881  0.366438  0.450899
-[01/25/2024 11:26:04 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.186>0.05.
-
-real    2m11.969s
-user    3m50.216s
-sys     0m14.508s
+test_mse_loss    8.0  0.009312  0.004077  0.004010  0.005968  0.010208  0.011694  0.015521
+test_r2          8.0  0.976755  0.027748  0.910766  0.978237  0.982443  0.991034  0.997106
+test_mape        8.0  0.022889  0.006179  0.012255  0.018382  0.024994  0.027098  0.030146
+test_wmape       8.0  0.021151  0.005120  0.013177  0.017212  0.023100  0.025260  0.026115
+test_l1          8.0  0.160849  0.034691  0.115016  0.132890  0.157501  0.188638  0.205169
+test_mdae        8.0  0.141768  0.048483  0.088757  0.108975  0.125542  0.163960  0.224543
+test_rmse        8.0  0.197821  0.042304  0.139991  0.166466  0.202003  0.229707  0.248529
+[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.540>0.05.
+[02/27/2024 01:05:30 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/27/2024 01:05:30 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:02:43.453523
 
 chemprop
 
-Task,Mean mae,Standard deviation mae,Fold 0 mae,Mean rmse,Standard deviation rmse,Fold 0 rmse,Mean r2,Standard deviation r2,Fold 0 r2
-log_p,1.583810856149771,0.0,1.583810856149771,2.2727142211004185,0.0,2.2727142211004185,0.502462086273753,0.0,0.502462086273753
-log_p,1.1298430017715362,0.0,1.1298430017715362,1.5680174445057777,0.0,1.5680174445057777,0.7729733835836915,0.0,0.7729733835836915
-log_p,0.9642980585445118,0.0,0.9642980585445118,1.0899792588299095,0.0,1.0899792588299095,0.8170510411737727,0.0,0.8170510411737727
-log_p,0.5977449950615908,0.0,0.5977449950615908,0.749184197908931,0.0,0.749184197908931,0.8928415401318607,0.0,0.8928415401318607
-
-mae:
-Mean	1.0689242278818525
-Standard Error	0.20448631611361848
-
-rmse:
-Mean	1.4199737805862591
-Standard Error	0.33014368512470244
-
-r2:
-Mean	0.7463320127907694
-Standard Error	0.08497476403531372
-
-real    0m36.336s
-user    0m32.538s
-sys     0m15.281s -->
+real    1m15.752s
+user    1m6.715s
+sys     0m30.473s
+-->
 
 ## Classification Datasets
 See Table \ref{classification_results_table} for a summary of all the classification dataset results.
 Especially noteworthy is the performance on QuantumScents dataset, which outperforms the best literature result.
 Citations for the datasets themselves are included in the sub-sections of this section.
 
-Table: Summary of regression benchmark results. \label{classification_results_table}
+Table: Summary of classification benchmark results. \label{classification_results_table}
 
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|Benchmark              |Samples (k)         |Metric      |Literature Best             |`fastprop`  |Chemprop                    |   Speedup   |
-+=======================+====================+============+============================+============+============================+=============+
-|binary-HIV             | ~41                |AUROC       |0.81 $^a$                   |0.81        |0.77 $^a$                   |      ~      |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|ternary-HIV            |~41                 |AUROC       |~                           |0.83        |WIP                         |      ~      |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|QuantumScents          |~3.5                |AUROC       |0.88 $^b$                   |0.91        |0.85 $^b$                   |      ~      |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|SIDER                  |~1.4                |AUROC       |0.67 $^c$                   |0.66        |0.57 $^c$                   |      ~      |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|Pgp                    |~1.3                |AUROC       |WIP                         |0.93        |WIP                         |      ~      |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
-|ARA                    |~0.8                |AUROC       |0.95 $^d$                   |0.95        |0.90*                       | 16m54s/2m7s |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+-------------+
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
+|Benchmark              |Samples (k)         |Metric      |Literature Best             |`fastprop`  |Chemprop                    |
++=======================+====================+============+============================+============+============================+
+|HIV                    | ~41                |AUROC       |0.81$^a$                    |0.81        |0.77$^a$                    |
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
+|QuantumScents          |~3.5                |AUROC       |0.88$^b$                    |0.91        |0.85$^b$                    |
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
+|SIDER                  |~1.4                |AUROC       |0.67$^c$                    |0.64        |0.65$^c$                    |
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
+|Pgp                    |~1.3                |AUROC       |0.94$^e$                    |0.92        |0.89$^e$                    |
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
+|ARA                    |~0.8                |Accuracy    |91$^d$                      |89          |82*                         |
++-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
 
-a [@unimol] b [@quantumscents] c [@cmpnn] d [@ara] * These results were generated for this study.
+a [@unimol] b [@quantumscents] c [@cmpnn] d [@ara] e [@pgp_best] * These results were generated for this study.
 
 ### HIV Inhibition
- - ~41k points
- - Originally compiled by Riesen and Bunke [@hiv], this dataset includes the reported HIV activity for many small molecules; this is an established benchmark in the world of molecular property prediction, and the exact version used is that which was prepared in MoleculeNet [@moleculenet].
- - This dataset is unique in that the labels in the original study include three possible classes (a _multiclass_) regression problem whereas the most common reported metric is instead lumping positive and semi-positive labels into a single class to reduce the task to _binary_ classification; both are reported here.
- - To compare to UniMol, use an 80/10/10 scaffold-based split with three repetitions.
+Originally compiled by Riesen and Bunke [@hiv], this dataset includes the reported HIV activity for approximately 41k small molecules.
+This is an established benchmark in the molecular property prediction community and the exact version used is that which was standardized in MoleculeNet [@moleculenet].
+This dataset is unique in that the labels in the original study include three possible classes (a _multiclass_) regression problem whereas the most common reported metric is instead lumping positive and semi-positive labels into a single class to reduce the task to _binary_ classification; both are reported here.
+UniMol is again used as a point of comparison, and thus an 80/10/10 scaffold-based split with three repetitions is used.
 
-#### Binary
- - `fastprop` matches the literature best UniMol (AUROC: 80.8+/-0.3 [@unimol]), AUROC: 0.805+/-0.04. This corresponds to an accuracy of 96.8+/-1.0.
- - Chemprop performs worse than both of these models.
-<!-- [01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: Displaying validation results:
+For binary classification `fastprop`'s AUROC of 0.81 $\pm$ 0.04 matches the literature best UniMol with and 0.808 $\pm$ 0.003 [@unimol].
+This corresponds to an accuracy of 96.8+/-1.0% for `fastprop`, which taken in combination with AUROC hints that the model is prone to false positives.
+Chemprop performs worse than both of these models with a reported AUROC of 0.771 $\pm$ 0.005.
+<!-- [02/27/2024 02:31:15 PM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    3.0  0.137778  0.012579  0.123418  0.133239  0.143060  0.144957  0.146854
-validation_accuracy    3.0  0.963035  0.004458  0.959144  0.960603  0.962062  0.964981  0.967899
-validation_f1          3.0  0.289890  0.007632  0.282051  0.286187  0.290323  0.293810  0.297297
-validation_auroc       3.0  0.781569  0.016585  0.765655  0.772978  0.780301  0.789526  0.798751
-[01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_bce_loss    3.0  0.138464  0.012790  0.123954  0.133643  0.143332  0.145718  0.148104
+validation_accuracy    3.0  0.963440  0.003239  0.961333  0.961576  0.961819  0.964494  0.967169
+validation_f1          3.0  0.296696  0.024142  0.270270  0.286246  0.302222  0.309909  0.317597
+validation_auroc       3.0  0.778699  0.016220  0.764092  0.769970  0.775849  0.786002  0.796155
+[02/27/2024 02:31:15 PM fastprop.fastprop_core] INFO: Displaying testing results:
                count      mean       std       min       25%       50%       75%       max
-test_bce_loss    3.0  0.123481  0.022154  0.097957  0.116358  0.134758  0.136243  0.137729
-test_accuracy    3.0  0.968142  0.009633  0.959630  0.962913  0.966196  0.972398  0.978599
-test_f1          3.0  0.307895  0.113440  0.194175  0.251316  0.308458  0.364755  0.421053
-test_auroc       3.0  0.805190  0.041026  0.776199  0.781719  0.787238  0.819685  0.852133
-[01/29/2024 10:53:49 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.452>0.05.-->
+test_bce_loss    3.0  0.122810  0.021838  0.097602  0.116223  0.134844  0.135414  0.135984
+test_accuracy    3.0  0.967899  0.009553  0.959630  0.962670  0.965710  0.972033  0.978356
+test_f1          3.0  0.298743  0.108394  0.194175  0.242816  0.291457  0.351027  0.410596
+test_auroc       3.0  0.805757  0.040305  0.777523  0.782678  0.787833  0.819874  0.851915
+[02/27/2024 02:31:15 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.487>0.05.
+[02/27/2024 02:31:16 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/27/2024 02:31:16 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:08:36.655815 -->
 
-
-#### Multiclass
- - Not yet found any reported results in the literature.
- - TODO: run Chemprop in this fashion.
- - `fastprop` achieves 0.818+/-0.019 AUROC, actually _increasing_ performance from the 'easier' binary classification task; note though that the accuracy has dropped to 0.424+/-0.071.
-<!-- [01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: Displaying validation results:
+When attempting multiclass classification, `fastprop` maintains a similar AUROC of 0.818+/-0.019 AUROC
+Accuracy suffers a prodigious drop to 42.8 $\pm$ 7.6%, now suggesting that the model is prone to false negatives.
+Other leading performers do not report performance metrics on this variation of the dataset.
+<!-- [02/27/2024 03:39:40 PM fastprop.fastprop_core] INFO: Displaying validation results:
                        count      mean       std       min       25%       50%       75%       max
-validation_kldiv_loss    3.0  0.158862  0.015531  0.140936  0.154146  0.167356  0.167825  0.168295
-validation_auroc         3.0  0.801941  0.007333  0.793869  0.798816  0.803762  0.805977  0.808192
-validation_accuracy      3.0  0.390970  0.030146  0.370830  0.373641  0.376451  0.401039  0.425628
-[01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_kldiv_loss    3.0  0.158738  0.014986  0.141436  0.154306  0.167177  0.167390  0.167602
+validation_auroc         3.0  0.804446  0.010528  0.792380  0.800787  0.809195  0.810479  0.811763
+validation_accuracy      3.0  0.394096  0.033280  0.373434  0.374900  0.376367  0.404427  0.432487
+[02/27/2024 03:39:40 PM fastprop.fastprop_core] INFO: Displaying testing results:
                  count      mean       std       min       25%       50%       75%       max
-test_kldiv_loss    3.0  0.142161  0.030653  0.107482  0.130424  0.153366  0.159501  0.165635
-test_auroc         3.0  0.818408  0.019140  0.798132  0.809531  0.820930  0.828546  0.836163
-test_accuracy      3.0  0.424130  0.071443  0.343844  0.395847  0.447851  0.464273  0.480695
-[01/29/2024 11:10:11 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.236>0.05. -->
+test_kldiv_loss    2.0  0.136514  0.041441  0.107211  0.121862  0.136514  0.151166  0.165817
+test_auroc         3.0  0.817601  0.021805  0.792922  0.809270  0.825619  0.829941  0.834263
+test_accuracy      3.0  0.428450  0.076047  0.343844  0.397120  0.450396  0.470754  0.491112
+[02/27/2024 03:39:40 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.400>0.05.
+[02/27/2024 03:39:40 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/27/2024 03:39:40 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:08:51.352367 -->
 
 ### QuantumScents
- - ~3.5k points
- - Compiled by Burns and Rogers [@quantumscents], this dataset contains SMILES and 3D structures for a collection of molecules labeled with their scents; each molecule can have any number of reported scents from a possible 113 different labels.
- - This benchmark is specifically a Quantitive Structure-Odor Relationship.
- - In the reference study, Chemprop achieved an AUROC of 0.85 with its default settings and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
- - `fastprop`, without using these descriptors and only the SMILES (not 3D) information, achieves an AUROC of 0.915+/-0.004.
- - The GitHub repository contains an example of generating custom descriptors incorporating the 3D information from QuantumScents and passing these to `fastprop`; impact on the performance was negligible.
-<!-- [01/19/2024 07:44:19 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    3.0  0.075712  0.001303  0.074208  0.075307  0.076405  0.076463  0.076522
-validation_auroc       3.0  0.915910  0.004798  0.913018  0.913141  0.913264  0.917356  0.921448
-[01/19/2024 07:44:19 AM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_bce_loss    3.0  0.076284  0.000804  0.075691  0.075826  0.075961  0.076580  0.077200
-test_auroc       3.0  0.915418  0.005326  0.909292  0.913653  0.918015  0.918481  0.918947
-[01/19/2024 07:44:19 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.911>0.05.
+Compiled by Burns and Rogers [@quantumscents], this dataset contains approximately 3.5k SMILES and 3D structures for a collection of molecules labeled with their scents.
+Each molecule can have any number of reported scents from a possible 113 different labels, making this benchmark a a Quantitative Structure-Odor Relationship.
+Due to the highly sparse nature of the scent labels a unique sampling algorithm (Szymanski sampling [@szymanski]) was used in the reference study and the exact splits are replicated here for a fair comparison.
 
-[01/19/2024 08:15:04 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    3.0  0.075457  0.001448  0.073790  0.074988  0.076186  0.076291  0.076396
-validation_auroc       3.0  0.915995  0.006418  0.911147  0.912357  0.913566  0.918420  0.923273
-[01/19/2024 08:15:04 AM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_bce_loss    3.0  0.076526  0.000616  0.075960  0.076197  0.076435  0.076808  0.077182
-test_auroc       3.0  0.914514  0.004367  0.909671  0.912695  0.915720  0.916935  0.918150
-[01/19/2024 08:15:04 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.758>0.05. -->
+In the reference study, Chemprop achieved an AUROC of 0.85 with modest hyperparameter optimization and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
+`fastprop`, using neither these descriptors nor the 3D structures, outperforms both models with an AUROC of 0.910+/-0.001 with only descriptors calculated from the molecules' SMILES.
+The GitHub repository contains an example of generating custom descriptors incorporating the 3D information from QuantumScents and passing these to `fastprop`; impact on the performance was negligible.
 
 ### SIDER
- - ~1.4k compounds, including small molecules, metals, and salts.
- - First described by Kuhn et al. in 2015 [@sider], the Side Effect Resource (SIDER) database has become a standard property prediction benchmark; the challenging dataset requires mapping structure to any combination of 27 side effects.
- - Among the best performers in literature is the CMPNN, with a reported AUROC of 0.666+/-0.0007 (5 repeats of 5-fold CV w/o holdout set); with the same approach, Chemprop got 0.646+/-0.016.
- - TODO: re-run the CMPNN with a holdout set to get a more honest result.
- - On an 80/10/10 random split with 5 repetitions, `fastprop` achieves AUROC of 0.655+/-0.016 in 5m9s whereas Chemprop achieves 0.637+/-0.011 in just under an **hour**. (*during one repetetion side effect 3 was ill-defined in the testing data and was excluded from the average performance for that repetition, repetition 3 was thrown out entirely because a similar issue occoured with the validation set during training, and AUROC for that trial was 0.473 which was an outlier compared to the others.)
-<!--
-fastprop:
-4m21s to calculate features
+First described by Kuhn et al. in 2015 [@sider], the Side Effect Resource (SIDER) database has become a standard property prediction benchmark.
+This challenging dataset maps around 1.4k compounds, including small molecules, metals, and salts, to any combination of 27 side effects - leading performers are only slightly better than random guessing (AUROC 0.5).
 
-[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    5.0  0.513962  0.007272  0.507627  0.509618  0.511895  0.514545  0.526124
-validation_auroc       5.0  0.634701  0.024984  0.610214  0.621136  0.628353  0.638365  0.675439
-[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_bce_loss    5.0  0.490345  0.011056  0.476638  0.483128  0.490632  0.496424  0.504902
-test_auroc       5.0  0.655232  0.016167  0.628616  0.652302  0.661167  0.664349  0.669729
-[01/29/2024 12:06:57 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing auroc yielded p value of p=0.161>0.05.
-
-real    0m47.894s
-user    0m27.250s
-sys     0m19.838s
-
-Chemprop:
-real    56m46.703s
-user    50m36.152s
-sys     6m25.502s
-
-mean auroc was 0.637+/-0.011
--->
+Among the best performers in literature is the previously discussed CMPNN [@cmpnn] with a reported AUROC of 0.666+/-0.007, which narrowly outperforms Chemprop at 0.646+/-0.016.
+Using the same approach, `fastprop` achieves a decent AUROC of 0.636+/-0.019.
+Despite many of the entries in this dataset being atypical for `mordred` near-leading performance is still possible, supporting the robustness and generalizability of this framework.
 
 ### Pgp
- - ~1.2k small molecule drugs
- - First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Theraputic Data Commons (TDC) [@tdc] model benchmarkign tool; the dataset maps drugs to a binary label indicating if they inhibit P-glycoprotein.
- - TDC serves this data through a Python package, but due to installation issues the data was retrieved from the original study instead. The reccomended splitting approach is a 70/10/20 scaffold-based split, which is done here.
- - The reference literature model uses a molecular interaction field, bu has since been surpassed by other models; according to TDC the current leader [@pgp_best] on this benchmark has achieved an AUROC of 0.938+/-0.002 (see [the TDC Pgp leaderboard](https://tdcommons.ai/benchmark/admet_group/03pgp/)).
- - According to the same leaderboard, Chemprop [@chemprop_theory] achieves 0.886+/-0.016 with the includsion of additional molecular features.
- - `fastprop` achieves 0.926+/-0.010 AUROC with an accuracy of 86.0+/-0.2%, approaching the performance of the current leader and significantly outperforming Chemprop.
-<!--
-fastprop does this in 44s w/ cached descriptors
-[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: Displaying validation results:
+First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Therapeutic Data Commons (TDC) [@tdc] model benchmarking suite.
+the dataset maps approximately 1.2k small molecule drugs to a binary label indicating if they inhibit P-glycoprotein (Pgp).
+TDC serves this data through a Python package, but due to installation issues the data was retrieved from the original study instead.
+The recommended splitting approach is a 70/10/20 scaffold-based split which is done here with 4 replicates.
+
+The model in the original study uses a molecular interaction field but has since been surpassed by other models.
+According to TDC the current leader [@pgp_best] on this benchmark has achieved an AUROC of 0.938 $\pm$ 0.002 [^5].
+AOn the same leaderboard Chemprop [@chemprop_theory] achieves 0.886 $\pm$ 0.016 with the inclusion of additional molecular features.
+`fastprop` yet again approaches the performance of the leading methods and outperforms Chemprop, here with an AUROC of 0.919 $\pm$ 0.013 and an accuracy of 84.5 $\pm$ 0.2%.
+<!-- [02/27/2024 08:38:09 PM fastprop.fastprop_core] INFO: Displaying validation results:
                      count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    4.0  0.387118  0.069688  0.310836  0.352300  0.379792  0.414611  0.478053
-validation_accuracy    4.0  0.864754  0.056194  0.795082  0.831967  0.872951  0.905738  0.918033
-validation_f1          4.0  0.851747  0.037130  0.800000  0.837500  0.862500  0.876747  0.881988
-validation_auroc       4.0  0.917608  0.018889  0.904749  0.907524  0.910028  0.920112  0.945628
-[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: Displaying testing results:
+validation_bce_loss    4.0  0.397071  0.059480  0.345734  0.360633  0.380944  0.417381  0.480661
+validation_accuracy    4.0  0.862705  0.057328  0.795082  0.825820  0.868852  0.905738  0.918033
+validation_f1          4.0  0.850000  0.035355  0.800000  0.837500  0.862500  0.875000  0.875000
+validation_auroc       4.0  0.912848  0.010768  0.901493  0.906710  0.911516  0.917655  0.926868
+[02/27/2024 08:38:09 PM fastprop.fastprop_core] INFO: Displaying testing results:
                count      mean       std       min       25%       50%       75%       max
-test_bce_loss    4.0  0.387347  0.032653  0.358048  0.359642  0.386927  0.414632  0.417484
-test_accuracy    4.0  0.860204  0.002041  0.857143  0.860204  0.861224  0.861224  0.861224
-test_f1          4.0  0.874467  0.008665  0.862903  0.870271  0.876923  0.881119  0.881119
-test_auroc       4.0  0.926062  0.009703  0.914280  0.921085  0.926352  0.931329  0.937263
-[01/29/2024 11:48:42 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.877>0.05.-->
+test_bce_loss    4.0  0.408681  0.049120  0.359007  0.388608  0.399594  0.419667  0.476528
+test_accuracy    4.0  0.845918  0.025680  0.808163  0.841837  0.855102  0.859184  0.865306
+test_f1          4.0  0.860778  0.023598  0.829091  0.851851  0.864501  0.873428  0.885017
+test_auroc       4.0  0.919041  0.012997  0.901614  0.912929  0.922293  0.928406  0.929965
+[02/27/2024 08:38:09 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.612>0.05.
+[02/27/2024 08:38:09 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/27/2024 08:38:09 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:14.312253 -->
+
+[^5]: See [the TDC Pgp leaderboard](https://tdcommons.ai/benchmark/admet_group/03pgp/).
 
 ### ARA
- - ~0.8k small molecules
- - Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps molecular structure to a binary label indicating if the molecule is an Androgen Receptor Antagonist (ARA); the reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 0.911 and an AUROC of 0.945.
- - For this study, an 80/10/10 random splitting is repeated four times on the dataset since no analogous split to the reference study can be determined.
- - Chemprop takes 16m55s to run on this dataset and achieves only 0.824+/-0.020 accuracy and 0.898+/-0.022 AUROC.
- - `fastprop` takes 2m7s and is competitive with the reference study, achieving a 0.882+/-0.02 accuracy and 0.951+/-0.018 AUROC.
-<!--
-fastprop:
-[01/23/2024 09:46:32 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_bce_loss    4.0  0.324625  0.078561  0.248426  0.270645  0.312653  0.366633  0.424765
-validation_accuracy    4.0  0.872024  0.017857  0.857143  0.857143  0.869048  0.883929  0.892857
-validation_f1          4.0  0.874281  0.019900  0.853659  0.861142  0.872294  0.885433  0.898876
-validation_auroc       4.0  0.937131  0.025501  0.903977  0.923698  0.942977  0.956410  0.958593
-[01/23/2024 09:46:32 AM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_bce_loss    4.0  0.286704  0.060484  0.204559  0.263829  0.297927  0.320802  0.346404
-test_accuracy    4.0  0.882353  0.025415  0.858824  0.867647  0.876471  0.891176  0.917647
-test_f1          4.0  0.878230  0.029198  0.857143  0.862934  0.867215  0.882511  0.921348
-test_auroc       4.0  0.950813  0.018066  0.932553  0.942168  0.947544  0.956188  0.975610
-[01/23/2024 09:46:32 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.531>0.05.
+The final benchmark is one which closely mimics typical QSPR studies.
+Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps ~0.8k small molecules to a binary label indicating if the molecule is an Androgen Receptor Antagonist (ARA).
+The reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 0.911 and an AUROC of 0.945.
 
-real	2m7.199s
-user	13m19.752s
-sys	0m40.241s
+For this study an 80/10/10 random splitting is repeated four times on the dataset since no analogous split to the reference study can be determined.
+Chemprop takes 16 minutes and 55 seconds to run on this dataset and achieves only 0.824+/-0.020 accuracy and 0.898+/-0.022 AUROC.
+`fastprop` takes only 2 minutes and 4 seconds (1 minute and 47 seconds for descriptor calculation) and is competitive with the reference study in performance, achieving a 89.1+/-4.0% accuracy and 0.951+/-0.018 AUROC.
+<!--
+[02/27/2024 09:12:38 PM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:01:47.042475
+[02/27/2024 09:12:54 PM fastprop.fastprop_core] INFO: Displaying validation results:
+                     count      mean       std       min       25%       50%       75%       max
+validation_bce_loss    4.0  0.342375  0.134405  0.230809  0.246378  0.307217  0.403215  0.524258
+validation_accuracy    4.0  0.880952  0.035047  0.833333  0.869048  0.886905  0.898810  0.916667
+validation_f1          4.0  0.883563  0.034730  0.837209  0.870017  0.888752  0.902299  0.919540
+validation_auroc       4.0  0.936141  0.031894  0.899432  0.914484  0.940432  0.962089  0.964265
+[02/27/2024 09:12:54 PM fastprop.fastprop_core] INFO: Displaying testing results:
+               count      mean       std       min       25%       50%       75%       max
+test_bce_loss    4.0  0.309558  0.074081  0.201878  0.292477  0.334441  0.351521  0.367472
+test_accuracy    4.0  0.885294  0.033792  0.858824  0.858824  0.876471  0.902941  0.929412
+test_f1          4.0  0.876612  0.048899  0.823529  0.843382  0.875549  0.908779  0.931818
+test_auroc       4.0  0.945325  0.023256  0.918286  0.936511  0.943980  0.952794  0.975055
+[02/27/2024 09:12:54 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing accuracy yielded p value of p=0.864>0.05.
+[02/27/2024 09:12:54 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
+[02/27/2024 09:12:54 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:02:03.685409
+
 
 Chemprop: 
 real	16m54.734s
@@ -1110,50 +1199,25 @@ Count	4 -->
 
 # Limitations and Future Work
 ## Execution Time
-Execution is ultimately not a significant concern - dataset generation takes a huge amount of time relative to all training methods.
-Day to day speedup is nice and significant here, but again just a nice to have.
+Although `fastprop` is consistently around an order of magnitude faster to train than learned representations when using a GPU, execution time is a minor concern when considering the enormous labor invested in dataset generation.
+For day-to-day work it is convenient but the correctness of `fastprop`, especially on small datasets, is more important.
+Note that due to the large size of the FNN in `fastprop` it will typically be slower than Chemprop when training on a CPU since Chemprop uses a much smaller FNN and associated components.
 
-There is an obvious performance improvement to be had (both in training and inference) by reducing the number of descriptors used to a subset that are highly-weighted in the network.
-Future work will address the possibility of reducing the required number of descriptors to achieve accurate predictions, which would shrink the required size of the network and remove the training limitation and remediate the inference limitation.
-This has _not_ been done in this initial study for two reasons:
- 1. To emphasize the capacity of the DL framework to effecitvely perform feature selection on its own via the training process, de-emphasizing unimportant descriptors.
- 2. Because the framework as it stands is already _dramatically_ faster than alternatives, and all existing modeling solutions are fast relative to the timescale of drug development where they are deployed (i.e. accuracy is more important than runtime).
+Regardless, there is an clear performance improvement to be had by reducing the number of descriptors to a subset of only the most important.
+Future work will address this possibility to decrease time requirements for both training by reducing network size and inference by decreasing the number of descriptors to be calculated for new molecules.
+This has _not_ been done in this study for two reasons: (1) to emphasize the capacity of the DL framework to effectively perform feature selection on its own via the training process, de-emphasizing unimportant descriptors; (2) as discussed above, training time is small compared ot dataset generation time.
 
-### Training
-The molecule representation is a series of scalars rather than a graph object, the memory consumption is lower, enabling larger batch sizes and thus faster training.
+## Coverage of Descriptors
+`fastprop` is fundamentally limited by the types of chemicals which can be uniquely described by the `mordred` package.
+Domain-specific additions which are not just derived from the descriptors already implemented will be required to expand its application to new domains.
 
-_Table of training times_
-
-Because `fastprop` does not require message passing like many existing learned representations, all of the operations rqeuired to train the network are much faster.
-The limitation is that due to the large size of the molecular descriptor set, the neural network must also be large (primarily in height of hidden layers, rather than depth).
-This means that when training with a GPU `fastprop` will be much faster than learned representations, but when using a CPU it will generally be slower.
-
-### Inference
-Slow on inference, especially on virtual libaries which may number in the millions of compounds.
-Thankfully descriptor calclulation is embarassingly parallel, and in practice the number of descriptors needed to be calculated can be reduced once those which are relevant to the neural network are selected based on their weights.
-
-## Combination with Learned Representations
-This seems like an intuitive next step, but we shouldn't do it.
-_Not_ just slamming all the mordred features into Chemprop, which would definitely give good results but would take out the `fast` part (FNN would also have to be increased in size).
-`fastprop` is good enough on its own.
+For example, in its current state `mordred` does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
+While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stereo Signature Molecular Descriptor [@stereo_signature] may prove helpful in the future if re-implemented in `mordred`.
 
 ## Interpretability
-Cite Wengao's paper about backing out meaning from intermediate embeddings, but emphasize we are in an even better spot because of the physical meaning of the inputs.
-
-## Additional Descriptors
-The `mordredcommunity` featurization package could of course stand to have more features added that could potentially expand its applicability beyond the datasets listed here and improve the performance on those already attempted.
-Domain-specific additions which are not just derived from the descriptors already implemented will be required.
-
-### Stereochemical
-In its current state, the underlying `mordredcommunity` featurization engine does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
-While some of the 3D descriptors it implements will inherently reflects these differences somewhat, more explicit descriptors like the Stero Signature Molecular Descriptor (see https://doi.org/10.1021/ci300584r) may prove helpful in the future.
-
-This is really just one named domain - any domain where there are bespoke descriptors could be added to `mordredcommunity`.
-
-### Charged Species
-
-### 3D Descriptors
- - already supported by `mordredcommunity` just need to find a good way to ingest 3D data or embed 3D conformers (cite some lit. like quantumscents for the latter point)
+Though not discussed here for the sake of length, `fastprop` already contains the functionality to perform feature importance studies on trained models.
+By using SHAP values [@shap] to assign a scalar 'importance' to each of the input features, users can determine which of the `mordred` descriptors has the largest impact on model predictions.
+Future studies will demonstrate this in greater detail.
 
 # Availability
  - Project name: fastprop
@@ -1166,9 +1230,10 @@ This is really just one named domain - any domain where there are bespoke descri
 # Declarations
 
 ## Availability of data and materials
-`fastprop` is Free and Open Source Software; anyone may view, modify, and execute it according to the terms of the MIT license. See github.com/jacksonburns/fastprop for more information.
+`fastprop` is Free and Open Source Software; anyone may view, modify, and execute it according to the terms of the MIT license.
+See github.com/jacksonburns/fastprop for more information.
 
-All data used in the Benchmarks shown above is publicly avialable under a permissive license. See the benchmarks directory at the `fastprop` GitHub page for instructions on retrieving each dataset and preparing it for use with `fastprop`, where applicable.
+All data used in the Benchmarks shown above is publicly available under a permissive license. See the benchmarks directory at the `fastprop` GitHub page for instructions on retrieving each dataset and preparing it for use with `fastprop`, where applicable.
 
 ## Competing interests
 None.

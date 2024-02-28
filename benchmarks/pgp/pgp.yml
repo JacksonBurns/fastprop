@@ -18,11 +18,6 @@
 output_directory: pgp
 random_seed: 0575077166
 problem_type: binary
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-fnn_layers: 2
-hidden_size: 2400
 
 # featurization
 input_file: pgp/benchmark_data.csv

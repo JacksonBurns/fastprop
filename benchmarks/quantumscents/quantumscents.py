@@ -11,13 +11,13 @@ and data splitting function.
 
 It is commented throughout to explain further!
 """
+
 import os
 import pickle as pkl
 
 import psutil
 from fastprop.utils import mordred_descriptors_from_strings, calculate_mordred_desciptors, load_saved_desc
-from fastprop.fastprop_core import _training_loop, ArbitraryDataModule
-from fastprop.hopt import _hopt_loop
+from fastprop.fastprop_core import train_and_test, fastprop
 from fastprop.preprocessing import preprocess
 from rdkit import Chem
 from rdkit.Chem import rdDetermineBonds
@@ -42,7 +42,7 @@ RANDOM_SEED = 60221023
 
 descs = None
 if os.path.exists(CACHED_DESCRIPTORS):
-    descs = load_saved_desc(CACHED_DESCRIPTORS)
+    descs = pd.DataFrame(load_saved_desc(CACHED_DESCRIPTORS))
 else:
     # QuantumScents provides a ground-state structure for each molecule in the dataset,
     # present in the Zenodo as an xyz file. We can calculate descriptors for these
@@ -82,67 +82,58 @@ else:
         ignore_3d=DESCRIPTOR_SET == "2d",
     )
 
-    d = pd.DataFrame(descs)
-    d.to_csv(CACHED_DESCRIPTORS)
+    descs = pd.DataFrame(descs)
+    descs.to_csv(CACHED_DESCRIPTORS)
 
 # the fastprop preprocess function applies some basic rescaling and inference
-X, y, target_scaler = preprocess(
-    descs,
-    QS_DATA.to_numpy(),
-    zero_variance_drop=False,
-    problem_type="multilabel",
-)
-# count how many features remain (some had no values for the entire dataset)
+X = preprocess(descs).to_numpy()
+# count how many features remain
 number_features = X.shape[1]
 # make sure to set the names of the input features!
-target_scaler.feature_names_in_ = QS_DATA.columns
+target_names = QS_DATA.columns
+targets = QS_DATA.to_numpy()
 
 
-# because QuantumScents includes a file with the desired splits for the data, we will override
-# the fastprop default DataModule class
-class QuantumScentsDataModule(ArbitraryDataModule):
-    # the setup method is called to split the data, so all we need to do is assign the indexes
-    # to do so, we open the file which is described at the top of this file
-    def setup(self, stage=None):
+# we override the _split method in the fastprop class and replace it with one
+# which loads our custom splits
+class quantumscents_fastprop(fastprop):
+    def __init__(self, fold_number, **kwargs):
+        self.fold_number = fold_number
+        super().__init__(**kwargs)
+
+    def _split(self):
         with open(DATASPLIT, "rb") as file:
             self.train_idxs, self.val_idxs, self.test_idxs = pkl.load(file)[self.fold_number]
 
 
-# initialize the module
-qs_datamodule = QuantumScentsDataModule(X, y, 4096, RANDOM_SEED, None, None, None, None, None)
-
-# call the _hopt_loop and _training_loop function, which will automatically increment fold_number
-# for each of number_repeats - in this case we have 3 folds from QuantumScents, so
-# we set number_repeats to 3
-general_args = dict(
-    number_repeats=3,
-    number_features=number_features,
-    target_scaler=target_scaler,
-    number_epochs=300,
-    learning_rate=0.0001,
-    output_directory="quantumscents_" + DESCRIPTOR_SET,
-    datamodule=qs_datamodule,
-    patience=10,
-    problem_type="multilabel",
-    num_classes=113,
-)
-
-# best_result = _hopt_loop(
-#     **general_args,
-#     random_seed=RANDOM_SEED,
-#     n_parallel=4,
-#     n_trials=128,
-# )
-
-# previous 2d run
-# best_result = {"hidden_size": 3000, "fnn_layers": 3}
-# previous 3d run
-best_result = {"hidden_size": 2600, "fnn_layers": 3}
-
-_training_loop(
-    # use the results from hyperparameter optimization
-    fnn_layers=best_result["fnn_layers"],
-    hidden_size=best_result["hidden_size"],
-    # same as above
-    **general_args,
-)
+all_valid_results = []
+all_test_results = []
+for fold_number in range(3):
+    lightning_module = quantumscents_fastprop(
+        fold_number=fold_number,
+        num_epochs=300,
+        input_size=number_features,
+        hidden_size=3000,
+        readout_size=113,
+        learning_rate=0.0001,
+        fnn_layers=3,
+        problem_type="multilabel",
+        cleaned_data=X,
+        targets=targets,
+        target_names=target_names,
+        batch_size=4096,
+        random_seed=RANDOM_SEED,
+        train_size=0.8,
+        val_size=0.1,
+        test_size=0.1,
+        sampler="",
+        smiles=None,
+        verbose=True,
+    )
+    test_results, valid_results = train_and_test("quantumscents_" + DESCRIPTOR_SET, lightning_module, patience=30)
+    all_valid_results.append(valid_results[0])
+    all_test_results.append(test_results[0])
+validation_results_df = pd.DataFrame.from_records(all_valid_results)
+print("Displaying validation results:\n", validation_results_df.describe().transpose().to_string())
+test_results_df = pd.DataFrame.from_records(all_test_results)
+print("Displaying testing results:\n", test_results_df.describe().transpose().to_string())

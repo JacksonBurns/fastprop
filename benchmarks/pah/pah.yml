@@ -9,7 +9,6 @@
 # Additional Comments:
 # 
 
-
 # generic args
 output_directory: pah
 random_seed: 55
@@ -22,15 +21,16 @@ smiles_column: smiles
 descriptors: all
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 
 # training
-number_repeats: 4
+hidden_size: 2900
+fnn_layers: 5
+number_repeats: 8
 number_epochs: 100
 batch_size: 64
-patience: 15
+patience: 10
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1

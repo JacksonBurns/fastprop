@@ -29,7 +29,6 @@ descriptors: all
 enable_cache: True
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 

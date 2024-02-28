@@ -29,15 +29,11 @@ target_columns: ternary_activity
 # generic args
 output_directory: hiv
 random_seed: 765309408
-# run hyperparameter optimization
-# optimize: True
-# optimized results
-# fnn_layers: 2
-# hidden_size: 2400
 
 # featurization
 input_file: hiv/benchmark_data.csv
 smiles_column: smiles
+descriptors: all
 precomputed: hiv/precomputed.csv
 
 # training

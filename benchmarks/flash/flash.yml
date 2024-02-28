@@ -26,7 +26,6 @@ smiles_column: smiles
 descriptors: all
 
 # preprocessing
-rescaling: True
 zero_variance_drop: False
 colinear_drop: False
 

@@ -7,7 +7,6 @@ _logging_format = dict(
     datefmt="%m/%d/%Y %I:%M:%S %p",
     level=logging.INFO,
 )
-logging.basicConfig(**_logging_format)
 
 
 def _init_loggers(outpath):
@@ -29,7 +28,6 @@ DEFAULT_TRAINING_CONFIG = MappingProxyType(
         descriptors="optimized",
         enable_cache=True,
         precomputed=None,
-        rescaling=True,
         zero_variance_drop=False,
         colinear_drop=False,
         fnn_layers=2,

@@ -28,9 +28,6 @@ benchmarks/ocelot/174705_1_supplements.zip
 benchmarks/ocelot/ocelot_chromophore_v1.zip
 benchmarks/ocelot/ocelot_chromophore_v1/readme.txt
 
-# paper build files
-paper/paper.pdf
-
 # todo's
 benchmarks/tox21
 benchmarks/ace

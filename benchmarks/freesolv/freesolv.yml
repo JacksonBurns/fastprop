@@ -21,14 +21,15 @@ descriptors: all
 
 # optimize: True
 # results after optimization
-fnn_layers: 5
 hidden_size: 100
+fnn_layers: 5
 
 # training
 number_epochs: 200
+patience: 3
 number_repeats: 8
 random_seed: 1701
-train_size: 0.8
-val_size: 0.1
-test_size: 0.1
+train_size: 0.6
+val_size: 0.2
+test_size: 0.2
 sampler: random
