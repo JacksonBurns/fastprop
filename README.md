@@ -11,7 +11,7 @@
 </p>
 
 # Announcement - Open Beta!
-`fastprop` is currently in the version 1 open beta!
+`fastprop` is currently in the version 3 open beta (1.0.0b3)!
 Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
 
@@ -159,7 +159,7 @@ If you wish to extend the CLI, check the inline documentation there.
 
 # Benchmarks
 The `benchmarks` directory contains the scripts needed to perform the studies (see `benchmarks/README.md` for more detail, they are a great way to learn how to use `fastprop`).
-To just see the results, checkout [`paper/paper.pdf`](./paper/paper.pdf) (or `paper/paper.md` for the plain text version).
+To just see the results, checkout [`paper/paper.pdf`](https://github.com/JacksonBurns/fastprop/blob/main/paper/paper.pdf) (or `paper/paper.md` for the plain text version).
 
 # Developing `fastprop`
 Bug reports, feature requests, and pull requests are welcome and encouraged!
