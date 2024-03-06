@@ -20,17 +20,8 @@ import pytorch_lightning as pl
 from fastprop.fastprop_core import fastprop
 
 
-PROPERTY_LOOKUP_FILE = "hwhp_property_lookup.csv"
+PROPERTY_LOOKUP_FILE = "hwhp_property_lookup.csv"  # "hwhp_property_lookup_downsample.csv"  # downsampled
 PAIR_DATA_FILE = "hwhp_gsolv.pkl"
-
-# train a random set of the solvents
-with open(PAIR_DATA_FILE, "rb") as file:
-    all_pairs: pd.DataFrame = pkl.load(file)
-    solvents_train, solvents_val, solvents_test = train_val_test_split(pd.unique(all_pairs["solvent_smiles"]))
-
-INDEXES_TRAIN = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_train)].tolist()
-INDEXES_VAL = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_val)].tolist()
-INDEXES_TEST = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_test)].tolist()
 
 
 class OOMDataset(TorchDataset):
@@ -38,27 +29,13 @@ class OOMDataset(TorchDataset):
         # read all the solute/solvent combinations
         with open(PAIR_DATA_FILE, "rb") as file:
             self.all_pairs: pd.DataFrame = pkl.load(file)
+            # for downsampling
+            # self.all_pairs = self.all_pairs.sample(n=1_000, random_state=2)
+            # self.all_pairs.reset_index(drop=True, inplace=True)
         # keep only those that are part of this dataset (train, val, or test)
         self.all_pairs = self.all_pairs.iloc[idxs]
-        # doing the type casts here uses too much memory!
-        # convert the target into the datatype for torch
-        # print("Converting target values to torch...")
-        # self.all_pairs["Gsolv (kcal/mol)"] = self.all_pairs["Gsolv (kcal/mol)"].apply(
-        #     lambda i: torch.as_tensor(i, dtype=torch.float32).unsqueeze(dim=0)
-        # )
         # load the features for all of the molecules
         self.descriptor_lookup_df: pd.DataFrame = pd.read_csv(PROPERTY_LOOKUP_FILE, index_col="smiles")
-        # find which molecules are actually in this split (not all that are in the property lookup file)
-        # include_smiles = set(np.hstack((pd.unique(self.all_pairs["solvent_smiles"]), pd.unique(self.all_pairs["solute_smiles"]))))
-        # map the molecules included in this dataset to their properties, in the appropriate data type
-        # print("Converting features to torch...")
-        # THIS EATS MEMORY - need to delete the dataframe as you go or find a way to do this that frees the
-        # previous memory at the same time as this is allocated
-        # self.smiles_to_features = {
-        #     smiles: torch.tensor(row.to_numpy(), dtype=torch.float32) for smiles, row in descriptor_lookup_df.iterrows() # if smiles in include_smiles
-        # }
-        # # explicitly remove some unwanted objects
-        # del descriptor_lookup_df  #, include_smiles
         # save the length for later
         self.len: int = len(self.all_pairs)
 
@@ -73,6 +50,18 @@ class OOMDataset(TorchDataset):
 
     def __len__(self):
         return self.len
+
+
+# train a random set of the solvents
+with open(PAIR_DATA_FILE, "rb") as file:
+    all_pairs: pd.DataFrame = pkl.load(file)
+    # downsampling
+    # all_pairs = all_pairs.sample(n=1_000, random_state=2)
+    # all_pairs.reset_index(drop=True, inplace=True)
+    solvents_train, solvents_val, solvents_test = train_val_test_split(pd.unique(all_pairs["solvent_smiles"]))
+INDEXES_TRAIN = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_train)].tolist()
+INDEXES_VAL = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_val)].tolist()
+INDEXES_TEST = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_test)].tolist()
 
 
 class OOMfastprop(fastprop):
@@ -132,69 +121,68 @@ class OOMfastprop(fastprop):
     def test_dataloader(self):
         return self._init_dataloader(False, INDEXES_TEST)
 
-    def validation_step(self, batch, batch_idx):
-        # skip human loss for this huge, slow dataset
-        loss = self._machine_loss(batch, return_all=False)
-        self.log(f"validation_{self.training_metric}_loss", loss, sync_dist=True)
-        return loss
 
-
-EPOCHS = 50
-lightning_module = OOMfastprop(
-    num_epochs=EPOCHS,
-    input_size=63 * 2,
-    hidden_size=200,
-    readout_size=1,
-    learning_rate=0.0001,
-    fnn_layers=2,
-    problem_type="regression",
-    target_names=["gsolv"],
-    batch_size=1024,
-    random_seed=42,
-)
-try:
-    repetition_number = len(os.listdir(os.path.join(os.getcwd(), "tensorboard_logs"))) + 1
-except FileNotFoundError:
-    repetition_number = 1
-tensorboard_logger = TensorBoardLogger(os.getcwd(), name="tensorboard_logs", version=f"repetition_{repetition_number}", default_hp_metric=False)
-
-callbacks = [
-    EarlyStopping(
-        monitor=f"validation_{lightning_module.training_metric}_loss",
-        mode="min",
-        verbose=False,
-        patience=EPOCHS // 5,
+def train():
+    EPOCHS = 100
+    lightning_module = OOMfastprop(
+        num_epochs=EPOCHS,
+        input_size=1613 * 2,  # 63 * 2,
+        hidden_size=4000,
+        readout_size=1,
+        learning_rate=0.00005,
+        fnn_layers=2,
+        problem_type="regression",
+        target_names=["gsolv"],
+        batch_size=1024,
+        random_seed=42,
     )
-]
-callbacks.append(
-    ModelCheckpoint(
-        monitor=f"validation_{lightning_module.training_metric}_loss",
-        dirpath=os.path.join(os.getcwd(), "checkpoints"),
-        filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
-        save_top_k=1,
-        mode="min",
+    try:
+        repetition_number = len(os.listdir(os.path.join(os.getcwd(), "tensorboard_logs"))) + 1
+    except FileNotFoundError:
+        repetition_number = 1
+    tensorboard_logger = TensorBoardLogger(os.getcwd(), name="tensorboard_logs", version=f"repetition_{repetition_number}", default_hp_metric=False)
+
+    callbacks = [
+        EarlyStopping(
+            monitor=f"validation_{lightning_module.training_metric}_loss",
+            mode="min",
+            verbose=False,
+            patience=EPOCHS // 5,
+        )
+    ]
+    callbacks.append(
+        ModelCheckpoint(
+            monitor=f"validation_{lightning_module.training_metric}_loss",
+            dirpath=os.path.join(os.getcwd(), "checkpoints"),
+            filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
+            save_top_k=1,
+            mode="min",
+        )
     )
-)
 
-warnings.filterwarnings(action="ignore", message=".*late the root mean squared error.*")
-trainer = pl.Trainer(
-    max_epochs=EPOCHS,
-    accelerator="cuda",
-    devices="auto",
-    enable_progress_bar=True,
-    enable_model_summary=True,
-    logger=tensorboard_logger,
-    log_every_n_steps=1,
-    enable_checkpointing=True,
-    check_val_every_n_epoch=1,
-    callbacks=callbacks,
-    deterministic=True,
-)
+    warnings.filterwarnings(action="ignore", message=".*late the root mean squared error.*")
+    trainer = pl.Trainer(
+        max_epochs=EPOCHS,
+        accelerator="cuda",
+        devices="auto",
+        enable_progress_bar=True,
+        enable_model_summary=True,
+        logger=tensorboard_logger,
+        log_every_n_steps=1,
+        enable_checkpointing=True,
+        check_val_every_n_epoch=1,
+        callbacks=callbacks,
+        deterministic=True,
+    )
 
-trainer.fit(lightning_module)
-validation_results = trainer.validate(lightning_module, verbose=False)
-test_results = trainer.test(lightning_module, verbose=False)
-validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
-print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, validation_results_df.transpose().to_string()))
-test_results_df = pd.DataFrame.from_records(test_results, index=("value",))
-print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, test_results_df.transpose().to_string()))
+    trainer.fit(lightning_module)
+    validation_results = trainer.validate(lightning_module, verbose=False)
+    test_results = trainer.test(lightning_module, verbose=False)
+    validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
+    print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, validation_results_df.transpose().to_string()))
+    test_results_df = pd.DataFrame.from_records(test_results, index=("value",))
+    print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, test_results_df.transpose().to_string()))
+
+
+if __name__ == "__main__":
+    train()
