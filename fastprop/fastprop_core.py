@@ -28,6 +28,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from torch import distributed
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional.classification import (
     auroc,
