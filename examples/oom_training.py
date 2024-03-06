@@ -1,7 +1,11 @@
+# to work on mithrim, had to install fastprop with
+# pip install -e ../ torch==1.12.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
+# in an environment with Python 3.10
 import pickle as pkl
 import pandas as pd
 from types import SimpleNamespace
 import os
+import warnings
 
 from astartes import train_val_test_split
 import torch
@@ -36,30 +40,36 @@ class OOMDataset(TorchDataset):
             self.all_pairs: pd.DataFrame = pkl.load(file)
         # keep only those that are part of this dataset (train, val, or test)
         self.all_pairs = self.all_pairs.iloc[idxs]
+        # doing the type casts here uses too much memory!
         # convert the target into the datatype for torch
-        print("Converting target values to torch...")
-        self.all_pairs["Gsolv (kcal/mol)"] = self.all_pairs["Gsolv (kcal/mol)"].apply(
-            lambda i: torch.as_tensor(i, dtype=torch.float32).unsqueeze(dim=0)
-        )
+        # print("Converting target values to torch...")
+        # self.all_pairs["Gsolv (kcal/mol)"] = self.all_pairs["Gsolv (kcal/mol)"].apply(
+        #     lambda i: torch.as_tensor(i, dtype=torch.float32).unsqueeze(dim=0)
+        # )
         # load the features for all of the molecules
-        descriptor_lookup_df: pd.DataFrame = pd.read_csv(PROPERTY_LOOKUP_FILE, index_col="smiles")
+        self.descriptor_lookup_df: pd.DataFrame = pd.read_csv(PROPERTY_LOOKUP_FILE, index_col="smiles")
         # find which molecules are actually in this split (not all that are in the property lookup file)
-        include_smiles = np.hstack((pd.unique(self.all_pairs["solvent_smiles"]), pd.unique(self.all_pairs["solute_smiles"])))
+        # include_smiles = set(np.hstack((pd.unique(self.all_pairs["solvent_smiles"]), pd.unique(self.all_pairs["solute_smiles"]))))
         # map the molecules included in this dataset to their properties, in the appropriate data type
-        print("Converting features to torch...")
-        self.smiles_to_features = {
-            smiles: torch.tensor(row.to_numpy(), dtype=torch.float32) for smiles, row in descriptor_lookup_df.iterrows() if smiles in include_smiles
-        }
-        # explicitly remove some unwanted objects
-        del include_smiles, descriptor_lookup_df
+        # print("Converting features to torch...")
+        # THIS EATS MEMORY - need to delete the dataframe as you go or find a way to do this that frees the
+        # previous memory at the same time as this is allocated
+        # self.smiles_to_features = {
+        #     smiles: torch.tensor(row.to_numpy(), dtype=torch.float32) for smiles, row in descriptor_lookup_df.iterrows() # if smiles in include_smiles
+        # }
+        # # explicitly remove some unwanted objects
+        # del descriptor_lookup_df  #, include_smiles
         # save the length for later
         self.len: int = len(self.all_pairs)
 
     def __getitem__(self, index):
         # pull out the solvent and solute at the given index
         solute, solvent = self.all_pairs.iloc[index][["solute_smiles", "solvent_smiles"]]
+        solute_features = torch.tensor(self.descriptor_lookup_df.loc[solute].to_numpy(), dtype=torch.float32)
+        solvent_features = torch.tensor(self.descriptor_lookup_df.loc[solvent].to_numpy(), dtype=torch.float32)
+        gsolv = torch.tensor(self.all_pairs.iloc[index]["Gsolv (kcal/mol)"], dtype=torch.float32).unsqueeze(dim=0)
         # concatenate their representations, look up the target value as well
-        return torch.cat((self.smiles_to_features[solute], self.smiles_to_features[solvent]), dim=0), self.all_pairs.iloc[index]["Gsolv (kcal/mol)"]
+        return torch.cat((solute_features, solvent_features), dim=0), gsolv
 
     def __len__(self):
         return self.len
@@ -110,7 +120,7 @@ class OOMfastprop(fastprop):
             batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=1,
-            persistent_workers=False,
+            persistent_workers=True,
         )
 
     def train_dataloader(self):
@@ -124,12 +134,12 @@ class OOMfastprop(fastprop):
 
     def validation_step(self, batch, batch_idx):
         # skip human loss for this huge, slow dataset
-        loss, _, y, y_hat = self._machine_loss(batch, return_all=True)
-        self.log(f"validation_{self.training_metric}_loss", loss)
+        loss = self._machine_loss(batch, return_all=False)
+        self.log(f"validation_{self.training_metric}_loss", loss, sync_dist=True)
         return loss
 
 
-EPOCHS = 30
+EPOCHS = 50
 lightning_module = OOMfastprop(
     num_epochs=EPOCHS,
     input_size=63 * 2,
@@ -139,7 +149,7 @@ lightning_module = OOMfastprop(
     fnn_layers=2,
     problem_type="regression",
     target_names=["gsolv"],
-    batch_size=128,
+    batch_size=1024,
     random_seed=42,
 )
 try:
@@ -166,9 +176,11 @@ callbacks.append(
     )
 )
 
+warnings.filterwarnings(action="ignore", message=".*late the root mean squared error.*")
 trainer = pl.Trainer(
     max_epochs=EPOCHS,
     accelerator="cuda",
+    devices="auto",
     enable_progress_bar=True,
     enable_model_summary=True,
     logger=tensorboard_logger,
