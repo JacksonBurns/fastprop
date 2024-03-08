@@ -1,6 +1,9 @@
 # to work on mithrim, had to install fastprop with
 # pip install -e ../ torch==1.12.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
 # in an environment with Python 3.10
+#
+# start under a screen session like this:
+# screen -L -Logfile interpolation -S inter
 import pickle as pkl
 import pandas as pd
 from types import SimpleNamespace
@@ -22,6 +25,8 @@ from fastprop.fastprop_core import fastprop
 
 PROPERTY_LOOKUP_FILE = "hwhp_property_lookup.csv"  # "hwhp_property_lookup_downsample.csv"  # downsampled
 PAIR_DATA_FILE = "hwhp_gsolv.pkl"
+RANDOM_SEED = 42
+SPLIT = "random_interpolation"  # "solvent_extrapolation"
 
 
 class OOMDataset(TorchDataset):
@@ -58,10 +63,16 @@ with open(PAIR_DATA_FILE, "rb") as file:
     # downsampling
     # all_pairs = all_pairs.sample(n=1_000, random_state=2)
     # all_pairs.reset_index(drop=True, inplace=True)
-    solvents_train, solvents_val, solvents_test = train_val_test_split(pd.unique(all_pairs["solvent_smiles"]))
-INDEXES_TRAIN = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_train)].tolist()
-INDEXES_VAL = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_val)].tolist()
-INDEXES_TEST = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_test)].tolist()
+if SPLIT == "solvent_extrapolation":
+    solvents_train, solvents_val, solvents_test = train_val_test_split(pd.unique(all_pairs["solvent_smiles"]), random_state=RANDOM_SEED)
+    INDEXES_TRAIN = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_train)].tolist()
+    INDEXES_VAL = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_val)].tolist()
+    INDEXES_TEST = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_test)].tolist()
+elif SPLIT == "random_interpolation":
+    INDEXES_TRAIN, INDEXES_VAL, INDEXES_TEST = train_val_test_split(np.array(list(range(len(all_pairs)))), random_state=RANDOM_SEED)
+else:
+    print(f"what is {SPLIT=}?")
+    exit(1)
 
 
 class OOMfastprop(fastprop):
@@ -123,38 +134,37 @@ class OOMfastprop(fastprop):
 
 
 def train():
-    EPOCHS = 100
+    EPOCHS = 30
+    # next steps:
+    # - separate FNN for solvent and solute, the latter of which would be bigger, and then combine in another fnn to later get readout
+    # - hopt by downsampling solute and solvents separately, oversample solvents due to imbalance (take all?)
     lightning_module = OOMfastprop(
         num_epochs=EPOCHS,
-        input_size=1613 * 2,  # 63 * 2,
-        hidden_size=4000,
+        input_size=42 * 2,
+        hidden_size=128,
         readout_size=1,
-        learning_rate=0.00005,
-        fnn_layers=2,
+        learning_rate=0.0001,
+        fnn_layers=3,
         problem_type="regression",
         target_names=["gsolv"],
         batch_size=1024,
-        random_seed=42,
+        random_seed=RANDOM_SEED,
     )
-    try:
-        repetition_number = len(os.listdir(os.path.join(os.getcwd(), "tensorboard_logs"))) + 1
-    except FileNotFoundError:
-        repetition_number = 1
-    tensorboard_logger = TensorBoardLogger(os.getcwd(), name="tensorboard_logs", version=f"repetition_{repetition_number}", default_hp_metric=False)
+    tensorboard_logger = TensorBoardLogger(os.getcwd(), name=SPLIT, default_hp_metric=False)
 
     callbacks = [
         EarlyStopping(
             monitor=f"validation_{lightning_module.training_metric}_loss",
             mode="min",
             verbose=False,
-            patience=EPOCHS // 5,
+            patience=EPOCHS // 10,
         )
     ]
     callbacks.append(
         ModelCheckpoint(
             monitor=f"validation_{lightning_module.training_metric}_loss",
             dirpath=os.path.join(os.getcwd(), "checkpoints"),
-            filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
+            filename=SPLIT+"-{epoch:02d}-{val_loss:.2f}",
             save_top_k=1,
             mode="min",
         )
@@ -179,9 +189,9 @@ def train():
     validation_results = trainer.validate(lightning_module, verbose=False)
     test_results = trainer.test(lightning_module, verbose=False)
     validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
-    print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, validation_results_df.transpose().to_string()))
+    print("Displaying validation results:\n{:s}".format(validation_results_df.transpose().to_string()))
     test_results_df = pd.DataFrame.from_records(test_results, index=("value",))
-    print("Displaying validation results for repetition {:d}:\n{:s}".format(repetition_number, test_results_df.transpose().to_string()))
+    print("Displaying validation results:\n{:s}".format(test_results_df.transpose().to_string()))
 
 
 if __name__ == "__main__":

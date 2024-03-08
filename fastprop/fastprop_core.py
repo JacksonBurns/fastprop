@@ -266,7 +266,11 @@ class fastprop(pl.LightningModule):
         return x
 
     def log(self, name, value, **kwargs):
-        return super().log(name, value, sync_dist=distributed.is_initialized(), **kwargs)
+        if (in_distributed := distributed.is_initialized()):
+            if not isinstance(value, torch.Tensor):
+                value = torch.tensor(value)
+            value = value.to(self.device)
+        return super().log(name, value, sync_dist=in_distributed, **kwargs)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
