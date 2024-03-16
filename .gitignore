@@ -28,6 +28,11 @@ benchmarks/ocelot/174705_1_supplements.zip
 benchmarks/ocelot/ocelot_chromophore_v1.zip
 benchmarks/ocelot/ocelot_chromophore_v1/readme.txt
 
+# OOM training trash files
+examples/hwhp_gsolv.pkl
+examples/hwhp_property_lookup.csv
+examples/trash
+
 # todo's
 benchmarks/tox21
 benchmarks/ace

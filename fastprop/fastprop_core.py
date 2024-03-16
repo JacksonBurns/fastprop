@@ -28,6 +28,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from torch import distributed
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional.classification import (
     auroc,
@@ -263,6 +264,13 @@ class fastprop(pl.LightningModule):
         x = self.fnn.forward(x)
         x = self.readout(x)
         return x
+
+    def log(self, name, value, **kwargs):
+        if (in_distributed := distributed.is_initialized()):
+            if not isinstance(value, torch.Tensor):
+                value = torch.tensor(value)
+            value = value.to(self.device)
+        return super().log(name, value, sync_dist=in_distributed, **kwargs)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)

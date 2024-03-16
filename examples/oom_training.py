@@ -1,0 +1,223 @@
+# to work on mithrim, had to install fastprop with
+# pip install -e ../ torch==1.12.1+cu113 --extra-index-url https://download.pytorch.org/whl/cu113
+# in an environment with Python 3.10
+#
+# start under a screen session like this:
+# screen -L -Logfile interpolation -S inter
+import pickle as pkl
+import pandas as pd
+from types import SimpleNamespace
+import os
+import warnings
+
+from astartes import train_val_test_split
+import torch
+from torch.utils.data import Dataset as TorchDataset
+from torch.utils.data.dataloader import DataLoader as TorchDataloader
+import numpy as np
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+import pytorch_lightning as pl
+
+from fastprop.fastprop_core import fastprop
+
+
+PROPERTY_LOOKUP_FILE = "hwhp_property_lookup.csv"  # "hwhp_property_lookup_downsample.csv"  # downsampled
+PAIR_DATA_FILE = "hwhp_gsolv.pkl"
+RANDOM_SEED = 42
+SPLIT = "random_interpolation"  # "solvent_extrapolation"
+
+
+class OOMDataset(TorchDataset):
+    def __init__(self, idxs: list[int], transformed_features: pd.DataFrame):
+        # read all the solute/solvent combinations
+        with open(PAIR_DATA_FILE, "rb") as file:
+            self.all_pairs: pd.DataFrame = pkl.load(file)
+            # for downsampling
+            # self.all_pairs = self.all_pairs.sample(n=1_000, random_state=2)
+            # self.all_pairs.reset_index(drop=True, inplace=True)
+        # keep only those that are part of this dataset (train, val, or test)
+        self.all_pairs = self.all_pairs.iloc[idxs]
+        # load the features for all of the molecules
+        self.descriptor_lookup_df: pd.DataFrame = transformed_features
+        # save the length for later
+        self.len: int = len(self.all_pairs)
+
+    def __getitem__(self, index):
+        # pull out the solvent and solute at the given index
+        solute, solvent = self.all_pairs.iloc[index][["solute_smiles", "solvent_smiles"]]
+        solute_features = torch.tensor(self.descriptor_lookup_df.loc[solute].to_numpy(), dtype=torch.float32)
+        solvent_features = torch.tensor(self.descriptor_lookup_df.loc[solvent].to_numpy(), dtype=torch.float32)
+        gsolv = torch.tensor(self.all_pairs.iloc[index]["Gsolv (kcal/mol)"], dtype=torch.float32).unsqueeze(dim=0)
+        # concatenate their representations, look up the target value as well
+        return torch.cat((solute_features, solvent_features), dim=0), gsolv
+
+    def __len__(self):
+        return self.len
+
+
+# train a random set of the solvents
+with open(PAIR_DATA_FILE, "rb") as file:
+    all_pairs: pd.DataFrame = pkl.load(file)
+    DATASET_SIZE = len(all_pairs)
+    # downsampling
+    # all_pairs = all_pairs.sample(n=1_000, random_state=2)
+    # all_pairs.reset_index(drop=True, inplace=True)
+if SPLIT == "solvent_extrapolation":
+    solvents_train, solvents_val, solvents_test = train_val_test_split(pd.unique(all_pairs["solvent_smiles"]), random_state=RANDOM_SEED)
+    INDEXES_TRAIN = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_train)].tolist()
+    INDEXES_VAL = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_val)].tolist()
+    INDEXES_TEST = all_pairs.index[all_pairs["solvent_smiles"].isin(solvents_test)].tolist()
+elif SPLIT == "random_interpolation":
+    INDEXES_TRAIN, INDEXES_VAL, INDEXES_TEST = train_val_test_split(np.array(list(range(DATASET_SIZE))), random_state=RANDOM_SEED)
+else:
+    print(f"what is {SPLIT=}?")
+    exit(1)
+
+print("Imputing and Rescaling input features...")
+_descriptor_lookup_df = pd.read_csv(PROPERTY_LOOKUP_FILE, index_col="smiles")
+
+
+def _impute_and_scale(descriptor_lookup_df, s):
+    # either solvent or solute column name in the pairs file
+    mean_imputer = SimpleImputer(missing_values=np.nan, strategy="mean", keep_empty_features=True).set_output(transform="pandas")
+    # subset of s smiles strings for fitting the rescalers
+    train_smiles = pd.unique(all_pairs.iloc[INDEXES_TRAIN][s])
+    # all the smiles strings in s (for indexing the overall dataframe of descriptors)
+    all_smiles = pd.unique(all_pairs[s])
+    mean_imputer.fit(descriptor_lookup_df.loc[train_smiles])
+    descs = mean_imputer.transform(descriptor_lookup_df.loc[all_smiles])
+    feature_scaler = StandardScaler().set_output(transform="pandas")
+    feature_scaler.fit(descriptor_lookup_df.loc[train_smiles])
+    descs = feature_scaler.transform(descs)
+    return descs.fillna(0)  # nan (missing features for whole dataset) -> zero
+
+
+_solvent_descs = _impute_and_scale(_descriptor_lookup_df, "solvent_smiles")
+_solute_descs = _impute_and_scale(_descriptor_lookup_df, "solute_smiles")
+INPUT_FEATURES = pd.concat((_solvent_descs, _solute_descs))
+del _descriptor_lookup_df, _solute_descs, _solvent_descs
+
+
+class OOMfastprop(fastprop):
+    def __init__(
+        self,
+        num_epochs,
+        input_size,
+        hidden_size,
+        readout_size,
+        learning_rate,
+        fnn_layers,
+        problem_type,
+        target_names,
+        batch_size,
+        random_seed,
+    ):
+        super().__init__(
+            num_epochs,
+            input_size,
+            hidden_size,
+            readout_size,
+            learning_rate,
+            fnn_layers,
+            problem_type,
+            cleaned_data=None,
+            targets=None,
+            target_names=target_names,
+            batch_size=batch_size,
+            random_seed=random_seed,
+            train_size=None,
+            val_size=None,
+            test_size=None,
+            sampler=None,
+            smiles=None,
+            verbose=True,
+        )
+        # mock the target scaler used for reporting some human-readable metrics
+        self.target_scaler = SimpleNamespace(n_features_in_=1, inverse_transform=lambda i: np.array(i))
+
+    def setup(self, stage=None): ...  # skip feature scaling and dataset splitting
+
+    def _init_dataloader(self, shuffle, idxs):
+        return TorchDataloader(
+            OOMDataset(idxs, INPUT_FEATURES),
+            batch_size=self.batch_size,
+            shuffle=shuffle,
+            num_workers=1,
+            persistent_workers=True,
+        )
+
+    def train_dataloader(self):
+        return self._init_dataloader(True, INDEXES_TRAIN)
+
+    def val_dataloader(self):
+        return self._init_dataloader(False, INDEXES_VAL)
+
+    def test_dataloader(self):
+        return self._init_dataloader(False, INDEXES_TEST)
+
+    def on_train_epoch_end(self):
+        print(f"Epoch [{self.trainer.current_epoch + 1}/{self.num_epochs}]")
+
+
+def train():
+    EPOCHS = 30
+    lightning_module = OOMfastprop(
+        num_epochs=EPOCHS,
+        input_size=1613 * 2,
+        hidden_size=3200,
+        readout_size=1,
+        learning_rate=0.0001,
+        fnn_layers=3,
+        problem_type="regression",
+        target_names=["gsolv"],
+        batch_size=1024,
+        random_seed=RANDOM_SEED,
+    )
+    tensorboard_logger = TensorBoardLogger(os.getcwd(), name="withscaling_prod_" + SPLIT, default_hp_metric=False)
+
+    callbacks = [
+        EarlyStopping(
+            monitor=f"validation_{lightning_module.training_metric}_loss",
+            mode="min",
+            verbose=False,
+            patience=EPOCHS // 10,
+        ),
+        ModelCheckpoint(
+            monitor=f"validation_{lightning_module.training_metric}_loss",
+            dirpath=os.path.join(os.getcwd(), "withscaling_prod_checkpoints"),
+            filename=SPLIT + "-{epoch:02d}-{val_loss:.2f}",
+            save_top_k=1,
+            mode="min",
+        ),
+    ]
+
+    warnings.filterwarnings(action="ignore", message=".*late the root mean squared error.*")
+    trainer = pl.Trainer(
+        max_epochs=EPOCHS,
+        accelerator="cuda",
+        devices="auto",
+        enable_progress_bar=False,
+        enable_model_summary=True,
+        logger=tensorboard_logger,
+        log_every_n_steps=1_000,
+        enable_checkpointing=True,
+        check_val_every_n_epoch=1,
+        callbacks=callbacks,
+        deterministic=True,
+    )
+
+    trainer.fit(lightning_module)
+    validation_results = trainer.validate(lightning_module, verbose=False)
+    test_results = trainer.test(lightning_module, verbose=False)
+    validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
+    print("Displaying validation results:\n{:s}".format(validation_results_df.transpose().to_string()))
+    test_results_df = pd.DataFrame.from_records(test_results, index=("value",))
+    print("Displaying testing results:\n{:s}".format(test_results_df.transpose().to_string()))
+
+
+if __name__ == "__main__":
+    train()
