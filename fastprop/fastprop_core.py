@@ -28,6 +28,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.metrics import mean_squared_error as l2_error
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from torch import distributed
 from torch.utils.data import Dataset as TorchDataset
 from torchmetrics.functional.classification import (
     auroc,
@@ -64,6 +65,12 @@ class ArbitraryDataset(TorchDataset):
     """
 
     def __init__(self, data, targets):
+        """Initialize a basic torch-compatible data
+
+        Args:
+            data (torch.tensor): features
+            targets (torch.tensor): targets
+        """
         self.data = data
         self.length = len(targets)
         self.targets = targets
@@ -106,24 +113,24 @@ class fastprop(pl.LightningModule):
         """Core fastprop model.
 
         Args:
-            feature_scaler (sklearn scaler): Scaler used on feature variables, used for reporting metrics in human-scale.
-            target_scaler (sklearn scaler): Scaler used on target variables, used for reporting metrics in human-scale.
             num_epochs (int): Maximum allowed number of training epochs.
+            input_size (int): Number of input neurons.
             hidden_size (int): Number of neurons in the hidden layers.
-            learning_rate (float): Learning rate.
+            readout_size (int): Number of targets to readout.
+            learning_rate (float): Learning rate for Adam.
             fnn_layers (int): Number of layers in the FNN.
             problem_type (str): Problem type, i.e. regression, multiclass, multilabel, or binary.
-            verbose (bool, optional): Reduces some logging if true. Defaults to False.
-            num_classes (int, optional): Number of classes for multiclass classification. Defaults to None.
-            cleaned_data (numpy.ndarray or torch.Tensor): Descriptors, already subjected to preprocessing (dropping operations)
-            targets (numpy.ndarray or torch.Tensor): Scaled targets in the same order as the descriptors.
-            batch_size (int): Samples/per batch - for small feature sets like in fastprop, set as high as possible.
-            random_seed (int): Seed for RNG.
-            train_size (float): Fraction of data for training.
-            val_size (float): Fraction of data for validation.
-            test_size (float): Fraction of data for test.
-            sampler (str): Type of sampler to use, see astartes for a list of implemented samplers.
-            smiles (list[str], optional): SMILES strings corresponding to the molecules for use in some samplers. Defaults to None.
+            cleaned_data (numpy.ndarray): Descriptors with no missing values.
+            targets (numpy.ndarray): Scaled targets in the same order as the descriptors.
+            target_names (sequence): Sequence of names for the targets.
+            batch_size (int): Number of molecules per training batch in SGD.
+            random_seed (int): Seed for splitting.
+            train_size (float): Fraction of data for training, nonzero.
+            val_size (float): Fraction of data for validation, nonzero.
+            test_size (float): Fraction of data for test, nonzero.
+            sampler (string): Sampling approach passed to astartes, i.e. random, scaffold
+            smiles (sequence): Sequence of SMILES strings corresponding to the features.
+            verbose (bool, optional): Print extra information. Defaults to True.
         """
         super().__init__()
         # used for data preparation and training
@@ -166,6 +173,7 @@ class fastprop(pl.LightningModule):
         self.save_hyperparameters(ignore=("cleaned_data", "targets", "smiles"))
 
     def _split(self):
+        """Sets self.*_idxs for training, validation, and test"""
         logger.info(f"Sampling dataset with {self.sampler} sampler.")
         split_kwargs = dict(
             train_size=self.train_size,
@@ -196,6 +204,7 @@ class fastprop(pl.LightningModule):
             ) = train_val_test_split_molecules(self.smiles, **split_kwargs)
 
     def setup(self, stage=None):
+        """Split and rescale the data."""
         if stage == "fit":
             self._split()
             logger.info("Imputing and rescaling input features.")
@@ -227,6 +236,15 @@ class fastprop(pl.LightningModule):
             self.targets = torch.tensor(self.targets, dtype=torch.float32)
 
     def _init_dataloader(self, shuffle, idxs):
+        """Helper method to initialize dataloaders.
+
+        Args:
+            shuffle (bool): Passed to torch's DataLoader
+            idxs (np.array): Indexes of overall dataset to include in dataloader.
+
+        Returns:
+            torch.utils.data.Dataloader: Dataloader instance.
+        """
         return torch.utils.data.DataLoader(
             ArbitraryDataset(
                 [self.data[i] for i in idxs],
@@ -248,6 +266,17 @@ class fastprop(pl.LightningModule):
         return self._init_dataloader(False, self.test_idxs)
 
     def get_metrics(problem_type):
+        """Get the metrics for training and early stopping based on the problem type.
+
+        Args:
+            problem_type (str): Regression, multilabel, multiclass, or binary.
+
+        Raises:
+            RuntimeError: Unsupported problem types
+
+        Returns:
+            str: names for the two metrics
+        """
         if problem_type == "regression":
             return "mse", "rmse"
         elif problem_type == "multilabel":
@@ -263,6 +292,13 @@ class fastprop(pl.LightningModule):
         x = self.fnn.forward(x)
         x = self.readout(x)
         return x
+
+    def log(self, name, value, **kwargs):
+        if in_distributed := distributed.is_initialized():
+            if not isinstance(value, torch.Tensor):
+                value = torch.tensor(value)
+            value = value.to(self.device)
+        return super().log(name, value, sync_dist=in_distributed, **kwargs)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
@@ -286,6 +322,7 @@ class fastprop(pl.LightningModule):
         return loss
 
     def predict_step(self, X):
+        # calls forward, but applies the appropriate transforms and activations
         X = self.mean_imputer.transform(X)
         X = self.feature_scaler.transform(X)
         X = torch.tensor(X, dtype=torch.float32, device=self.device)
@@ -299,6 +336,7 @@ class fastprop(pl.LightningModule):
             return torch.nn.functional.softmax(logits, dim=1).detach().cpu()
 
     def _machine_loss(self, batch, reduction="mean", return_all=False):
+        # reports the rescaled loss directly on the logits for computational efficiency
         x, y = batch
         y_hat = self.forward(x)
         if self.problem_type == "regression":
@@ -403,8 +441,7 @@ def train_and_test(
 
     Args:
         outdir (str): Output directory for log files.
-        datamodule (ArbitraryDataModule): Lightning-style datamodule.
-        model (LightingModule): fastprop model architecture itself.
+        lightning_module (LightingModule): fastprop model architecture itself.
         patience (int, optional): Maximum number of epochs to wait before stopping early. Defaults to 5.
         verbose (bool, optional): Set to false for less output. Defaults to True.
         no_logs (bool, optional): Set to true to disable logs. Defaults to False.
@@ -494,21 +531,29 @@ def _training_loop(
 
     Args:
         number_repeats (int): Number of repetitions.
-        number_features (int): Number of features in the input layer.
-        target_scaler (sklearn scaler): Scaler used on target variables, used for reporting metrics in human-scale.
         number_epochs (int): Maximum allowed number of training epochs.
+        input_size (int): Number of input neurons.
         hidden_size (int): Number of neurons in the hidden layers.
-        learning_rate (float): Learning rate.
+        readout_size (int): Number of targets to readout.
+        learning_rate (float): Learning rate for Adam.
         fnn_layers (int): Number of layers in the FNN.
+        output_directory (str): Destination directory for file output.
+        patience (int, optional): Maximum number of epochs to wait before stopping early. Defaults to 5.
         problem_type (str): Problem type, i.e. regression, multiclass, multilabel, or binary.
-        num_classes (int, optional): Number of classes for multiclass classification. Defaults to None.
-        output_directory (str): Output directory for log files.
-        datamodule (pl.DataModule): Basic data module.
-        patience (int): Maximum number of epochs to wait before stopping training early.
-        hopt (bool, optional): Set to true when running hyperparameter optimization to turn off logs, logging, etc. Defaults to False.
+        train_size (float): Fraction of data for training, nonzero.
+        val_size (float): Fraction of data for validation, nonzero.
+        test_size (float): Fraction of data for test, nonzero.
+        sampler (string): Sampling approach passed to astartes, i.e. random, scaffold
+        smiles (sequence): Sequence of SMILES strings corresponding to the features.
+        cleaned_data (numpy.ndarray): Descriptors with no missing values.
+        targets (numpy.ndarray): Scaled targets in the same order as the descriptors.
+        target_names (sequence): Sequence of names for the targets.
+        batch_size (int): Number of molecules per training batch in SGD.
+        random_seed (int): Seed for splitting.
+        hopt (bool, optional): Disables checkpointing and printing when True. Defaults to False.
 
     Returns:
-        list[dict{metric: score}]: Output of lightning model.test and model.validate, one pair per repetition.
+        _type_: _description_
     """
     if not hopt:
         logger.info(f"Run 'tensorboard --logdir {os.path.join(output_directory, 'tensorboard_logs')}' to track training progress.")

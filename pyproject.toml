@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastprop"
-version = "1.0.0b3"
+version = "1.0.0b4"
 authors = [
     { name = "Jackson Burns" },
 ]
@@ -20,7 +20,7 @@ dependencies = ["pyyaml", "lightning", "mordredcommunity", "astartes[molecules]"
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
 hopt = ["ray[train]", "optuna"]
-shap = ["shap"]
+shap = ["shap", "matplotlib"]
 bmark = ["py2opsin"]
 
 [project.readme]

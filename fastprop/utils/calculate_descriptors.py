@@ -27,13 +27,13 @@ def _f(in_tuple):
     return mordred_descs
 
 
-def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs, strategy: Literal["fast", "low-memory"] = "fast", ignore_3d=True):
+def calculate_mordred_desciptors(descriptors, rdkit_mols, n_procs: int = 2, strategy: Literal["fast", "low-memory"] = "fast", ignore_3d=True):
     """Wraps the mordred descriptor calculator.
 
     Args:
         descriptors (Mordred descriptor instances): Descriptors to calculate
         rdkit_mols (list[rdkit mols]): List of RDKit molecules.
-        n_procs (int): Number of parallel processes.
+        n_procs (int): Number of parallel processes. Defaults to 2.
         strategy (Literal["fast", "low-memory", optional): Parallelization strategy. Defaults to "fast".
         ignore_3d (bool, optional): Include 3D descriptors, if in given list. Defaults to True.
 
@@ -80,6 +80,7 @@ def _get_descs(precomputed, input_file, output_directory, descriptors, enable_ca
         descriptors (list): fastprop set of descriptors to calculate.
         enable_cache (bool): Allow/disallow caching mechanism.
         mols (list): RDKit molecules.
+        as_df (bool): Set to true to return the result as a pandas DataFrame. Defaults to False.
     """
     descs = None
     if precomputed:

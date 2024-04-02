@@ -6,6 +6,7 @@ would necessarily be useful. This script was where the pre-processing pipeline w
 (which now lives in `fastprop.preprocessing`) but also shows how to track which descriptors were dropped,
 used to develop the `optimized` subset of descriptors.
 """
+
 import warnings
 
 import numpy as np
