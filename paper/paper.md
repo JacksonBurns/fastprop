@@ -11,7 +11,7 @@ affiliations:
     name: Massachusetts Institute of Technology, Cambridge, MA
   - id: "*"
     name: "Corresponding: whgreen@mit.edu"
-date: January 31, 2024
+date: 2 April, 2024
 geometry: margin=1in
 bibliography: paper.bib
 citation-style: journal-of-cheminformatics
@@ -246,6 +246,7 @@ The authors prefer more readily interpretable metrics such as (Weighted) Mean Ab
 
 All metrics are defined according to their typical formulae which are readily available online and are implemented in common software packages.
 Those presented here are summarized below, first for regression:
+
  - Mean Absolute Error (MAE): Absolute difference between predictions and ground truth averaged across dataset; scale-dependent.
  - Root Mean Squared Error (RMSE): Absolute differences _squared_ and then averaged; scale-dependent.
  - Mean Absolute Percentage Error (MAPE): MAE except that differences are relative (i.e. divided by the ground truth); scale-independent, range 0 (best) and up.

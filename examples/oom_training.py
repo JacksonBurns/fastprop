@@ -225,7 +225,8 @@ class OOMfastprop(fastprop):
         # mock the target scaler used for reporting some human-readable metrics
         self.target_scaler = SimpleNamespace(n_features_in_=1, inverse_transform=lambda i: np.array(i))
 
-    def setup(self, stage=None): ...  # skip feature scaling and dataset splitting
+    def setup(self, stage=None):
+        ...  # skip feature scaling and dataset splitting
 
     def _init_dataloader(self, shuffle, idxs):
         return TorchDataloader(

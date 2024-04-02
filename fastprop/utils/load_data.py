@@ -52,6 +52,7 @@ def load_from_csv(fpath, smiles_column, target_columns):
 
 
 def load_saved_desc(fpath):
+    # loads descriptors previously saved by fastprop, forces any non-numeric values (missing, strings, etc) to be nan.
     d = pd.read_csv(fpath, low_memory=False)
     d = d.apply(pd.to_numeric, errors="coerce")
     descs = d[d.columns[1:]].to_numpy(dtype=float)
