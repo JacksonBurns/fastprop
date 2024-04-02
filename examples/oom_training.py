@@ -79,7 +79,7 @@ if not os.path.exists(PROPERTY_LOOKUP_FILE):
     def safe_cast(i):
         try:
             return format(i, ".6e")
-        except:
+        except:  # noqa: E722
             return ""
 
     with open(PROPERTY_LOOKUP_FILE, "w", newline="") as file:
