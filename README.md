@@ -11,7 +11,7 @@
 </p>
 
 # Announcement - Open Beta!
-`fastprop` is currently in the version 3 open beta (1.0.0b3)!
+`fastprop` is currently in the version 4 open beta (1.0.0b4)!
 Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
 
