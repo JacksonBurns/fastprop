@@ -2,6 +2,7 @@ import datetime
 import os
 from time import perf_counter
 from typing import OrderedDict, Literal
+import glob
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -214,6 +215,10 @@ def train_and_test(
     trainer.fit(fastprop_model, train_dataloader, val_dataloader)
     t1_stop = perf_counter()
     logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
+    checkpoints_list = glob.glob('*.ckpt')
+    latest_file = max(checkpoints_list, key=os.path.getctime)
+    logger.info(f"Reloading best model from checkpoint file: {latest_file}")
+    fastprop_model = fastprop.load_from_checkpoint(latest_file)
     validation_results = trainer.validate(fastprop_model, val_dataloader, verbose=False)
     test_results = trainer.test(fastprop_model, test_dataloader, verbose=False)
     validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
