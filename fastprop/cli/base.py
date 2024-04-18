@@ -7,14 +7,12 @@ from time import perf_counter
 import yaml
 
 from fastprop import (
-    DEFAULT_TRAINING_CONFIG,
-    hopt_fastprop,
-    predict_fastprop,
-    shap_fastprop,
-    train_fastprop,
+    DEFAULT_TRAINING_CONFIG
 )
 from fastprop.defaults import init_logger
-from fastprop.utils import validate_config
+from .predict import predict_fastprop
+from .shap import shap_fastprop
+from .train import train_fastprop
 
 logger = init_logger(__name__)
 
@@ -34,14 +32,9 @@ def main():
     train_subparser.add_argument("-if", "--input-file", help="csv of SMILES and targets")
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
     train_subparser.add_argument("-sc", "--smiles-column", help="column name for SMILES")
-    train_subparser.add_argument("-d", "--descriptors", help="descriptors to calculate (one of all, optimized, smallest, or search)")
+    train_subparser.add_argument("-d", "--descriptors", help="descriptors to calculate (one of all, optimized, or debug)")
     train_subparser.add_argument("-ec", "--enable-cache", type=bool, help="allow saving and loading of cached descriptors")
     train_subparser.add_argument("-p", "--precomputed", help="precomputed descriptors from fastprop or mordred")
-
-    # preprocessing
-    train_subparser.add_argument("-r", "--rescaling", type=bool, help="rescale descriptors between 0 and 1 (default to True)")
-    train_subparser.add_argument("-zvd", "--zero-variance-drop", type=bool, help="drop zero variance descriptors (defaults to True)")
-    train_subparser.add_argument("-cd", "--colinear-drop", type=bool, help="drop colinear descriptors (defaults to False)")
 
     # training
     train_subparser.add_argument("-op", "--optimize", action="store_true", help="run hyperparameter optimization", default=False)
@@ -58,22 +51,28 @@ def main():
     train_subparser.add_argument("-rs", "--random-seed", type=int, help="random seed for sampling and pytorch seed")
     train_subparser.add_argument("-pc", "--patience", type=int, help="number of epochs to wait before early stopping")
 
+    # inference
     predict_subparser = subparsers.add_parser("predict")
     predict_subparser.add_argument("checkpoints_dir", help="directory of checkpoint file(s) for predictions")
     input_group = predict_subparser.add_mutually_exclusive_group()
-    input_group.add_argument("-s", "--smiles", nargs="+", help="SMILES string for prediction")
-    input_group.add_argument("-i", "--input-file", help="file containing SMILES strings")
+    input_group.add_argument("-ss", "--smiles-strings", nargs="+", type=str, help="SMILES string(s) for prediction")
+    input_group.add_argument("-sf", "--smiles-file", help="file containing SMILES strings only")
+    input_group = predict_subparser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
+    input_group.add_argument("-pd", "--precomputed-descriptors", help="precomputed descriptors")
     predict_subparser.add_argument("-o", "--output", required=False, help="output file for predictions (defaults to stdout)")
 
+    # feature importance
     shap_subparser = subparsers.add_parser("shap")
     shap_subparser.add_argument("checkpoints_dir", help="directory of checkpoint file(s) for SHAP analysis")
-    shap_subparser.add_argument("input_file", help="csv of SMILES and targets used during training")
+    shap_subparser.add_argument("cached_descriptors", help="csv of calculated descriptors cached by fastprop")
+    shap_subparser.add_argument("descriptor_set", help="descriptors in the cache file (one of all, optimized, or debug)")
     shap_subparser.add_argument(
         "-it",
         "--importance-threshold",
         default=0.75,
         type=float,
-        help="[0-1] hide features below (most important feature) x this",
+        help="[0-1] include top fraction of features, default 0.75",
     )
 
     # no args provided - print the help text
@@ -92,10 +91,6 @@ def main():
     args.pop("version")
     if subcommand == "train":
         training_default = dict(DEFAULT_TRAINING_CONFIG)
-        # exit with help if no args given
-        if not sum(map(lambda i: i is not None, args.values())):
-            train_subparser.print_help()
-            exit(0)
         optim_requested = args.pop("optimize")
         if args["config_file"] is not None:
             if sum(map(lambda i: i is not None, args.values())) > 1:
@@ -109,27 +104,22 @@ def main():
 
         optim_requested = training_default.pop("optimize") or optim_requested
         logger.info(f"Training Parameters:\n{yaml.dump(training_default, sort_keys=False)}")
-        # validate this dictionary, i.e. layer counts are positive, etc.
-        # cannot specify both precomputed and descriptors or enable/cache
-        validate_config(training_default)
         if optim_requested:
-            training_default.pop("fnn_layers")
-            training_default.pop("hidden_size")
-            if any((args.get("fnn_layers") is not None, args.get("hidden_size") is not None)):
-                logger.warning("Hidden Size/FNN Layers specified with optimize and are ignored.")
-            hopt_fastprop(**training_default)
+            if args.get("fnn_layers", None) is not None or cfg.get("fnn_layers", None) is not None:
+                logger.warning("--fnn-layers specified with --optimize - ignored.")
+            if args.get("hidden_size", None) is not None or cfg.get("hidden_size", None) is not None:
+                logger.warning("--hidden-size specified with --optimize - ignored.")
+            train_fastprop(**training_default, hopt=True)
         else:
             train_fastprop(**training_default)
     elif subcommand == "shap":
         shap_fastprop(**args)
     elif subcommand == "predict":
-        if args["smiles"] is None and args["input_file"] is None:
-            raise parser.error("One of -i/--input-file or -s/--smiles must be provided.")
         logger.info(f"Predict Parameters:\n {yaml.dump(args, sort_keys=False)}")
         predict_fastprop(**args)
     else:
         logger.critical(f"Unrecognized subcommand '{subcommand}', printing help and exiting.")
         parser.print_help()
         sys.exit(0)
-    logger.info("If you use fastprop in published work, please cite: ...WIP...")
+    logger.info("If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058")
     logger.info("Total elapsed time: " + str(datetime.timedelta(seconds=perf_counter() - cli_start)))

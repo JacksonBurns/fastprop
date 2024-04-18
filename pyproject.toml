@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastprop"
-version = "1.0.0b4"
+version = "1.0.0b5"
 authors = [
     { name = "Jackson Burns" },
 ]
@@ -28,7 +28,7 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.scripts]
-fastprop = "fastprop.cli.fastprop_cli:main"
+fastprop = "fastprop.cli.base:main"
 
 [tool.isort]
 profile = "black"

@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: fastprop
+message: >-
+  If you use this software in published work, please cite it
+  using the metadata in this file.
+type: software
+authors:
+  - given-names: Jackson
+    family-names: Burns
+    orcid: 'https://orcid.org/0000-0002-0657-9426'
+  - given-names: William
+    family-names: Green
+    orcid: 'https://orcid.org/0000-0003-2603-9694'
+identifiers:
+  - type: doi
+    value: 10.48550/arXiv.2404.02058
+  - type: url
+    value: 'https://arxiv.org/abs/2404.02058'
+repository-code: 'https://github.com/JacksonBurns/fastprop'
+abstract: >-
+  fast, accurate, scalable, and interpretable machine
+  learning with molecular descriptors
+license: MIT

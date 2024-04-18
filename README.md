@@ -73,10 +73,7 @@ There are four distinct steps in `fastprop` that define its framework:
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
-    - Enable/Disable dropping of zero-variance parameters (disabled by default; faster, but often less accurate)
-
-    ~~- Enable/Disable dropping of co-linear descriptors (disabled by default; faster, decreased accuracy)~~ _WIP_
-    - _not configurable_: `fastprop` will always rescale input features, drop columns with no values, and impute missing values with the per-feature mean
+    - _not configurable_: `fastprop` will always rescale input features, set invariant and missing features to zero, and impute missing values with the per-feature mean
  3. Training
     - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).
 
@@ -91,8 +88,6 @@ There are four distinct steps in `fastprop` that define its framework:
     - Output Directory
     - Learning rate
     - Batch size
-
-    ~~- Checkpoint file to resume from (optional)~~ _WIP_
     - Problem type (one of: regression, binary, multiclass (start labels from 0), multilabel)
  4. Prediction
     - Input SMILES: either a single SMILES or a CSV file
