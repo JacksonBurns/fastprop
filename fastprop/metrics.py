@@ -1,5 +1,10 @@
-"""Wrap a number of loss and score functions so that they can all be called
-using the same arguments.
+"""
+This file wraps a number of loss functions and score functions so that
+they can be called with a unified interface after being packed into a
+dictionary.
+
+Names of each function indicate its contents, and all of them call out
+to external libraries with thorough documentation.
 """
 
 import torch

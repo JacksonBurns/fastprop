@@ -12,14 +12,27 @@ _logging_format = dict(
 )
 
 
-def _init_loggers(outpath):
+def _init_loggers(outpath: str):
+    """Sets up a duplicate logging output to a text file in the given directory.
+
+    Args:
+        outpath (str): Destination directory for log file.
+    """
     logging.basicConfig(
         **_logging_format,
         handlers=[logging.FileHandler(os.path.join(outpath, "fastprop_log.txt")), logging.StreamHandler()],
     )
 
 
-def init_logger(module_name):
+def init_logger(module_name: str) -> logging.Logger:
+    """Returns a logger instance at appropriate level given with the given name.
+
+    Args:
+        module_name (str): Module name.
+
+    Returns:
+        logging.logger: Logger instance.
+    """
     logger = logging.getLogger(module_name)
     logger.setLevel(logging.DEBUG)
     return logger

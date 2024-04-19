@@ -35,6 +35,22 @@ class fastprop(pl.LightningModule):
         target_means: Optional[torch.Tensor] = None,
         target_vars: Optional[torch.Tensor] = None,
     ):
+        """fastprop descriptor-based regression FNN.
+
+        Args:
+            input_size (int, optional): Number of features. Defaults to 1613.
+            hidden_size (int, optional): Height of hidden layers. Defaults to 1800.
+            readout_size (int, optional): Number of output neurons. Defaults to 1.
+            num_tasks (int, optional): Number of distinct tasks. Defaults to 1.
+            learning_rate (float, optional): Learning rate for SGD. Defaults to 0.001.
+            fnn_layers (int, optional): Number of hidden layers. Defaults to 2.
+            problem_type (Literal["regression", "binary", "multiclass", "multilabel"], optional): Type of training task. Defaults to "regression".
+            target_names (list[str], optional): Names for targets in dataset, blank for simple integer names. Defaults to [].
+            feature_means (Optional[torch.Tensor], optional): Means for scaling features in regression. Defaults to None.
+            feature_vars (Optional[torch.Tensor], optional): Variances for scaling features in regression. Defaults to None.
+            target_means (Optional[torch.Tensor], optional): Means for scaling targets during inference. Defaults to None.
+            target_vars (Optional[torch.Tensor], optional): Means for scaling targets during inference. Defaults to None.
+        """
         super().__init__()
         self.n_tasks = num_tasks
         self.register_buffer("feature_means", feature_means)
@@ -62,9 +78,19 @@ class fastprop(pl.LightningModule):
         self.save_hyperparameters()
 
     def configure_optimizers(self):
+        """See https://lightning.ai/docs/pytorch/stable/common/optimization.html
+
+        Returns:
+            dict: Optimizer name and instance.
+        """
         return {"optimizer": torch.optim.Adam(self.parameters(), lr=self.learning_rate)}
 
     def setup(self, stage=None):
+        """Fill the target names if none were provided
+
+        Args:
+            stage (str, optional): Step of pipeline. Defaults to None.
+        """
         if stage == "fit":
             if len(self.target_names) == 0:
                 self.target_names = [f"task_{i}" for i in range(self.n_tasks)]
@@ -91,11 +117,20 @@ class fastprop(pl.LightningModule):
             raise RuntimeError(f"Unsupported problem type '{problem_type}'!")
 
     def forward(self, x):
+        """Returns the logits (i.e. without activation or scaling) for a given batch of features.
+
+        Args:
+            x (torch.Tensor): Input features.
+
+        Returns:
+            torch.Tensor: Logits.
+        """
         x = self.fnn.forward(x)
         x = self.readout(x)
         return x
 
     def log(self, name, value, **kwargs):
+        """Wrap the parent PyTorch Lightning log function to automatically detect DDP."""
         return super().log(name, value, sync_dist=distributed.is_initialized(), **kwargs)
 
     def training_step(self, batch, batch_idx):
@@ -116,6 +151,14 @@ class fastprop(pl.LightningModule):
         return loss
 
     def predict_step(self, descriptors: torch.Tensor):
+        """Applies feature scaling and appropriate activation function to a Tensor of descriptors.
+
+        Args:
+            descriptors (torch.Tensor): Unscaled descriptors.
+
+        Returns:
+            torch.Tensor: Predictions.
+        """
         if self.feature_means is not None and self.feature_vars is not None:
             descriptors = standard_scale(descriptors, self.feature_means, self.feature_vars)
         with torch.inference_mode():
@@ -129,7 +172,7 @@ class fastprop(pl.LightningModule):
             return torch.nn.functional.softmax(logits, dim=1)
 
     def _machine_loss(self, batch):
-        # reports the scaled loss directly on the logits for computational efficiency
+        """Reports the loss without undoing scaling for greater efficiency."""
         x, y = batch
         y_hat = self.forward(x)
         if self.problem_type == "regression":
@@ -142,6 +185,13 @@ class fastprop(pl.LightningModule):
         return loss, y_hat
 
     def _human_loss(self, pred, batch, name):
+        """Reports human-interpretable loss metrics.
+
+        Args:
+            pred (torch.Tensor): Network logits.
+            batch (tuple[torch.Tensor, torch.Tensor]): Inputs and targets
+            name (str): Name under which to log the results.
+        """
         truth = batch[1]
         if self.problem_type == "regression" and self.target_means is not None and self.target_vars is not None:
             pred = inverse_standard_scale(pred, self.target_means, self.target_vars)
@@ -173,6 +223,20 @@ def train_and_test(
     number_epochs: int = 30,
     patience: int = 5,
 ):
+    """Run a single train/validate and test iteration.
+
+    Args:
+        output_directory (str): Filepath to write logs and checkpoints.
+        fastprop_model (fastprop): fastprop LightningModule instance.
+        train_dataloader (fastpropDataLoader): Training data.
+        val_dataloader (fastpropDataLoader): Validation data.
+        test_dataloader (fastpropDataLoader): Testing data.
+        number_epochs (int, optional): Maximum number of epochs for training. Defaults to 30.
+        patience (int, optional): Number of epochs for early stopping. Defaults to 5.
+
+    Returns:
+        _type_: _description_
+    """
     try:
         repetition_number = len(os.listdir(os.path.join(output_directory, "tensorboard_logs"))) + 1
     except FileNotFoundError:

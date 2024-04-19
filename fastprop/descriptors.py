@@ -56,6 +56,16 @@ def _mols_to_desciptors(descriptors: list[Descriptor], rdkit_mols: list[rdchem.M
 
 
 def get_descriptors(cache_filepath: str | bool, descriptors: list[str], rdkit_mols: list[rdchem.Mol]) -> pd.DataFrame:
+    """Calculates requested descriptors for the given molecules, optionally writing to a cache file.
+
+    Args:
+        cache_filepath (str | bool): Filepath for cache, False to not cache.
+        descriptors (list[str]): Names of mordred-community descriptors to calculate.
+        rdkit_mols (list[rdchem.Mol]): Molecules.
+
+    Returns:
+        pd.DataFrame: Calculated descriptors.
+    """
     d2c = _descriptor_names_to_mordred_class(descriptors)
     out = pd.DataFrame(data=_mols_to_desciptors(d2c, rdkit_mols), columns=descriptors)
     out = out.apply(pd.to_numeric, errors="coerce")

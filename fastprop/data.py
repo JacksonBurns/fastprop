@@ -21,6 +21,22 @@ def split(
     test_size: float = 0.1,
     sampler: Literal["random", "scaffold"] = "random",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Split a dataset into training, validation, and testing subsets and return the indices for each.
+
+    Args:
+        smiles (list[str]): SMILES strings to split.
+        random_seed (int, optional): Seed for splitting. Defaults to 42.
+        train_size (float, optional): Fraction of data for training. Defaults to 0.8.
+        val_size (float, optional): Fraction of data for validation. Defaults to 0.1.
+        test_size (float, optional): Fraction of data for testing. Defaults to 0.1.
+        sampler (Literal["random", "scaffold"], optional): Type of sampler from astartes. Defaults to "random".
+
+    Raises:
+        TypeError: Unsupported sampler requested
+
+    Returns:
+        tuple[np.ndarray, np.ndarray, np.ndarray]: Indices for training, validation, and testing.
+    """
     split_kwargs = dict(
         train_size=train_size,
         val_size=val_size,
@@ -84,11 +100,30 @@ def standard_scale(data: torch.Tensor, means: Optional[torch.Tensor] = None, var
         return data
 
 
-def inverse_standard_scale(data: torch.Tensor, means: torch.Tensor, variances: torch.Tensor):
+def inverse_standard_scale(data: torch.Tensor, means: torch.Tensor, variances: torch.Tensor) -> torch.Tensor:
+    """Undo standard scaling.
+
+    Args:
+        data (torch.Tensor): Input data.
+        means (torch.Tensor): Precomputed means which were used for scaling.
+        variances (torch.Tensor): Precomputed variances which were used for scaling.
+
+    Returns:
+        torch.Tensor: Unscaled data.
+    """
     return data * variances.sqrt() + means
 
 
 def clean_dataset(targets: np.ndarray, smiles: np.ndarray):
+    """Removes targets with missing values and SMILES which cannot be converted to molecules.
+
+    Args:
+        targets (np.ndarray): Targets corresponding to mols.
+        smiles (np.ndarray): SMILES corresponding to the targets.
+
+    Returns:
+        tuple[np.ndarray, np.ndarray]: Valid targets and RDKit Molecules.
+    """
     rdkit_mols = np.array(list(Chem.MolFromSmiles(i) for i in smiles))
     starting_length = len(rdkit_mols)
 
@@ -120,6 +155,9 @@ def clean_dataset(targets: np.ndarray, smiles: np.ndarray):
         rdkit_mols = np.delete(rdkit_mols, error_target_idxs, axis=0)
         smiles = np.delete(smiles, error_target_idxs)
     return targets, rdkit_mols
+
+
+# wrap the basic pytorch Dataset and Dataloader to set some arguments in a convenient way
 
 
 class fastpropDataset(TorchDataset):
