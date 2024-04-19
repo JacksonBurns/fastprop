@@ -50,7 +50,7 @@ def predict_fastprop(
     # 1: predictions
     # 2: per-model
     trainer = Trainer(logger=False)
-    all_predictions = np.stack([trainer.predict(model, predict_dataloader)[0].numpy(force=True) for model in all_models], axis=2)
+    all_predictions = np.stack([torch.vstack(trainer.predict(model, predict_dataloader)).numpy(force=True) for model in all_models], axis=2)
     perf = np.mean(all_predictions, axis=2)
     err = np.std(all_predictions, axis=2)
     # interleave the columns of these arrays, thanks stackoverflow.com/a/75519265
