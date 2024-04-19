@@ -25,7 +25,7 @@ optimize: False # True
 # Featurization
 #
 # Which set of descriptors to calculate (either all or optimized)
-descriptors: all
+descriptor_set: all
 # Allow caching of descriptors
 enable_cache: True
 #
@@ -33,15 +33,6 @@ enable_cache: True
 #
 # Provide your own descriptors or those calculated by mordredcommunity from its CLI
 precomputed: /path/to/precomputed/descriptors.csv
-
-# Preprocessing
-#
-# Rescale descriptors from their initial range to 0->1
-rescaling: True
-# Drop descriptors which are invariant across the entire dataset
-zero_variance_drop: False
-# Drop descriptors which are colinear
-colinear_drop: False
 
 # Training
 #
@@ -59,10 +50,7 @@ number_epochs: 1000
 train_size: 0.8
 val_size: 0.05
 test_size: 0.15
-# Checkpoint from a previous run from which to restart (optional)
-checkpoint: /path/to/checkpoint.ckpt
-# Algorithm for data sampling, i.e. random, see all available samplers
-# here: https://github.com/JacksonBurns/astartes?tab=readme-ov-file#implemented-sampling-algorithms
+# Algorithm for data sampling, either scaffold or random
 sampler: random
 # number of epochs to wait before stopping early - avoid overfitting
 patience: 5

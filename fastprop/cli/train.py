@@ -214,7 +214,6 @@ def _replicates(
         descriptors[train_indexes], feature_means, feature_vars = standard_scale(descriptors[train_indexes])
         descriptors[val_indexes] = standard_scale(descriptors[val_indexes], feature_means, feature_vars)
         descriptors[test_indexes] = standard_scale(descriptors[test_indexes], feature_means, feature_vars)
-        # descriptors, feature_means, feature_vars = scale(descriptors)
 
         if problem_type == "regression":
             targets[train_indexes], target_means, target_vars = standard_scale(targets[train_indexes, :])

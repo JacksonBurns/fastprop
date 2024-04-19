@@ -20,7 +20,7 @@ dependencies = ["pyyaml", "lightning", "torch>=1.13", "mordredcommunity", "astar
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest"]
 hopt = ["ray[train]", "optuna"]
-shap = ["shap", "matplotlib"]
+shap = ["shap<0.45", "matplotlib"]
 bmark = ["py2opsin"]
 
 [project.readme]
