@@ -2,9 +2,11 @@ import os
 
 import numpy as np
 import pandas as pd
+from pytorch_lightning import Trainer
 import torch
+from torch.utils.data import TensorDataset
 
-from fastprop.data import clean_dataset
+from fastprop.data import clean_dataset, fastpropDataLoader
 from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, init_logger
 from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors
@@ -23,7 +25,7 @@ def predict_fastprop(
     output: Optional[str] = None,
 ):
     if smiles_file is not None:
-        if len(smiles_strings) != 0:
+        if smiles_strings:
             raise RuntimeError("Specify either smiles_strings or smiles_file, not both.")
         smiles_strings = [s.strip() for s in open(smiles_file, "r").readlines()]
 
@@ -40,14 +42,15 @@ def predict_fastprop(
         model = fastprop.load_from_checkpoint(os.path.join(checkpoints_dir, checkpoint))
         all_models.append(model)
 
-    descs = torch.tensor(descs, dtype=torch.float32, device=all_models[0].device)
-
+    descs = torch.tensor(descs, dtype=torch.float32)
+    predict_dataloader = fastpropDataLoader(TensorDataset(descs))
     # run inference
     # axis: contents
     # 0: smiles
     # 1: predictions
     # 2: per-model
-    all_predictions = np.stack([model.predict_step(descs).numpy(force=True) for model in all_models], axis=2)
+    trainer = Trainer(logger=False)
+    all_predictions = np.stack([trainer.predict(model, predict_dataloader)[0].numpy(force=True) for model in all_models], axis=2)
     perf = np.mean(all_predictions, axis=2)
     err = np.std(all_predictions, axis=2)
     # interleave the columns of these arrays, thanks stackoverflow.com/a/75519265
