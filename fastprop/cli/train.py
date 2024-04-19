@@ -316,7 +316,7 @@ def _hopt_objective(
     patience,
     target_columns,
     output_subdirectory,
-) -> float:
+) -> dict[str, float]:
     descriptors = ray.get(descriptors_ref)
     targets = ray.get(targets_ref)
     smiles = ray.get(smiles_ref)

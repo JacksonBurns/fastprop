@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Optional, Literal
 
 import numpy as np
 import torch
@@ -48,7 +48,7 @@ def split(
     return train_idxs, val_idxs, test_idxs
 
 
-def standard_scale(data: torch.Tensor, means: torch.Tensor = None, variances: torch.Tensor = None):
+def standard_scale(data: torch.Tensor, means: Optional[torch.Tensor] = None, variances: Optional[torch.Tensor] = None):
     """Applies standard scaling, i.e. Z-Score normalization.
 
     Args:

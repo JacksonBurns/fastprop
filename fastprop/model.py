@@ -2,7 +2,7 @@ import datetime
 import glob
 import os
 from time import perf_counter
-from typing import Literal, OrderedDict
+from typing import Optional, Literal, OrderedDict
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -30,10 +30,10 @@ class fastprop(pl.LightningModule):
         fnn_layers: int = 2,
         problem_type: Literal["regression", "binary", "multiclass", "multilabel"] = "regression",
         target_names: list[str] = [],
-        feature_means: torch.Tensor = None,
-        feature_vars: torch.Tensor = None,
-        target_means: torch.Tensor = None,
-        target_vars: torch.Tensor = None,
+        feature_means: Optional[torch.Tensor] = None,
+        feature_vars: Optional[torch.Tensor] = None,
+        target_means: Optional[torch.Tensor] = None,
+        target_vars: Optional[torch.Tensor] = None,
     ):
         super().__init__()
         self.n_tasks = num_tasks

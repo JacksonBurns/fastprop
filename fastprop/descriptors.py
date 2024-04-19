@@ -55,7 +55,7 @@ def _mols_to_desciptors(descriptors: list[Descriptor], rdkit_mols: list[rdchem.M
     return mordred_descs
 
 
-def get_descriptors(cache_filepath: str, descriptors: list[str], rdkit_mols: list[rdchem.Mol]) -> pd.DataFrame:
+def get_descriptors(cache_filepath: str | bool, descriptors: list[str], rdkit_mols: list[rdchem.Mol]) -> pd.DataFrame:
     d2c = _descriptor_names_to_mordred_class(descriptors)
     out = pd.DataFrame(data=_mols_to_desciptors(d2c, rdkit_mols), columns=descriptors)
     out = out.apply(pd.to_numeric, errors="coerce")

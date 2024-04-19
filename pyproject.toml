@@ -36,6 +36,12 @@ profile = "black"
 [tool.black]
 line-length = 150
 
+[tool.autopep8]
+max_line_length = 150
+in-place = true
+recursive = true
+aggressive = 3
+
 [tool.setuptools]
 include-package-data = true
 

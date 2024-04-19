@@ -9,6 +9,7 @@ from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, init_logger
 from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors
 from fastprop.model import fastprop
+from typing import Optional
 
 logger = init_logger(__name__)
 
@@ -17,9 +18,9 @@ def predict_fastprop(
     checkpoints_dir: str,
     smiles_strings: list[str],
     descriptor_set: str,
-    smiles_file: str = None,
-    precomputed_descriptors: np.ndarray = None,
-    output: str = None,
+    smiles_file: Optional[str] = None,
+    precomputed_descriptors: Optional[np.ndarray] = None,
+    output: Optional[str] = None,
 ):
     if smiles_file is not None:
         if len(smiles_strings) != 0:
@@ -28,7 +29,7 @@ def predict_fastprop(
 
     # load the models
     if precomputed_descriptors is None:
-        _, rdkit_mols = clean_dataset(np.zeros((1, len(smiles_strings))), smiles_strings)
+        _, rdkit_mols = clean_dataset(np.zeros((1, len(smiles_strings))), np.array(smiles_strings))
         descs = get_descriptors(cache_filepath=False, descriptors=DESCRIPTOR_SET_LOOKUP[descriptor_set], rdkit_mols=rdkit_mols)
         descs = descs.to_numpy(dtype=float)
     else:
