@@ -1,8 +1,7 @@
 import logging
 import os
-from types import MappingProxyType
 import warnings
-
+from types import MappingProxyType
 
 warnings.filterwarnings(action="ignore", message=".*does not have many workers.*")
 

@@ -3,17 +3,22 @@ import logging
 import os
 from pathlib import Path
 
-import numpy as np
-from lightning.pytorch import seed_everything
 import pandas as pd
-from scipy.stats import ttest_ind
 import torch
+from lightning.pytorch import seed_everything
+from scipy.stats import ttest_ind
 
-from fastprop.model import fastprop, train_and_test
-from fastprop.data import fastpropDataset, fastpropDataLoader, split, standard_scale, clean_dataset
-from fastprop.io import read_input_csv, load_saved_descriptors
+from fastprop.data import (
+    clean_dataset,
+    fastpropDataLoader,
+    fastpropDataset,
+    split,
+    standard_scale,
+)
+from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, _init_loggers, init_logger
 from fastprop.descriptors import get_descriptors
-from fastprop.defaults import _init_loggers, init_logger, DESCRIPTOR_SET_LOOKUP
+from fastprop.io import load_saved_descriptors, read_input_csv
+from fastprop.model import fastprop, train_and_test
 
 logger = init_logger(__name__)
 

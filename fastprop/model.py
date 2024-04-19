@@ -1,8 +1,8 @@
 import datetime
+import glob
 import os
 from time import perf_counter
-from typing import OrderedDict, Literal
-import glob
+from typing import Literal, OrderedDict
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -12,8 +12,8 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch import distributed
 
+from fastprop.data import fastpropDataLoader, inverse_standard_scale, standard_scale
 from fastprop.defaults import init_logger
-from fastprop.data import fastpropDataLoader, standard_scale, inverse_standard_scale
 from fastprop.metrics import SCORE_LOOKUP
 
 logger = init_logger(__name__)
@@ -37,10 +37,10 @@ class fastprop(pl.LightningModule):
     ):
         super().__init__()
         self.n_tasks = num_tasks
-        self.register_buffer('feature_means', feature_means)
-        self.register_buffer('feature_vars', feature_vars)
-        self.register_buffer('target_means', target_means)
-        self.register_buffer('target_vars', target_vars)
+        self.register_buffer("feature_means", feature_means)
+        self.register_buffer("feature_vars", feature_vars)
+        self.register_buffer("target_means", target_means)
+        self.register_buffer("target_vars", target_vars)
         self.problem_type = problem_type
         self.training_metric = fastprop.get_metric(problem_type)
         self.learning_rate = learning_rate
@@ -215,7 +215,7 @@ def train_and_test(
     trainer.fit(fastprop_model, train_dataloader, val_dataloader)
     t1_stop = perf_counter()
     logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    checkpoints_list = glob.glob('*.ckpt')
+    checkpoints_list = glob.glob(os.path.join(output_directory, "checkpoints", "*.ckpt"))
     latest_file = max(checkpoints_list, key=os.path.getctime)
     logger.info(f"Reloading best model from checkpoint file: {latest_file}")
     fastprop_model = fastprop.load_from_checkpoint(latest_file)

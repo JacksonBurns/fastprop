@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 import torch
 
-from fastprop.model import fastprop
-from fastprop.defaults import init_logger, DESCRIPTOR_SET_LOOKUP
-from fastprop.io import load_saved_descriptors
-from fastprop.descriptors import get_descriptors
 from fastprop.data import clean_dataset
+from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, init_logger
+from fastprop.descriptors import get_descriptors
+from fastprop.io import load_saved_descriptors
+from fastprop.model import fastprop
 
 logger = init_logger(__name__)
 

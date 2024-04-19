@@ -1,15 +1,12 @@
-from importlib.metadata import version
-
-from mordred import descriptors, get_descriptors_in_module
-from packaging.version import Version
-
 import datetime
+from importlib.metadata import version
 from time import perf_counter
 
 import numpy as np
 import pandas as pd
 import psutil
-from mordred import Calculator, Descriptor
+from mordred import Calculator, Descriptor, descriptors, get_descriptors_in_module
+from packaging.version import Version
 from rdkit.Chem import rdchem
 
 from fastprop.defaults import init_logger

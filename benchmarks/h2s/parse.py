@@ -1,12 +1,15 @@
-import pandas as pd
-import numpy as np
-
-from fastprop.utils import calculate_mordred_desciptors, ALL_2D, mordred_descriptors_from_strings
-
-from rdkit import Chem
-from py2opsin import py2opsin
-
 import itertools
+
+import numpy as np
+import pandas as pd
+from py2opsin import py2opsin
+from rdkit import Chem
+
+from fastprop.utils import (
+    ALL_2D,
+    calculate_mordred_desciptors,
+    mordred_descriptors_from_strings,
+)
 
 study_data = pd.read_excel("1-s2.0-S0167732217350985-mmc1.xlsx")
 

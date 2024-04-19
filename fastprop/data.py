@@ -1,12 +1,14 @@
 from typing import Literal
 
 import numpy as np
+import torch
 from astartes import train_val_test_split
 from astartes.molecules import train_val_test_split_molecules
-from fastprop.defaults import init_logger
-import torch
 from rdkit import Chem
-from torch.utils.data import Dataset as TorchDataset, DataLoader as TorchDataloader
+from torch.utils.data import DataLoader as TorchDataloader
+from torch.utils.data import Dataset as TorchDataset
+
+from fastprop.defaults import init_logger
 
 logger = init_logger(__name__)
 

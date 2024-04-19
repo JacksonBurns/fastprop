@@ -3,14 +3,14 @@ using the same arguments.
 """
 
 import torch
+from sklearn.metrics import mean_absolute_percentage_error as mape
 from torchmetrics.functional.classification import (
-    auroc,
     accuracy,
-    f1_score,
+    auroc,
     average_precision,
+    f1_score,
 )
 from torchmetrics.functional.regression import r2_score as tm_r2_score
-from sklearn.metrics import mean_absolute_percentage_error as mape
 
 
 def r2_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):

@@ -6,10 +6,9 @@ from time import perf_counter
 
 import yaml
 
-from fastprop import (
-    DEFAULT_TRAINING_CONFIG
-)
+from fastprop import DEFAULT_TRAINING_CONFIG
 from fastprop.defaults import init_logger
+
 from .predict import predict_fastprop
 from .shap import shap_fastprop
 from .train import train_fastprop
