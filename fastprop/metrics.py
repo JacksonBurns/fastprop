@@ -18,15 +18,15 @@ from torchmetrics.functional.classification import (
 from torchmetrics.functional.regression import r2_score as tm_r2_score
 
 
-def r2_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def r2_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return tm_r2_score(prediction, truth, multioutput="raw_values" if multitask else "uniform_average")
 
 
-def mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return mape(truth.numpy(force=True), prediction.numpy(force=True), multioutput="raw_values" if multitask else "uniform_average")
 
 
-def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return mape(
         truth.numpy(force=True),
         prediction.numpy(force=True),
@@ -35,36 +35,44 @@ def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, predictio
     )
 
 
-def mean_absolute_error_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def mean_absolute_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return torch.nn.functional.l1_loss(prediction, truth, reduction="none" if multitask else "mean")
 
 
-def mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return torch.nn.functional.mse_loss(prediction, truth, reduction="none" if multitask else "mean")
 
 
-def root_mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def root_mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return torch.sqrt(mean_squared_error_loss(truth, prediction, multitask))
 
 
-def binary_accuracy_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def binary_accuracy_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return accuracy(prediction, truth, task="binary")
 
 
-def binary_f1_score(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def binary_f1_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return f1_score(prediction, truth, task="binary")
 
 
-def binary_auroc(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def binary_auroc(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return auroc(prediction, truth.int(), task="binary")
 
 
-def binary_average_precision(truth: torch.Tensor, prediction: torch.Tensor, multitask: bool = False):
+def binary_average_precision(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
     return average_precision(prediction, truth.int(), task="binary")
 
 
 def multilabel_auroc(truth: torch.Tensor, prediction: torch.Tensor, num_labels: int):
     return auroc(prediction, truth.int(), task="multilabel", num_labels=num_labels)
+
+
+def multilabel_average_precision(truth: torch.Tensor, prediction: torch.Tensor, num_labels: int):
+    return average_precision(prediction, truth.int(), task="multilabel", num_labels=num_labels, average="micro")
+
+
+def multilabel_f1_score(truth: torch.Tensor, prediction: torch.Tensor, num_labels: int):
+    return f1_score(prediction, truth.int(), task="multilabel", num_labels=num_labels, average="micro")
 
 
 def multiclass_auroc(truth: torch.Tensor, prediction: torch.Tensor, num_classes: int):
@@ -85,6 +93,10 @@ SCORE_LOOKUP = {
         binary_auroc,
         binary_average_precision,
     ),
-    "multiclass": multiclass_auroc,
-    "multilabel": multilabel_auroc,
+    "multiclass": (multiclass_auroc,),
+    "multilabel": (
+        multilabel_auroc,
+        multilabel_average_precision,
+        multilabel_f1_score,
+    ),
 }
