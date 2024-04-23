@@ -104,9 +104,9 @@ def main():
         optim_requested = training_default.pop("optimize") or optim_requested
         logger.info(f"Training Parameters:\n{yaml.dump(training_default, sort_keys=False)}")
         if optim_requested:
-            if args.get("fnn_layers", None) is not None or cfg.get("fnn_layers", None) is not None:
+            if args.get("fnn_layers", None) is not None:
                 logger.warning("--fnn-layers specified with --optimize - ignored.")
-            if args.get("hidden_size", None) is not None or cfg.get("hidden_size", None) is not None:
+            if args.get("hidden_size", None) is not None:
                 logger.warning("--hidden-size specified with --optimize - ignored.")
             train_fastprop(**training_default, hopt=True)
         else:

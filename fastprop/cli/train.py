@@ -169,7 +169,7 @@ def train_fastprop(
             ),
             tune_config=tune.TuneConfig(
                 metric=metric,
-                mode="min" if problem_type == "regression" else "max",
+                mode="min",
                 search_alg=algo,
                 max_concurrent_trials=MODELS_PER_GPU,
                 num_samples=NUM_HOPT_TRIALS,
