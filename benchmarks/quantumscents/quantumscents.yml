@@ -26,7 +26,7 @@ smiles_column: smiles
 target_columns: alcoholic aldehydic alliaceous almond animal anisic apple apricot aromatic balsamic banana beefy berry black_currant brandy bread brothy burnt buttery cabbage camphoreous caramellic catty chamomile cheesy cherry chicken chocolate cinnamon citrus cocoa coconut coffee cognac coumarinic creamy cucumber dairy dry earthy ethereal fatty fermented fishy floral fresh fruity garlic gasoline grape grapefruit grassy green hay hazelnut herbal honey horseradish jasmine ketonic leafy leathery lemon malty meaty medicinal melon metallic milky mint mushroom musk musty nutty odorless oily onion orange orris peach pear phenolic pine pineapple plum popcorn potato pungent radish ripe roasted rose rum savory sharp smoky solvent sour spicy strawberry sulfurous sweet tea tobacco tomato tropical vanilla vegetable violet warm waxy winey woody
 
 # featurization
-descriptors: all
+descriptor_set: all
 
 # training
 number_repeats: 2

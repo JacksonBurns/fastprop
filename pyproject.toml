@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastprop"
-version = "1.0.0b4"
+version = "1.0.0"
 authors = [
     { name = "Jackson Burns" },
 ]
@@ -15,12 +15,12 @@ classifiers = [
 ]
 urls = { Homepage = "https://github.com/JacksonBurns/fastprop" }
 requires-python = ">=3.8"
-dependencies = ["pyyaml", "lightning", "mordredcommunity", "astartes[molecules]", "tensorboard", "psutil"]
+dependencies = ["pyyaml", "lightning", "torch>=1.13", "mordredcommunity", "astartes[molecules]", "tensorboard", "psutil"]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "pytest"]
+dev = ["black", "isort", "pytest", "pytest-cov"]
 hopt = ["ray[train]", "optuna"]
-shap = ["shap", "matplotlib"]
+shap = ["shap<0.45", "matplotlib"]
 bmark = ["py2opsin"]
 
 [project.readme]
@@ -28,13 +28,22 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.scripts]
-fastprop = "fastprop.cli.fastprop_cli:main"
+fastprop = "fastprop.cli.base:main"
 
 [tool.isort]
 profile = "black"
 
 [tool.black]
 line-length = 150
+
+[tool.autopep8]
+max_line_length = 150
+in-place = true
+recursive = true
+aggressive = 3
+
+[tool.pytest.ini_options]
+addopts = "--cov fastprop"
 
 [tool.setuptools]
 include-package-data = true

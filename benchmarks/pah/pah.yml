@@ -11,26 +11,20 @@
 
 # generic args
 output_directory: pah
-random_seed: 55
+random_seed: 562
 problem_type: regression
 
 # featurization
 input_file: pah/arockiaraj_pah_data.csv
 target_columns: log_p
 smiles_column: smiles
-descriptors: all
-
-# preprocessing
-zero_variance_drop: False
-colinear_drop: False
+descriptor_set: all
 
 # training
-hidden_size: 2900
-fnn_layers: 5
-number_repeats: 8
-number_epochs: 100
+number_repeats: 3
+number_epochs: 20
 batch_size: 64
-patience: 10
+patience: 5
 train_size: 0.8
 val_size: 0.1
 test_size: 0.1

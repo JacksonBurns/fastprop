@@ -33,7 +33,7 @@ random_seed: 765309408
 # featurization
 input_file: hiv/benchmark_data.csv
 smiles_column: smiles
-descriptors: all
+descriptor_set: all
 precomputed: hiv/precomputed.csv
 
 # training

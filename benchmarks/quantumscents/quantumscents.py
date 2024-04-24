@@ -15,17 +15,22 @@ It is commented throughout to explain further!
 import os
 import pickle as pkl
 
-import psutil
-from fastprop.utils import mordred_descriptors_from_strings, calculate_mordred_desciptors, load_saved_desc
-from fastprop.fastprop_core import train_and_test, fastprop
-from fastprop.preprocessing import preprocess
-from rdkit import Chem
-from rdkit.Chem import rdDetermineBonds
 import pandas as pd
+import psutil
 
 # the QuantumScents Zenodo includes a number of utilities for loading the dataset
 # two of which are imported here.
-from dataset.loader import QS_DATA, CID_TO_SMILES
+from dataset.loader import CID_TO_SMILES, QS_DATA
+from rdkit import Chem
+from rdkit.Chem import rdDetermineBonds
+
+from fastprop.fastprop_core import fastprop, train_and_test
+from fastprop.preprocessing import preprocess
+from fastprop.utils import (
+    calculate_mordred_desciptors,
+    load_saved_desc,
+    mordred_descriptors_from_strings,
+)
 
 # this file is a list of list of list - the outer list is len=number of folds, then the sublist is len=3
 # i.e. train/val/test and then then innermost lists contain the indexes for train/val/test
