@@ -21,9 +21,7 @@ smiles_column: smiles
 descriptor_set: all
 
 # training
-hidden_size: 128
-fnn_layers: 2
-number_repeats: 1
+number_repeats: 3
 number_epochs: 20
 batch_size: 64
 patience: 5

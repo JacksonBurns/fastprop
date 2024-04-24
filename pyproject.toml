@@ -18,7 +18,7 @@ requires-python = ">=3.8"
 dependencies = ["pyyaml", "lightning", "torch>=1.13", "mordredcommunity", "astartes[molecules]", "tensorboard", "psutil"]
 
 [project.optional-dependencies]
-dev = ["black", "isort", "pytest"]
+dev = ["black", "isort", "pytest", "pytest-cov"]
 hopt = ["ray[train]", "optuna"]
 shap = ["shap<0.45", "matplotlib"]
 bmark = ["py2opsin"]
@@ -41,6 +41,9 @@ max_line_length = 150
 in-place = true
 recursive = true
 aggressive = 3
+
+[tool.pytest.ini_options]
+addopts = "--cov fastprop"
 
 [tool.setuptools]
 include-package-data = true
