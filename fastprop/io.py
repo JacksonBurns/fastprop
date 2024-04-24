@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
 
@@ -6,7 +8,7 @@ from fastprop.defaults import init_logger
 logger = init_logger(__name__)
 
 
-def read_input_csv(filepath: str, smiles_column: str, target_columns: list[str]) -> tuple[np.ndarray, np.ndarray]:
+def read_input_csv(filepath: str, smiles_column: str, target_columns: List[str]) -> Tuple[np.ndarray, np.ndarray]:
     """Read a CSV file provided by the user.
 
     Args:

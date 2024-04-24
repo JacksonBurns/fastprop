@@ -1,6 +1,7 @@
 import datetime
 from importlib.metadata import version
 from time import perf_counter
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from fastprop.defaults import init_logger
 logger = init_logger(__name__)
 
 
-def _descriptor_names_to_mordred_class(string_list: list[str] = [], include_3d: bool = False):
+def _descriptor_names_to_mordred_class(string_list: List[str] = [], include_3d: bool = False):
     """Wraps a weird quirk of the mordred calculator library - descriptors must be passed
     as their corresponding class, not their name string.
 
@@ -37,7 +38,7 @@ def _descriptor_names_to_mordred_class(string_list: list[str] = [], include_3d: 
     return out
 
 
-def _mols_to_desciptors(descriptors: list[Descriptor], rdkit_mols: list[rdchem.Mol]) -> np.ndarray:
+def _mols_to_desciptors(descriptors: List[Descriptor], rdkit_mols: List[rdchem.Mol]) -> np.ndarray:
     """Wraps the mordred descriptor calculator.
 
     Args:
@@ -55,7 +56,7 @@ def _mols_to_desciptors(descriptors: list[Descriptor], rdkit_mols: list[rdchem.M
     return mordred_descs
 
 
-def get_descriptors(cache_filepath: str | bool, descriptors: list[str], rdkit_mols: list[rdchem.Mol]) -> pd.DataFrame:
+def get_descriptors(cache_filepath: Union[str, bool], descriptors: List[str], rdkit_mols: List[rdchem.Mol]) -> pd.DataFrame:
     """Calculates requested descriptors for the given molecules, optionally writing to a cache file.
 
     Args:

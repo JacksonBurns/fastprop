@@ -2,7 +2,7 @@ import datetime
 import glob
 import os
 from time import perf_counter
-from typing import Optional, Literal, OrderedDict
+from typing import List, Literal, Optional, OrderedDict, Tuple
 
 import pandas as pd
 import pytorch_lightning as pl
@@ -29,7 +29,7 @@ class fastprop(pl.LightningModule):
         learning_rate: float = 0.001,
         fnn_layers: int = 2,
         problem_type: Literal["regression", "binary", "multiclass", "multilabel"] = "regression",
-        target_names: list[str] = [],
+        target_names: List[str] = [],
         feature_means: Optional[torch.Tensor] = None,
         feature_vars: Optional[torch.Tensor] = None,
         target_means: Optional[torch.Tensor] = None,
@@ -150,7 +150,7 @@ class fastprop(pl.LightningModule):
         self._human_loss(y_hat, batch, "test")
         return loss
 
-    def predict_step(self, batch: tuple[torch.Tensor]):
+    def predict_step(self, batch: Tuple[torch.Tensor]):
         """Applies feature scaling and appropriate activation function to a Tensor of descriptors.
 
         Args:

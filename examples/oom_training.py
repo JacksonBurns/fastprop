@@ -1,6 +1,8 @@
 """
 oom_training.py
 
+This was created with fastprop beta version 4, but could easily be adapted to later versions.
+
 This script demonstrates how to run fastprop on a dataset which is too large to fit in memory
 (GPU or main memory) and instead must be dynamically loaded during training, i.e. "Out-of-memory"
 (OOM) training.

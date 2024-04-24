@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 from pathlib import Path
+from typing import Dict, List
 
 import pandas as pd
 import torch
@@ -42,7 +43,7 @@ def train_fastprop(
     output_directory: str,
     input_file: str,
     smiles_column: str,
-    target_columns: list[str],
+    target_columns: List[str],
     descriptor_set: str,
     enable_cache: bool,
     precomputed: str,
@@ -315,7 +316,7 @@ def _hopt_objective(
     patience,
     target_columns,
     output_subdirectory,
-) -> dict[str, float]:
+) -> Dict[str, float]:
     descriptors = ray.get(descriptors_ref)
     targets = ray.get(targets_ref)
     smiles = ray.get(smiles_ref)

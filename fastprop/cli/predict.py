@@ -1,9 +1,10 @@
 import os
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from pytorch_lightning import Trainer
 import torch
+from pytorch_lightning import Trainer
 from torch.utils.data import TensorDataset
 
 from fastprop.data import clean_dataset, fastpropDataLoader
@@ -11,14 +12,13 @@ from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, init_logger
 from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors
 from fastprop.model import fastprop
-from typing import Optional
 
 logger = init_logger(__name__)
 
 
 def predict_fastprop(
     checkpoints_dir: str,
-    smiles_strings: list[str],
+    smiles_strings: List[str],
     descriptor_set: str,
     smiles_file: Optional[str] = None,
     precomputed_descriptors: Optional[np.ndarray] = None,

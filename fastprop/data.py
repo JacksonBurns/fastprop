@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 import torch
@@ -14,13 +14,13 @@ logger = init_logger(__name__)
 
 
 def split(
-    smiles: list[str],
+    smiles: List[str],
     random_seed: int = 42,
     train_size: float = 0.8,
     val_size: float = 0.1,
     test_size: float = 0.1,
     sampler: Literal["random", "scaffold"] = "random",
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Split a dataset into training, validation, and testing subsets and return the indices for each.
 
     Args:
