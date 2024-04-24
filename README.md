@@ -1,7 +1,8 @@
 <p align="center">  
-  <img alt="fastproplogo" height="400" src="https://raw.githubusercontent.com/JacksonBurns/fastprop/main/fastprop_logo.png">
+  <img alt="fastprop Logo" height="400" src="https://raw.githubusercontent.com/JacksonBurns/fastprop/main/fastprop_logo.png">
 </p>
-<h2 align="center">Fast Molecular Property Prediction with <a href="https://github.com/JacksonBurns/mordred-community">mordredcommunity</a></h2>
+<h2 align="center">Molecular Property Prediction with <a href="https://github.com/JacksonBurns/mordred-community">mordredcommunity</a></h2>
+<h3 align="center">Fast, Scalable, and <500 LOC</h3>
  
 <p align="center">
   <img alt="GitHub Repo Stars" src="https://img.shields.io/github/stars/JacksonBurns/fastprop?style=social">
@@ -15,17 +16,17 @@
 The `fastprop` paper is freely available online at [arxiv.org/abs/2404.02058](https://arxiv.org/abs/2404.02058) and we are conducting open source peer review on [alphaXiv](https://alphaxiv.org/abs/2404.02058) - comments are appreciated!
 The source for the paper is stored in this repository under the `paper` directory.
 
-## Open Beta!
-`fastprop` is currently in open beta `v1.0.0b5`!
+## Initial Release :tada:
+`fastprop` version 1 is officially released, meaning the API is now stable and ready for production use!
 Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
-
-Check out the demo notebook for quick intro to `fastprop` via Google Colab - runs in your browser, GPU included, no install required: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JacksonBurns/fastprop/blob/main/fastprop_demo.ipynb)
 
 # Installing `fastprop`
 `fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.12.
 Installing from `pip` is the best way to get `fastprop`, but if you need to check out a specific GitHub branch or you want to contribute to `fastprop` a source installation is recommended.
 Pending interest from users, a `conda` package will be added.
+
+Check out the demo notebook for quick intro to `fastprop` via Google Colab - runs in your browser, GPU included, no install required: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JacksonBurns/fastprop/blob/main/fastprop_demo.ipynb)
 
 ## `pip` [recommended]
 `fastprop` is available via PyPI with `pip install fastprop`.
@@ -112,7 +113,11 @@ See `fastprop train --help` or `fastprop predict --help` for more information.
 `fastprop shap` and `fastprop predict` have only a couple arguments and so do not use configuration files.
 
 ## Python Module
-Here's an example of training `fastprop` as a Python module, pulled largely from `fastprop/cli/train.py`:
+
+### Example
+Here's an example of training `fastprop` as a Python module on the `Arockiaraj` Polycyclic Aromatic Hydrocarbon dataset, pulled largely from `fastprop/cli/train.py`.
+With `fastprop` installed you can copy and run this script as-is!
+
 ```python
 import pandas as pd
 import torch
@@ -150,11 +155,13 @@ model = fastprop(feature_means, feature_vars)
 test_results, validation_results = train_and_test(".", model, train_dataloader, val_dataloader, test_dataloader)
 
 ```
+
+### Package Structure
 This section documents where the various modules and functions used in `fastprop` are located.
 Check each file listed for more information, as each contains additional inline documentation useful for development as a Python module.
 To use the core `fastprop` model and dataloaders in your own work, consider looking at `shap.py` or `train.py` which show how to import and instantiate the relevant classes.
 
-### `fastprop`
+#### `fastprop`
  - `defaults`: contains the function `init_logger` used to initialize loggers in different submodules, as well as the default configuration for training.
  - `model`: the model itself and a convenience function for training.
  - `metrics`: wraps a number of common loss and score functions.
@@ -162,7 +169,7 @@ To use the core `fastprop` model and dataloaders in your own work, consider look
  - `data`: functions for cleaning and scaling data.
  - `io`: functions for loading data from files.
 
-### `fastprop.cli`
+#### `fastprop.cli`
 `fastprop_cli`` contains all the CLI code which is likely not useful in use from a script.
 If you wish to extend the CLI, check the inline documentation there.
 
