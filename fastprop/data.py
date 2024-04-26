@@ -19,7 +19,7 @@ def split(
     train_size: float = 0.8,
     val_size: float = 0.1,
     test_size: float = 0.1,
-    sampler: Literal["random", "scaffold"] = "random",
+    sampler: Literal["random", "scaffold", "predetermined"] = "random",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Split a dataset into training, validation, and testing subsets and return the indices for each.
 
@@ -29,7 +29,7 @@ def split(
         train_size (float, optional): Fraction of data for training. Defaults to 0.8.
         val_size (float, optional): Fraction of data for validation. Defaults to 0.1.
         test_size (float, optional): Fraction of data for testing. Defaults to 0.1.
-        sampler (Literal["random", "scaffold"], optional): Type of sampler from astartes. Defaults to "random".
+        sampler (Literal["random", "scaffold", "predetermined"], optional): Type of sampler from astartes. Defaults to "random".
 
     Raises:
         TypeError: Unsupported sampler requested
@@ -59,6 +59,8 @@ def split(
             val_idxs,
             test_idxs,
         ) = train_val_test_split_molecules(smiles, **split_kwargs)
+    elif sampler == "predetermined":
+        return tuple(np.split(np.arange(len(smiles)), [int(train_size), int(val_size), int(test_size)]))
     else:
         raise TypeError(f"Unknown sampler {sampler=}.")
     return train_idxs, val_idxs, test_idxs
