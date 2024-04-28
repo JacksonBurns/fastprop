@@ -101,7 +101,7 @@ def main():
         else:
             training_default.update({k: v for k, v in args.items() if v is not None})
 
-        optim_requested = training_default.pop("optimize") or optim_requested
+        optim_requested = training_default.pop("hopt") or optim_requested
         logger.info(f"Training Parameters:\n{yaml.dump(training_default, sort_keys=False)}")
         if optim_requested:
             if args.get("fnn_layers", None) is not None:
