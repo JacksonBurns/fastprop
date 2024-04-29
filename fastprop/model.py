@@ -279,7 +279,7 @@ def train_and_test(
     checkpoints_list = glob.glob(os.path.join(output_directory, "checkpoints", "*.ckpt"))
     latest_file = max(checkpoints_list, key=os.path.getctime)
     logger.info(f"Reloading best model from checkpoint file: {latest_file}")
-    fastprop_model = fastprop.load_from_checkpoint(latest_file)
+    fastprop_model = fastprop_model.__class__.load_from_checkpoint(latest_file)
     validation_results = trainer.validate(fastprop_model, val_dataloader, verbose=False)
     test_results = trainer.test(fastprop_model, test_dataloader, verbose=False)
     validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
