@@ -135,18 +135,18 @@ class fastprop(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, _ = self._machine_loss(batch)
-        self.log(f"train_{self.training_metric}_loss", loss)
+        self.log(f"train_{self.training_metric}_scaled_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, y_hat = self._machine_loss(batch)
-        self.log(f"validation_{self.training_metric}_loss", loss)
+        self.log(f"validation_{self.training_metric}_scaled_loss", loss)
         self._human_loss(y_hat, batch, "validation")
         return loss
 
     def test_step(self, batch, batch_idx):
         loss, y_hat = self._machine_loss(batch)
-        self.log(f"test_{self.training_metric}_loss", loss)
+        self.log(f"test_{self.training_metric}_scaled_loss", loss)
         self._human_loss(y_hat, batch, "test")
         return loss
 
@@ -247,13 +247,13 @@ def train_and_test(
 
     callbacks = [
         EarlyStopping(
-            monitor=f"validation_{fastprop_model.training_metric}_loss",
+            monitor=f"validation_{fastprop_model.training_metric}_scaled_loss",
             mode="min",
             verbose=False,
             patience=patience,
         ),
         ModelCheckpoint(
-            monitor=f"validation_{fastprop_model.training_metric}_loss",
+            monitor=f"validation_{fastprop_model.training_metric}_scaled_loss",
             dirpath=os.path.join(output_directory, "checkpoints"),
             filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
             save_top_k=1,
