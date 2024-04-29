@@ -15,7 +15,7 @@ classifiers = [
 ]
 urls = { Homepage = "https://github.com/JacksonBurns/fastprop" }
 requires-python = ">=3.8"
-dependencies = ["pyyaml", "lightning", "torch>=1.13", "mordredcommunity", "astartes[molecules]", "tensorboard", "psutil"]
+dependencies = ["pyyaml", "lightning", "torch>=1.13", "mordredcommunity", "astartes[molecules]", "tensorboard", "psutil", "polars"]
 
 [project.optional-dependencies]
 dev = ["black", "isort", "pytest", "pytest-cov"]
