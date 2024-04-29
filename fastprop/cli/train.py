@@ -102,7 +102,7 @@ def train_fastprop(
     readout_size = targets.shape[1]
     n_tasks = 1 if problem_type in {"binary", "multiclass"} else readout_size
 
-    logger.info(f"Run 'tensorboard --logdir {os.path.join(output_directory, 'tensorboard_logs')}' to track training progress.")
+    logger.info(f"Run 'tensorboard --logdir {os.path.join(output_subdirectory, 'tensorboard_logs')}' to track training progress.")
     if not hopt:
         return _replicates(
             number_repeats,
