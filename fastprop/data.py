@@ -143,7 +143,7 @@ def clean_dataset(targets: np.ndarray, smiles: np.ndarray):
 
     # also remove dataset entries where the target is missing
     # TODO: weight masking instead of removal?
-    error_target_idxs = [idx for idx, arr in enumerate(targets) if any(np.isnan(arr))]
+    error_target_idxs = [idx for idx, arr in enumerate(targets) if np.any(np.isnan(arr))]
     for idx in error_target_idxs:
         logger.warn(
             f"Missing target value (target={targets[idx]}) for SMILES {smiles[idx]}. Both the molecule and the target will be removed from the data."
