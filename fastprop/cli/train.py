@@ -278,8 +278,8 @@ def _replicates(
     if number_repeats > 1:
         metric = fastprop.get_metric(problem_type)
         ttest_result = ttest_ind(
-            test_results_df[f"test_{metric}_loss"].to_numpy(),
-            validation_results_df[f"validation_{metric}_loss"].to_numpy(),
+            test_results_df[f"test_{metric}_scaled_loss"].to_numpy(),
+            validation_results_df[f"validation_{metric}_scaled_loss"].to_numpy(),
         )
         if (p := ttest_result.pvalue) < 0.05:
             logger.warn(
@@ -345,4 +345,4 @@ def _hopt_objective(
         output_subdirectory,
     )
     metric = fastprop.get_metric(problem_type)
-    return {metric: test_results_df.describe().at["mean", f"test_{metric}_loss"]}
+    return {metric: test_results_df.describe().at["mean", f"test_{metric}_scaled_loss"]}
