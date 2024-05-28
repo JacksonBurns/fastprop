@@ -219,6 +219,7 @@ def train_and_test(
     test_dataloader: fastpropDataLoader,
     number_epochs: int = 30,
     patience: int = 5,
+    quiet: bool = False
 ):
     """Run a single train/validate and test iteration.
 
@@ -230,9 +231,10 @@ def train_and_test(
         test_dataloader (fastpropDataLoader): Testing data.
         number_epochs (int, optional): Maximum number of epochs for training. Defaults to 30.
         patience (int, optional): Number of epochs for early stopping. Defaults to 5.
+        quiet (bool, optional): Set True to disable some printing. Default to False.
 
     Returns:
-        _type_: _description_
+        list[dict]: Lightning model output.
     """
     try:
         repetition_number = len(os.listdir(os.path.join(output_directory, "tensorboard_logs"))) + 1
@@ -263,8 +265,8 @@ def train_and_test(
 
     trainer = pl.Trainer(
         max_epochs=number_epochs,
-        enable_progress_bar=True,
-        enable_model_summary=True,
+        enable_progress_bar=not quiet,
+        enable_model_summary=not quiet,
         logger=tensorboard_logger,
         log_every_n_steps=1,
         enable_checkpointing=True,
