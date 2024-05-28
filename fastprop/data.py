@@ -154,7 +154,7 @@ def clean_dataset(targets: np.ndarray, smiles: np.ndarray):
         targets = np.delete(targets, error_target_idxs, axis=0)
         rdkit_mols = np.delete(rdkit_mols, error_target_idxs, axis=0)
         smiles = np.delete(smiles, error_target_idxs)
-    return targets, rdkit_mols
+    return targets, rdkit_mols, smiles
 
 
 # wrap the basic pytorch Dataset and Dataloader to set some arguments in a convenient way

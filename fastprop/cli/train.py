@@ -86,7 +86,7 @@ def train_fastprop(
             logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
             descriptors = load_saved_descriptors(cache_file)
         else:
-            targets, rdkit_mols = clean_dataset(targets, smiles)
+            targets, rdkit_mols, smiles = clean_dataset(targets, smiles)
             descriptors = get_descriptors(enable_cache and cache_file, DESCRIPTOR_SET_LOOKUP[descriptor_set], rdkit_mols)
             descriptors = descriptors.to_numpy(dtype=float)
 
