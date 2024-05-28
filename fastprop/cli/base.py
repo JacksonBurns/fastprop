@@ -38,6 +38,7 @@ def main():
     # training
     train_subparser.add_argument("-op", "--optimize", action="store_true", help="run hyperparameter optimization", default=False)
     train_subparser.add_argument("-fl", "--fnn-layers", type=int, help="number of fnn layers")
+    train_subparser.add_argument("-hs", "--hidden-size", type=int, help="hidden size of fnn layers")
     train_subparser.add_argument("-lr", "--learning-rate", type=float, help="learning rate")
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
     train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")
