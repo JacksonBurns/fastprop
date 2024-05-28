@@ -225,6 +225,7 @@ All of these `fastprop` benchmarks are reproducible, and complete instructions f
 ## Benchmark Methods
 All benchmarks use 80% of the dataset for training (selected randomly, unless otherwise stated), 10% for validation, and holdout the remaining 10% for testing (unless otherwise stated).
 Sampling is performed using the `astartes` package [@astartes] which implements a variety of sampling algorithms and is highly reproducible.
+For datasets containing missing target values or invalid SMILES strings, those entries were dropped.
 
 Results for `fastprop` are reported as the average value of a metric and its standard deviation across a number of repetitions (repeated re-sampling of the dataset).
 The number of repetitions is chosen to either match referenced literature studies or else increased from two until the performance no longer meaningfully changes.
@@ -235,7 +236,7 @@ When results are generated for this study using Chemprop, the default settings a
 
 When reported, execution time is as given by the unix `time` command using Chemprop version 1.6.1 on Python 3.8 and includes the complete invocation of Chemprop, i.e. `time chemprop_train ...`.
 The insignificant time spent manually collating Chemprop results (Chemprop does not natively support repetitions) is excluded.
-`fastprop` is run on version 1.0.0b2 using Python 3.11 and timing values are reported according to its internal time measurement  which was verified to be nearly identical to the Unix `time` command.
+`fastprop` is run on version 1.0.2 using Python 3.11 and timing values are reported according to its internal time measurement  which was verified to be nearly identical to the Unix `time` command.
 The coarse comparison of the two packages is intended to emphasize the scaling of LRs and Deep-QSPR and that `fastprop` is, generally speaking, much faster.
 All models trained for this study were run on a Dell Precision series laptop with an NVIDIA Quadro RTX 4000 GPU and Intel Xeon E-2286M CPU.
 
@@ -272,22 +273,16 @@ Table: Summary of regression benchmark results. \label{regression_results_table}
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 |QM8            |~22                 |MAE          |0.016$^a$                          |0.018       |0.019$^a$                |
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|ESOL           |~1.1                |RMSE         |0.55$^c$                           |0.64        |0.67$^c$                 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|FreeSolv       |~0.6                |RMSE         |0.82$^c$                           |1.33        |1.26$^c$                 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 |Flash          |~0.6                |RMSE         |13.2$^e$                           |13.3        |21.2*                    |
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 |YSI            |~0.4                |MAE          |22.3$^f$                           |13.6        |28.9*                    |
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|HOPV15$^g$     |~0.3                |MAE          |1.32$^g$                           |1.55        |1.60                     |
+|Fubrain        |~0.3                |RMSE         |0.44$^h$/0.83$^d$                  |0.20/0.74   |0.22*/0.97$^d$           |
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|Fubrain        |~0.3                |RMSE         |0.44$^h$/0.83$^d$                  |0.19/0.74   |0.22*/0.97$^d$           |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|PAH            |~0.06               |R2           |0.96$^i$                           |0.98        |0.59*                    |
+|PAH            |~0.06               |R2           |0.96$^i$                           |0.97        |0.59*                    |
 +---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
 
-a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) c [@cmpnn] d [@deepdelta] (delta-learning instead of direct prediction) e [@flash] f [@ysi] g [@hopv15_subset] (uses a subset of the complete HOPV15 dataset) h [@fubrain] i [@pah] * These results were generated for this study.
+a [@unimol] b [@mhnn] (summary result is geometric mean across tasks) d [@deepdelta] (delta-learning instead of direct prediction) e [@flash] f [@ysi] h [@fubrain] i [@pah] * These results were generated for this study.
 
 ### QM9
 Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~134k.
@@ -699,70 +694,6 @@ test_rmse_output_f2-CAM      3.0  5.694622e-02  1.382938e-02       0.043153  5.0
 [02/22/2024 08:17:34 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
 [02/22/2024 08:17:34 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:10:48.739306 -->
 
-### ESOL
-First described in 2004 [@esol] and has since become a critically important benchmark for QSPR/molecular property prediction studies.
-The dataset includes molecular structure for approximately 1.1k simple organic molecules are their corresponding experimentally measured free energy of solvation.
-This property is a classic target of QSPR studies and is especially well suited for `fastprop`.
-
-The CMPNN [@cmpnn] model, a derivative of Chemprop, is used for comparison.
-The performance values are _not_ those from the original paper but instead the _corrected_ results shown on the CMPNN GitHub page [@cmpnn_amended_results].
-These numbers are the average and standard deviation across 5 repetitions, each including 5-fold cross validation (60/20/20 random split), for a total of 25 models.
-`fastprop` performance is reported using the same split sizes across 8 repetitions _without_ cross validation; increasing the number of repetitions further did not meaningfully change model performance.
-
-`fastprop` achieves an RMSE of 0.643 $\pm$ 0.048 trailing the CMPNN at 0.547 $\pm$ 0.011 but matching Chemprop at 0.665 $\pm$ 0.052.
-The same pattern from previous benchmarks is repeated - `fastprop` matches the performance of generic learned representation approaches but is outperformed by bespoke modeling techniques.
-In this case the CMPNN has been designed to perform better on these benchmark datasets specifically and at an increased cost in both execution time and complexity.
-<!-- [02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count         mean           std       min       25%       50%         75%           max
-validation_mse_loss    8.0     0.095556      0.021735  0.071144  0.084887  0.090992    0.098194      0.144221
-validation_r2          8.0     0.906880      0.019380  0.863877  0.905810  0.912962    0.919242      0.921702
-validation_mape        8.0  4852.799028  13378.896109  0.354641  0.430600  0.545640  216.635182  37955.437500
-validation_wmape       8.0     0.119274      0.008751  0.108916  0.111683  0.117584    0.127764      0.130299
-validation_l1          8.0     0.452131      0.032328  0.415299  0.436033  0.443621    0.463682      0.514942
-validation_mdae        8.0     0.318440      0.017449  0.288106  0.311116  0.322926    0.330057      0.339814
-validation_rmse        8.0     0.639168      0.068747  0.559729  0.609307  0.620219    0.648583      0.792154
-[02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count         mean          std       min       25%       50%          75%           max
-test_mse_loss    8.0     0.096117     0.013415  0.082148  0.087325  0.096219     0.098967      0.124506
-test_r2          8.0     0.907555     0.015811  0.876043  0.899289  0.910924     0.920941      0.922190
-test_mape        8.0  4107.554610  7206.676462  0.297727  0.398541  0.606253  5138.838989  20146.849609
-test_wmape       8.0     0.123171     0.018052  0.098788  0.110336  0.124274     0.130009      0.158073
-test_l1          8.0     0.463413     0.033499  0.411660  0.447721  0.459838     0.481340      0.520428
-test_mdae        8.0     0.335356     0.021130  0.303247  0.323648  0.333049     0.346739      0.370731
-test_rmse        8.0     0.643311     0.048021  0.592616  0.603093  0.648945     0.654420      0.742377
-[02/22/2024 10:40:29 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.891>0.05.
-[02/22/2024 10:40:29 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
-[02/22/2024 10:40:29 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:51.805718 -->
-
-### FreeSolv
-The Free Energy of Solvation (FreeSolv) database is a more curated alternative to ESOL developed and maintained by Mobley et al. in 2014 [@freesolv].
-It contains approximately 0.6k molecules and their experimental _and_ calculated hydration free energy.
-This benchmark is the smallest 'recognized' benchmark often reported in the molecular property prediction literature.
-
-Again the CMPNN study is used as a reference and the same procedure described in [ESOL](#esol) is followed.
-`fastprop` achieves an RMSE of 1.33 $\pm$ 0.21, once again trailing trailing the CMPNN at 0.82 $\pm$ 0.15 but matching Chemprop at 1.26 $\pm$ 0.11.
-<!-- [02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count          mean           std       min       25%       50%           75%           max
-validation_mse_loss    8.0      0.105076      0.021142  0.071070  0.094144  0.108995      0.122287      0.128179
-validation_r2          8.0      0.887782      0.031946  0.829467  0.872631  0.887708      0.916983      0.921358
-validation_mape        8.0  16893.051336  32489.402467  0.267785  0.288608  0.486189  12784.332201  84006.593750
-validation_wmape       8.0      0.168538      0.028897  0.140509  0.149993  0.162564      0.172264      0.229460
-validation_l1          8.0      0.793325      0.104319  0.671217  0.725321  0.760419      0.853767      0.973832
-validation_mdae        8.0      0.450124      0.073153  0.378300  0.410038  0.427426      0.464366      0.597248
-validation_rmse        8.0      1.248167      0.154767  0.977231  1.163309  1.258965      1.383154      1.423775
-[02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count          mean           std       min       25%       50%          75%            max
-test_mse_loss    8.0      0.122054      0.038057  0.068932  0.086034  0.135498     0.146974       0.172368
-test_r2          8.0      0.871179      0.041758  0.820861  0.834757  0.872354     0.904700       0.929744
-test_mape        8.0  17740.199359  43945.869444  0.326405  0.664482  0.713992  7779.158203  126142.187500
-test_wmape       8.0      0.161002      0.012844  0.144911  0.152154  0.159423     0.166615       0.184403
-test_l1          8.0      0.793003      0.073708  0.689533  0.728003  0.811125     0.836852       0.881987
-test_mdae        8.0      0.438812      0.037666  0.378906  0.416421  0.439448     0.456648       0.505403
-test_rmse        8.0      1.332239      0.212225  1.024511  1.144719  1.421061     1.430947       1.649917
-[02/22/2024 11:08:31 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.381>0.05.
-[02/22/2024 11:08:31 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
-[02/22/2024 11:08:31 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:00:38.625761 -->
-
 ### Flash
 First assembled and fitted to by Saldana and coauthors [@flash] the dataset (Flash) includes around 0.6k entries, primarily alkanes and some oxygen-containing compounds, and their literature-reported flash point.
 The reference study reports the performance on only one repetition, but manually confirms that the distribution of points in the three splits follows the parent dataset.
@@ -834,18 +765,15 @@ Table: YSI results. \label{ysi_results_table}
 +------------+----------------+----------------+----------------+
 | Model      | MAE            | RMSE           | WMAPE          |
 +============+================+================+================+
-| Reference  | 22.3           | 50             | 0.3            |
+| Reference  | 22.3           | 50             | 14             |
 +------------+----------------+----------------+----------------+
-| `fastprop` | 13.6 $\pm$ 2.1 | 54 $\pm$ 13    | 14.5 $\pm$ 2.2 |
+| `fastprop` | 30.0 $\pm$ 6.3 | 65 $\pm$ 19    | 16.6 $\pm$ 3.4 |
 +------------+----------------+----------------+----------------+
 | Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~              |
 +------------+----------------+----------------+----------------+
 
-`fastprop` significantly outperforms both other models when considering MAE, especially impressive in the case of the reference model which was trained on far more data.
-When considering RMSE, which penalizes large errors more than MAE, all models are similarly performant.
-Finally the WMAPE shows that the reference model makes much smaller errors on the highest YSI molecules compared to `fastprop`.
-Taken in combination with the MAE and RMSE values, which are respectively worse and competitive with `fastprop`, the model is likely highly overfit to the training data due to the cross-validation strategy.
-
+`fastprop` and Chemprop perform similarly, both slightly worse than the reference model.
+Taking into account that reference model has been trained on a significantly larger amount of data, this performance is admirable.
 Also notable is the difference in training times.
 Chemprop takes 7 minutes and 2 seconds while `fastprop` completes in only 38 seconds, again a factor of ten faster.
 <!-- 
@@ -875,29 +803,6 @@ test_rmse        8.0  54.804913  13.585199  39.491203  43.347728  52.980692  65.
 
 [^3]: Predictions are available at this [permalink](https://github.com/pstjohn/ysi-fragment-prediction/blob/bdf8b16a792a69c3e3e63e64fba6f1d190746abe/data/ysi_predictions.csv) to the CSV file on GitHub.
 
-### HOPV15 Subset
-The HOPV15 Subset is a collection of ~0.3k organic photovoltaic compounds curated by Eibeck and coworkers from the larger Harvard Organic Photovoltaic (HOPV15 [@hopv15_original]) based on criteria described in their paper [@hopv15_subset].
-This dataset is unique in that the target property Power Conversion Efficiency is both experimentally measurable or can be derived from quantum mechanics simulations, but regardless is not a 'classical' target of QSPR.
-After applying a variety of established modeling techniques Eibeck et al. achieved a best-case MAE of 1.32 $\pm$ 0.10 averaged across 5 randomly selected 60/20/20 data splits by using a simple molecular fingerprint representation and support vector regression.
-
-In the course of this study it was found that changing the random seed when using only 5 repetitions would lead to dramatically different model performance.
-Thus, for this benchmark the number of repetitions was set _higher_ than the reference study at 15.
-`fastprop` reports an average MAE of 1.55 $\pm$ 0.20 and an RMSE of 1.93 $\pm$ 0.20, in line with the performance of Chemprop at an MAE of 1.60 $\pm$ 0.15 and an RMSE of 1.97 $\pm$ 0.16.
-Execution time is again dramatically different with Chemprop taking 11 minutes and 35 seconds whereas `fastprop` took only 2 minutes and 3 seconds of which 1 minute and 47 seconds was spent calculating descriptors for the abnormally large molecules in HOPV15.
-<!-- [01/23/2024 11:22:14 AM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_mse_loss    5.0  0.769138  0.193359  0.524239  0.630217  0.783427  0.923952  0.983856
-validation_wmape       5.0  0.468045  0.060016  0.395862  0.422238  0.481899  0.492871  0.547358
-validation_l1          5.0  1.619807  0.196770  1.342793  1.510417  1.649071  1.770630  1.826126
-validation_rmse        5.0  1.948286  0.251272  1.619144  1.775276  1.979340  2.149541  2.218128
-[01/23/2024 11:22:14 AM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_mse_loss    5.0  0.636690  0.123323  0.419931  0.652266  0.695075  0.706868  0.709310
-test_wmape       5.0  0.409631  0.074432  0.297398  0.393970  0.409640  0.449684  0.497463
-test_l1          5.0  1.443413  0.184273  1.120585  1.486124  1.494168  1.536834  1.579354
-test_rmse        5.0  1.776624  0.185695  1.449138  1.806064  1.864390  1.880140  1.883385
-[01/23/2024 11:22:14 AM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.254>0.05. -->
-
 ### Fubrain
 First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimental experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
 This specific target in combination with this dataset size makes this benchmark highly relevant for typical QSPR studies.
@@ -906,7 +811,7 @@ The study that first generated this dataset used `mordred` descriptors but as is
 Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
 All told, their model achieved an RMSE of 0.53 averaged across all testing data.
 
-In only 44 seconds, of which 36 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.19 $\pm$ 0.03 
+In only 44 seconds, of which 36 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.207 $\pm$ 0.023 
 Under the same conditions Chemprop approaches `fastprop`'s performance with an RMSE of 0.22 $\pm$ 0.04 but requires 5 minutes and 11 seconds to do so, in this case a 7 times performance improvement for `fastprop` over Chemprop.
 
 #### Delta-Fubrain
@@ -985,14 +890,14 @@ sys     0m15.378s
 
 Timing for fastprop: descriptor generation was 30 seconds, total was 54s. -->
 
-### PAHs
+### PAH
 Originally compiled by Arockiaraj et al. [@pah] the Polycyclic Aromatic Hydrocarbons (PAH) dataset contains water/octanol partition coefficients (logP) for exactly 55 polycyclic aromatic hydrocarbons ranging in size from napthalene to circumcoronene.
 This size of this benchmark is an ideal case study for the application of `fastprop`.
 Using expert insight the reference study designed a novel set of molecular descriptors that show a strong correlation to logP, with correlation coefficients ranging from 0.96 to 0.99 among the various new descriptors.
 
 For comparison, `fastprop` and Chemprop are trained using 8 repetitions of a typical 80/10/10 random split - only **44** molecules in the training data.
-`fastprop` matches the performance of the bespoke descriptors with a correlation coefficient of 0.976 $\pm$ 0.027.
-This corresponds to an MAE of 0.160 $\pm$ 0.035 and an MAPE of 2.229 $\pm$ 0.061%.
+`fastprop` matches the performance of the bespoke descriptors with a correlation coefficient of 0.972 $\pm$ 0.025.
+This corresponds to an MAE of 0.19 $\pm$ 0.10 and an MAPE of 2.5 $\pm$ 1.4%.
 Chemprop effectively fails on this dataset, achieving a correlation coefficient of only 0.59 $\pm$ 0.24, an MAE of 1.04 $\pm$ 0.33 (one anti-correlated outlier replicate removed).
 Despite the large parameter size of the `fastprop` model relative to the training data, it readily outperforms Chemprop in the small-data limit.
 
@@ -1003,28 +908,22 @@ Chemprop completes in 1 minute and 17 seconds, on par with the training time of 
 On only the 21 points that have a retention index, mape: 0.024147   0.008081 
 Similar good story on the boiling point, acentric factor only has 12 points left after removing unvalued entries - difficult to call it anything.
 
-[02/27/2024 01:04:31 PM fastprop.utils.calculate_descriptors] INFO: Descriptor calculation complete, elapsed time: 0:01:43.992341
-[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: Displaying validation results:
-                     count      mean       std       min       25%       50%       75%       max
-validation_mse_loss    8.0  0.011793  0.007565  0.002760  0.007052  0.010122  0.016038  0.023678
-validation_r2          8.0  0.967643  0.041480  0.887329  0.962079  0.990051  0.991525  0.995362
-validation_mape        8.0  0.023872  0.007336  0.012750  0.019830  0.021311  0.030370  0.034264
-validation_wmape       8.0  0.023179  0.006904  0.011766  0.019547  0.022500  0.027003  0.033757
-validation_l1          8.0  0.180293  0.063113  0.097302  0.142936  0.159853  0.216696  0.297467
-validation_mdae        8.0  0.163112  0.076687  0.048465  0.120278  0.155380  0.203896  0.286865
-validation_rmse        8.0  0.216918  0.074785  0.119338  0.176945  0.189857  0.275287  0.328269
-[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: Displaying testing results:
-               count      mean       std       min       25%       50%       75%       max
-test_mse_loss    8.0  0.009312  0.004077  0.004010  0.005968  0.010208  0.011694  0.015521
-test_r2          8.0  0.976755  0.027748  0.910766  0.978237  0.982443  0.991034  0.997106
-test_mape        8.0  0.022889  0.006179  0.012255  0.018382  0.024994  0.027098  0.030146
-test_wmape       8.0  0.021151  0.005120  0.013177  0.017212  0.023100  0.025260  0.026115
-test_l1          8.0  0.160849  0.034691  0.115016  0.132890  0.157501  0.188638  0.205169
-test_mdae        8.0  0.141768  0.048483  0.088757  0.108975  0.125542  0.163960  0.224543
-test_rmse        8.0  0.197821  0.042304  0.139991  0.166466  0.202003  0.229707  0.248529
-[02/27/2024 01:05:30 PM fastprop.fastprop_core] INFO: 2-sided T-test between validation and testing rmse yielded p value of p=0.540>0.05.
-[02/27/2024 01:05:30 PM fastprop.cli.fastprop_cli] INFO: If you use fastprop in published work, please cite: ...WIP...
-[02/27/2024 01:05:30 PM fastprop.cli.fastprop_cli] INFO: Total elapsed time: 0:02:43.453523
+[05/28/2024 03:19:16 PM fastprop.cli.train] INFO: Displaying validation results:
+                                                          count      mean       std       min       25%       50%       75%       max
+validation_mse_scaled_loss                                  8.0  0.015993  0.014160  0.003091  0.005246  0.010797  0.023142  0.043774
+validation_r2_score                                         8.0  0.931177  0.132627  0.604734  0.958733  0.983718  0.985874  0.990619
+validation_mean_absolute_percentage_error_score             8.0  0.029330  0.013786  0.010083  0.019395  0.029097  0.042694  0.045405
+validation_weighted_mean_absolute_percentage_error_score    8.0  0.027937  0.012704  0.010349  0.018477  0.028200  0.039156  0.043552
+validation_mean_absolute_error_score                        8.0  0.215183  0.092659  0.093390  0.142778  0.202674  0.301386  0.336168
+validation_root_mean_squared_error_loss                     8.0  0.248758  0.106266  0.107539  0.166125  0.234507  0.334529  0.394562
+[05/28/2024 03:19:16 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                    count      mean       std       min       25%       50%       75%       max
+test_mse_scaled_loss                                  8.0  0.013877  0.009920  0.000536  0.007033  0.014443  0.017946  0.032355
+test_r2_score                                         8.0  0.971621  0.025000  0.939595  0.944988  0.979568  0.990349  0.999278
+test_mean_absolute_percentage_error_score             8.0  0.025644  0.014867  0.006885  0.013840  0.025514  0.034095  0.051297
+test_weighted_mean_absolute_percentage_error_score    8.0  0.024297  0.014311  0.005466  0.013144  0.024334  0.031072  0.048998
+test_mean_absolute_error_score                        8.0  0.190078  0.101137  0.041588  0.112903  0.198249  0.234031  0.354014
+test_root_mean_squared_error_loss                     8.0  0.236781  0.110437  0.051430  0.178263  0.252217  0.297688  0.401531
 
 chemprop
 
@@ -1046,8 +945,6 @@ Table: Summary of classification benchmark results. \label{classification_result
 |HIV                    | ~41                |AUROC       |0.81$^a$                    |0.81        |0.77$^a$                    |
 +-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
 |QuantumScents          |~3.5                |AUROC       |0.88$^b$                    |0.91        |0.85$^b$                    |
-+-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
-|SIDER                  |~1.4                |AUROC       |0.67$^c$                    |0.64        |0.65$^c$                    |
 +-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
 |Pgp                    |~1.3                |AUROC       |0.94$^e$                    |0.92        |0.89$^e$                    |
 +-----------------------+--------------------+------------+----------------------------+------------+----------------------------+
@@ -1106,14 +1003,6 @@ Due to the highly sparse nature of the scent labels a unique sampling algorithm 
 In the reference study, Chemprop achieved an AUROC of 0.85 with modest hyperparameter optimization and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
 `fastprop`, using neither these descriptors nor the 3D structures, outperforms both models with an AUROC of 0.910+/-0.001 with only descriptors calculated from the molecules' SMILES.
 The GitHub repository contains an example of generating custom descriptors incorporating the 3D information from QuantumScents and passing these to `fastprop`; impact on the performance was negligible.
-
-### SIDER
-First described by Kuhn et al. in 2015 [@sider], the Side Effect Resource (SIDER) database has become a standard property prediction benchmark.
-This challenging dataset maps around 1.4k compounds, including small molecules, metals, and salts, to any combination of 27 side effects - leading performers are only slightly better than random guessing (AUROC 0.5).
-
-Among the best performers in literature is the previously discussed CMPNN [@cmpnn] with a reported AUROC of 0.666+/-0.007, which narrowly outperforms Chemprop at 0.646+/-0.016.
-Using the same approach, `fastprop` achieves a decent AUROC of 0.636+/-0.019.
-Despite many of the entries in this dataset being atypical for `mordred` near-leading performance is still possible, supporting the robustness and generalizability of this framework.
 
 ### Pgp
 First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Therapeutic Data Commons (TDC) [@tdc] model benchmarking suite.

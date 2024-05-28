@@ -36,7 +36,7 @@ smiles_column: smiles
 number_repeats: 3
 
 # featurization
-descriptors: all
+descriptor_set: all
 precomputed: qm9/precomputed.csv
 
 # training

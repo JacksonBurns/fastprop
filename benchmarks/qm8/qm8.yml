@@ -34,10 +34,6 @@ sampler: scaffold
 descriptors: all
 enable_cache: True
 
-# preprocessing
-zero_variance_drop: False
-colinear_drop: False
-
 # training
 learning_rate: 0.0001
 random_seed: 709

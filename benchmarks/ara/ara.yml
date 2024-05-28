@@ -22,7 +22,7 @@ problem_type: binary
 input_file: ara/benchmark_data.csv
 target_columns: Activity
 smiles_column: Smiles
-descriptors: all
+descriptor_set: all
 
 # training
 hidden_size: 2300
