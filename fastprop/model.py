@@ -1,5 +1,4 @@
 import datetime
-import glob
 import os
 from time import perf_counter
 from typing import List, Literal, Optional, OrderedDict, Tuple
@@ -63,15 +62,11 @@ class fastprop(pl.LightningModule):
         self.target_names = target_names
 
         # fully-connected nn
-        layers = OrderedDict(
-            [
-                ("lin1", torch.nn.Linear(input_size, hidden_size)),
-                ("act1", torch.nn.ReLU()),
-            ]
-        )
-        for i in range(fnn_layers - 1):
-            layers[f"lin{i+2}"] = torch.nn.Linear(hidden_size, hidden_size)
-            layers[f"act{i+2}"] = torch.nn.ReLU()
+        layers = OrderedDict()
+        for i in range(fnn_layers):
+            layers[f"lin{i+1}"] = torch.nn.Linear(input_size if i == 0 else hidden_size, hidden_size)
+            if fnn_layers == 1 or i < (fnn_layers - 1):  # no output activation, unless single layer
+                layers[f"act{i+1}"] = torch.nn.ReLU()
         self.fnn = torch.nn.Sequential(layers)
         self.readout = torch.nn.Linear(hidden_size, readout_size)
 
@@ -278,10 +273,9 @@ def train_and_test(
     trainer.fit(fastprop_model, train_dataloader, val_dataloader)
     t1_stop = perf_counter()
     logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    checkpoints_list = glob.glob(os.path.join(output_directory, "checkpoints", "*.ckpt"))
-    latest_file = max(checkpoints_list, key=os.path.getctime)
-    logger.info(f"Reloading best model from checkpoint file: {latest_file}")
-    fastprop_model = fastprop_model.__class__.load_from_checkpoint(latest_file)
+    ckpt_path = trainer.checkpoint_callback.best_model_path
+    logger.info(f"Reloading best model from checkpoint file: {ckpt_path}")
+    fastprop_model = fastprop_model.__class__.load_from_checkpoint(ckpt_path)
     validation_results = trainer.validate(fastprop_model, val_dataloader, verbose=False)
     test_results = trainer.test(fastprop_model, test_dataloader, verbose=False)
     validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))
