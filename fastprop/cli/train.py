@@ -8,6 +8,7 @@ import pandas as pd
 import psutil
 import torch
 from lightning.pytorch import seed_everything
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
 from scipy.stats import ttest_ind
 
 from fastprop.data import (
@@ -38,6 +39,11 @@ logger = init_logger(__name__)
 NUM_HOPT_TRIALS = 16
 
 
+@rank_zero_only
+def _get_out_subdir_name(output_directory: str):
+    return os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
+
+
 def train_fastprop(
     output_directory: str,
     input_file: str,
@@ -66,7 +72,7 @@ def train_fastprop(
             "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt].\nOriginal error: " + str(hopt_error)
         )
     # setup logging and output directories
-    output_subdirectory = os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
+    output_subdirectory = _get_out_subdir_name(output_directory)
     os.makedirs(output_directory, exist_ok=True)
     os.makedirs(output_subdirectory, exist_ok=True)
     os.makedirs(os.path.join(output_subdirectory, "checkpoints"), exist_ok=True)
