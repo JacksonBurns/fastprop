@@ -213,31 +213,33 @@ def _replicates(
     for replicate_number in range(number_repeats):
         logger.info(f"Training model {replicate_number+1} of {number_repeats} ({random_seed=})")
 
+        descriptors_copy = descriptors.detach().clone()
+        targets_copy = targets.detach().clone()
         # prepare the dataloaders
         train_indexes, val_indexes, test_indexes = split(smiles, random_seed, train_size, val_size, test_size, sampler)
-        descriptors[train_indexes], feature_means, feature_vars = standard_scale(descriptors[train_indexes])
-        descriptors[val_indexes] = standard_scale(descriptors[val_indexes], feature_means, feature_vars)
-        descriptors[test_indexes] = standard_scale(descriptors[test_indexes], feature_means, feature_vars)
+        descriptors_copy[train_indexes], feature_means, feature_vars = standard_scale(descriptors_copy[train_indexes])
+        descriptors_copy[val_indexes] = standard_scale(descriptors_copy[val_indexes], feature_means, feature_vars)
+        descriptors_copy[test_indexes] = standard_scale(descriptors_copy[test_indexes], feature_means, feature_vars)
 
         if problem_type == "regression":
-            targets[train_indexes], target_means, target_vars = standard_scale(targets[train_indexes, :])
-            targets[val_indexes] = standard_scale(targets[val_indexes, :], target_means, target_vars)
-            targets[test_indexes] = standard_scale(targets[test_indexes, :], target_means, target_vars)
+            targets_copy[train_indexes], target_means, target_vars = standard_scale(targets_copy[train_indexes, :])
+            targets_copy[val_indexes] = standard_scale(targets_copy[val_indexes, :], target_means, target_vars)
+            targets_copy[test_indexes] = standard_scale(targets_copy[test_indexes, :], target_means, target_vars)
         else:
             target_means = None
             target_vars = None
 
         train_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[train_indexes], targets[train_indexes]),
+            fastpropDataset(descriptors_copy[train_indexes], targets_copy[train_indexes]),
             shuffle=True,
             batch_size=batch_size,
         )
         val_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[val_indexes], targets[val_indexes]),
+            fastpropDataset(descriptors_copy[val_indexes], targets_copy[val_indexes]),
             batch_size=batch_size,
         )
         test_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[test_indexes], targets[test_indexes]),
+            fastpropDataset(descriptors_copy[test_indexes], targets_copy[test_indexes]),
             batch_size=batch_size,
         )
 
