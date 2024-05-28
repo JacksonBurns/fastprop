@@ -29,7 +29,7 @@ class Test_fastprop(unittest.TestCase):
             fastprop_args["output_directory"] = self.temp_dirname
             fastprop_args["input_file"] = os.path.join(self.benchmark_dir, "pah", "arockiaraj_pah_data.csv")
             train_args.update(fastprop_args)
-            res = train_fastprop(**train_args)
+            res, _ = train_fastprop(**train_args)
             assert res.describe().loc["mean", "test_r2_score"] > 0.90
 
     @classmethod
