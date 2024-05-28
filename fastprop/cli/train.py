@@ -21,8 +21,6 @@ from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors, read_input_csv
 from fastprop.model import fastprop, train_and_test
 
-logger = init_logger(__name__)
-
 
 tune, OptunaSearch = None, None
 try:
