@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
+import psutil
 import torch
 from lightning.pytorch import seed_everything
 from scipy.stats import ttest_ind
@@ -34,7 +35,7 @@ except ImportError as ie:
 logger = init_logger(__name__)
 
 
-MODELS_PER_GPU, NUM_HOPT_TRIALS = 4, 16
+NUM_HOPT_TRIALS = 16
 
 
 def train_fastprop(
@@ -162,15 +163,13 @@ def train_fastprop(
                     target_columns,
                     output_subdirectory,
                 ),
-                # run n_parallel models at the same time (leave 20% for system)
-                # don't specify cpus, and just let pl figure it out
-                resources={"gpu": (1 - 0.20) / MODELS_PER_GPU},
+                resources={"gpu": 1, "cpu": psutil.cpu_count()},
             ),
             tune_config=tune.TuneConfig(
                 metric=metric,
                 mode="min",
                 search_alg=algo,
-                max_concurrent_trials=MODELS_PER_GPU,
+                max_concurrent_trials=1,
                 num_samples=NUM_HOPT_TRIALS,
             ),
             param_space=search_space,
