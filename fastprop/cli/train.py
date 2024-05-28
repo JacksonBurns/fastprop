@@ -290,7 +290,7 @@ def _replicates(
             logger.info(f"2-sided T-test between validation and testing {metric} yielded p value of {p=:.3f}>0.05.")
     else:
         logger.info("fastprop is unable to generate statistics to check for overfitting, consider increasing 'num_repeats' to at least 2.")
-    return test_results_df
+    return validation_results_df, test_results_df
 
 
 def _hopt_objective(
@@ -321,7 +321,7 @@ def _hopt_objective(
     targets = ray.get(targets_ref)
     smiles = ray.get(smiles_ref)
     enable_reproducibility(random_seed)
-    test_results_df = _replicates(
+    validation_results_df, test_results_df = _replicates(
         number_repeats,
         smiles,
         train_size,
@@ -345,4 +345,4 @@ def _hopt_objective(
         output_subdirectory,
     )
     metric = fastprop.get_metric(problem_type)
-    return {metric: test_results_df.describe().at["mean", f"test_{metric}_scaled_loss"]}
+    return {metric: validation_results_df.describe().at["mean", f"validation_{metric}_scaled_loss"]}
