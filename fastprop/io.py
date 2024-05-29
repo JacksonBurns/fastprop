@@ -2,6 +2,7 @@ from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
+import polars as pl
 
 from fastprop.defaults import init_logger
 
@@ -22,7 +23,7 @@ def read_input_csv(filepath: str, smiles_column: str, target_columns: List[str])
     Returns:
         tuple[np.ndarray, np.ndarray]: Targets and SMILES strings.
     """
-    src = pd.read_csv(filepath)
+    src = pl.read_csv(filepath).to_pandas()
     try:
         targets = pd.concat([src.pop(x) for x in target_columns], axis=1).to_numpy()
         smiles = src.pop(smiles_column).to_numpy()
@@ -45,7 +46,7 @@ def load_saved_descriptors(fpath: str) -> np.ndarray:
     Returns:
         np.ndarray: Loaded descriptors.
     """
-    d = pd.read_csv(fpath, low_memory=False)
+    d = pl.read_csv(fpath, ignore_errors=True).to_pandas()
     d = d.apply(pd.to_numeric, errors="coerce")
     descs = d[d.columns[1:]].to_numpy(dtype=float)
     return descs

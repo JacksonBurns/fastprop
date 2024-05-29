@@ -31,7 +31,7 @@ def predict_fastprop(
 
     # load the models
     if precomputed_descriptors is None:
-        _, rdkit_mols = clean_dataset(np.zeros((1, len(smiles_strings))), np.array(smiles_strings))
+        _, rdkit_mols, _ = clean_dataset(np.zeros((1, len(smiles_strings))), np.array(smiles_strings))
         descs = get_descriptors(cache_filepath=False, descriptors=DESCRIPTOR_SET_LOOKUP[descriptor_set], rdkit_mols=rdkit_mols)
         descs = descs.to_numpy(dtype=float)
     else:

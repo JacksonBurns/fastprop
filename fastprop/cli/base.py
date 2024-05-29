@@ -31,13 +31,14 @@ def main():
     train_subparser.add_argument("-if", "--input-file", help="csv of SMILES and targets")
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
     train_subparser.add_argument("-sc", "--smiles-column", help="column name for SMILES")
-    train_subparser.add_argument("-d", "--descriptors", help="descriptors to calculate (one of all, optimized, or debug)")
+    train_subparser.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
     train_subparser.add_argument("-ec", "--enable-cache", type=bool, help="allow saving and loading of cached descriptors")
     train_subparser.add_argument("-p", "--precomputed", help="precomputed descriptors from fastprop or mordred")
 
     # training
     train_subparser.add_argument("-op", "--optimize", action="store_true", help="run hyperparameter optimization", default=False)
     train_subparser.add_argument("-fl", "--fnn-layers", type=int, help="number of fnn layers")
+    train_subparser.add_argument("-hs", "--hidden-size", type=int, help="hidden size of fnn layers")
     train_subparser.add_argument("-lr", "--learning-rate", type=float, help="learning rate")
     train_subparser.add_argument("-bs", "--batch-size", type=int, help="batch size")
     train_subparser.add_argument("-ne", "--number-epochs", type=int, help="number of epochs")

@@ -21,12 +21,8 @@ problem_type: regression
 input_file: fubrain/benchmark_data.csv
 target_columns: fraction
 smiles_column: SMILES
-descriptors: all
+descriptor_set: all
 enable_cache: True
-
-# preprocessing
-zero_variance_drop: False
-colinear_drop: False
 
 # training
 number_repeats: 4

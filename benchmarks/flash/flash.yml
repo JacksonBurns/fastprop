@@ -20,14 +20,10 @@ random_seed: 195091191
 problem_type: regression
 
 # featurization
-input_file: flash/benchmark_data.csv
+input_file: flash/chemprop_data.csv
 target_columns: flash
 smiles_column: smiles
-descriptors: all
-
-# preprocessing
-zero_variance_drop: False
-colinear_drop: False
+descriptor_set: all
 
 # training
 number_repeats: 4

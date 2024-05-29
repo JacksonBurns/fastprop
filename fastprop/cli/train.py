@@ -5,8 +5,10 @@ from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
+import psutil
 import torch
 from lightning.pytorch import seed_everything
+from lightning.pytorch.utilities.rank_zero import rank_zero_only
 from scipy.stats import ttest_ind
 
 from fastprop.data import (
@@ -21,8 +23,6 @@ from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors, read_input_csv
 from fastprop.model import fastprop, train_and_test
 
-logger = init_logger(__name__)
-
 
 tune, OptunaSearch = None, None
 try:
@@ -36,7 +36,12 @@ except ImportError as ie:
 logger = init_logger(__name__)
 
 
-MODELS_PER_GPU, NUM_HOPT_TRIALS = 4, 16
+NUM_HOPT_TRIALS = 16
+
+
+@rank_zero_only
+def _get_out_subdir_name(output_directory: str):
+    return os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
 
 
 def train_fastprop(
@@ -67,7 +72,7 @@ def train_fastprop(
             "Unable to import hyperparameter optimization dependencies, please install fastprop[hopt].\nOriginal error: " + str(hopt_error)
         )
     # setup logging and output directories
-    output_subdirectory = os.path.join(output_directory, f"fastprop_{int(datetime.datetime.utcnow().timestamp())}")
+    output_subdirectory = _get_out_subdir_name(output_directory)
     os.makedirs(output_directory, exist_ok=True)
     os.makedirs(output_subdirectory, exist_ok=True)
     os.makedirs(os.path.join(output_subdirectory, "checkpoints"), exist_ok=True)
@@ -87,7 +92,7 @@ def train_fastprop(
             logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
             descriptors = load_saved_descriptors(cache_file)
         else:
-            targets, rdkit_mols = clean_dataset(targets, smiles)
+            targets, rdkit_mols, smiles = clean_dataset(targets, smiles)
             descriptors = get_descriptors(enable_cache and cache_file, DESCRIPTOR_SET_LOOKUP[descriptor_set], rdkit_mols)
             descriptors = descriptors.to_numpy(dtype=float)
 
@@ -102,7 +107,7 @@ def train_fastprop(
     readout_size = targets.shape[1]
     n_tasks = 1 if problem_type in {"binary", "multiclass"} else readout_size
 
-    logger.info(f"Run 'tensorboard --logdir {os.path.join(output_directory, 'tensorboard_logs')}' to track training progress.")
+    logger.info(f"Run 'tensorboard --logdir {os.path.join(output_subdirectory, 'tensorboard_logs')}' to track training progress.")
     if not hopt:
         return _replicates(
             number_repeats,
@@ -164,15 +169,13 @@ def train_fastprop(
                     target_columns,
                     output_subdirectory,
                 ),
-                # run n_parallel models at the same time (leave 20% for system)
-                # don't specify cpus, and just let pl figure it out
-                resources={"gpu": (1 - 0.20) / MODELS_PER_GPU},
+                resources={"gpu": 1, "cpu": psutil.cpu_count()},
             ),
             tune_config=tune.TuneConfig(
                 metric=metric,
                 mode="min",
                 search_alg=algo,
-                max_concurrent_trials=MODELS_PER_GPU,
+                max_concurrent_trials=1,
                 num_samples=NUM_HOPT_TRIALS,
             ),
             param_space=search_space,
@@ -210,31 +213,33 @@ def _replicates(
     for replicate_number in range(number_repeats):
         logger.info(f"Training model {replicate_number+1} of {number_repeats} ({random_seed=})")
 
+        descriptors_copy = descriptors.detach().clone()
+        targets_copy = targets.detach().clone()
         # prepare the dataloaders
         train_indexes, val_indexes, test_indexes = split(smiles, random_seed, train_size, val_size, test_size, sampler)
-        descriptors[train_indexes], feature_means, feature_vars = standard_scale(descriptors[train_indexes])
-        descriptors[val_indexes] = standard_scale(descriptors[val_indexes], feature_means, feature_vars)
-        descriptors[test_indexes] = standard_scale(descriptors[test_indexes], feature_means, feature_vars)
+        descriptors_copy[train_indexes], feature_means, feature_vars = standard_scale(descriptors_copy[train_indexes])
+        descriptors_copy[val_indexes] = standard_scale(descriptors_copy[val_indexes], feature_means, feature_vars)
+        descriptors_copy[test_indexes] = standard_scale(descriptors_copy[test_indexes], feature_means, feature_vars)
 
         if problem_type == "regression":
-            targets[train_indexes], target_means, target_vars = standard_scale(targets[train_indexes, :])
-            targets[val_indexes] = standard_scale(targets[val_indexes, :], target_means, target_vars)
-            targets[test_indexes] = standard_scale(targets[test_indexes, :], target_means, target_vars)
+            targets_copy[train_indexes], target_means, target_vars = standard_scale(targets_copy[train_indexes, :])
+            targets_copy[val_indexes] = standard_scale(targets_copy[val_indexes, :], target_means, target_vars)
+            targets_copy[test_indexes] = standard_scale(targets_copy[test_indexes, :], target_means, target_vars)
         else:
             target_means = None
             target_vars = None
 
         train_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[train_indexes], targets[train_indexes]),
+            fastpropDataset(descriptors_copy[train_indexes], targets_copy[train_indexes]),
             shuffle=True,
             batch_size=batch_size,
         )
         val_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[val_indexes], targets[val_indexes]),
+            fastpropDataset(descriptors_copy[val_indexes], targets_copy[val_indexes]),
             batch_size=batch_size,
         )
         test_dataloader = fastpropDataLoader(
-            fastpropDataset(descriptors[test_indexes], targets[test_indexes]),
+            fastpropDataset(descriptors_copy[test_indexes], targets_copy[test_indexes]),
             batch_size=batch_size,
         )
 
@@ -278,8 +283,8 @@ def _replicates(
     if number_repeats > 1:
         metric = fastprop.get_metric(problem_type)
         ttest_result = ttest_ind(
-            test_results_df[f"test_{metric}_loss"].to_numpy(),
-            validation_results_df[f"validation_{metric}_loss"].to_numpy(),
+            test_results_df[f"test_{metric}_scaled_loss"].to_numpy(),
+            validation_results_df[f"validation_{metric}_scaled_loss"].to_numpy(),
         )
         if (p := ttest_result.pvalue) < 0.05:
             logger.warn(
@@ -290,7 +295,7 @@ def _replicates(
             logger.info(f"2-sided T-test between validation and testing {metric} yielded p value of {p=:.3f}>0.05.")
     else:
         logger.info("fastprop is unable to generate statistics to check for overfitting, consider increasing 'num_repeats' to at least 2.")
-    return test_results_df
+    return validation_results_df, test_results_df
 
 
 def _hopt_objective(
@@ -321,7 +326,7 @@ def _hopt_objective(
     targets = ray.get(targets_ref)
     smiles = ray.get(smiles_ref)
     enable_reproducibility(random_seed)
-    test_results_df = _replicates(
+    validation_results_df, test_results_df = _replicates(
         number_repeats,
         smiles,
         train_size,
@@ -345,4 +350,4 @@ def _hopt_objective(
         output_subdirectory,
     )
     metric = fastprop.get_metric(problem_type)
-    return {metric: test_results_df.describe().at["mean", f"test_{metric}_loss"]}
+    return {metric: validation_results_df.describe().at["mean", f"validation_{metric}_scaled_loss"]}

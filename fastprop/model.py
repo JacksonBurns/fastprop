@@ -1,5 +1,4 @@
 import datetime
-import glob
 import os
 from time import perf_counter
 from typing import List, Literal, Optional, OrderedDict, Tuple
@@ -63,15 +62,11 @@ class fastprop(pl.LightningModule):
         self.target_names = target_names
 
         # fully-connected nn
-        layers = OrderedDict(
-            [
-                ("lin1", torch.nn.Linear(input_size, hidden_size)),
-                ("act1", torch.nn.ReLU()),
-            ]
-        )
-        for i in range(fnn_layers - 1):
-            layers[f"lin{i+2}"] = torch.nn.Linear(hidden_size, hidden_size)
-            layers[f"act{i+2}"] = torch.nn.ReLU()
+        layers = OrderedDict()
+        for i in range(fnn_layers):
+            layers[f"lin{i+1}"] = torch.nn.Linear(input_size if i == 0 else hidden_size, hidden_size)
+            if fnn_layers == 1 or i < (fnn_layers - 1):  # no output activation, unless single layer
+                layers[f"act{i+1}"] = torch.nn.ReLU()
         self.fnn = torch.nn.Sequential(layers)
         self.readout = torch.nn.Linear(hidden_size, readout_size)
 
@@ -135,18 +130,18 @@ class fastprop(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, _ = self._machine_loss(batch)
-        self.log(f"train_{self.training_metric}_loss", loss)
+        self.log(f"train_{self.training_metric}_scaled_loss", loss)
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss, y_hat = self._machine_loss(batch)
-        self.log(f"validation_{self.training_metric}_loss", loss)
+        self.log(f"validation_{self.training_metric}_scaled_loss", loss)
         self._human_loss(y_hat, batch, "validation")
         return loss
 
     def test_step(self, batch, batch_idx):
         loss, y_hat = self._machine_loss(batch)
-        self.log(f"test_{self.training_metric}_loss", loss)
+        self.log(f"test_{self.training_metric}_scaled_loss", loss)
         self._human_loss(y_hat, batch, "test")
         return loss
 
@@ -219,6 +214,7 @@ def train_and_test(
     test_dataloader: fastpropDataLoader,
     number_epochs: int = 30,
     patience: int = 5,
+    quiet: bool = False
 ):
     """Run a single train/validate and test iteration.
 
@@ -230,9 +226,10 @@ def train_and_test(
         test_dataloader (fastpropDataLoader): Testing data.
         number_epochs (int, optional): Maximum number of epochs for training. Defaults to 30.
         patience (int, optional): Number of epochs for early stopping. Defaults to 5.
+        quiet (bool, optional): Set True to disable some printing. Default to False.
 
     Returns:
-        _type_: _description_
+        list[dict]: Lightning model output.
     """
     try:
         repetition_number = len(os.listdir(os.path.join(output_directory, "tensorboard_logs"))) + 1
@@ -247,13 +244,13 @@ def train_and_test(
 
     callbacks = [
         EarlyStopping(
-            monitor=f"validation_{fastprop_model.training_metric}_loss",
+            monitor=f"validation_{fastprop_model.training_metric}_scaled_loss",
             mode="min",
             verbose=False,
             patience=patience,
         ),
         ModelCheckpoint(
-            monitor=f"validation_{fastprop_model.training_metric}_loss",
+            monitor=f"validation_{fastprop_model.training_metric}_scaled_loss",
             dirpath=os.path.join(output_directory, "checkpoints"),
             filename=f"repetition-{repetition_number}" + "-{epoch:02d}-{val_loss:.2f}",
             save_top_k=1,
@@ -263,8 +260,8 @@ def train_and_test(
 
     trainer = pl.Trainer(
         max_epochs=number_epochs,
-        enable_progress_bar=True,
-        enable_model_summary=True,
+        enable_progress_bar=not quiet,
+        enable_model_summary=not quiet,
         logger=tensorboard_logger,
         log_every_n_steps=1,
         enable_checkpointing=True,
@@ -276,10 +273,9 @@ def train_and_test(
     trainer.fit(fastprop_model, train_dataloader, val_dataloader)
     t1_stop = perf_counter()
     logger.info("Elapsed time during training: " + str(datetime.timedelta(seconds=t1_stop - t1_start)))
-    checkpoints_list = glob.glob(os.path.join(output_directory, "checkpoints", "*.ckpt"))
-    latest_file = max(checkpoints_list, key=os.path.getctime)
-    logger.info(f"Reloading best model from checkpoint file: {latest_file}")
-    fastprop_model = fastprop.load_from_checkpoint(latest_file)
+    ckpt_path = trainer.checkpoint_callback.best_model_path
+    logger.info(f"Reloading best model from checkpoint file: {ckpt_path}")
+    fastprop_model = fastprop_model.__class__.load_from_checkpoint(ckpt_path)
     validation_results = trainer.validate(fastprop_model, val_dataloader, verbose=False)
     test_results = trainer.test(fastprop_model, test_dataloader, verbose=False)
     validation_results_df = pd.DataFrame.from_records(validation_results, index=("value",))

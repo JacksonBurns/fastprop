@@ -23,7 +23,7 @@ problem_type: binary
 input_file: pgp/benchmark_data.csv
 target_columns: Activity
 smiles_column: SMILES
-descriptors: all
+descriptor_set: all
 
 # training
 number_repeats: 4
