@@ -201,7 +201,7 @@ class fastprop(pl.LightningModule):
         for metric in SCORE_LOOKUP[self.problem_type]:
             self.log(f"{name}_{metric.__name__}", metric(truth, pred, self.readout.out_features))
             if "multi" not in self.problem_type and self.n_tasks > 1:
-                per_task_metric = metric(truth, pred, True)
+                per_task_metric = metric(truth, pred, None, True)
                 for target, value in zip(self.target_names, per_task_metric):
                     self.log(f"{name}_{target}_{metric.__name__}", value)
 
