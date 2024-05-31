@@ -36,15 +36,21 @@ def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, predictio
 
 
 def mean_absolute_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
-    return torch.nn.functional.l1_loss(prediction, truth, reduction="none" if multitask else "mean")
+    res = torch.nn.functional.l1_loss(prediction, truth, reduction="none" if multitask else "mean")
+    if multitask:
+        res = res.mean(dim=0)
+    return res
 
 
 def mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
-    return torch.nn.functional.mse_loss(prediction, truth, reduction="none" if multitask else "mean")
+    res = torch.nn.functional.mse_loss(prediction, truth, reduction="none" if multitask else "mean")
+    if multitask:
+        res = res.mean(dim=0)
+    return res
 
 
 def root_mean_squared_error_loss(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
-    return torch.sqrt(mean_squared_error_loss(truth, prediction, multitask))
+    return torch.sqrt(mean_squared_error_loss(truth, prediction, ignored, multitask))
 
 
 def binary_accuracy_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
