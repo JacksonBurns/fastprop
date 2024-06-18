@@ -214,7 +214,8 @@ def train_and_test(
     test_dataloader: fastpropDataLoader,
     number_epochs: int = 30,
     patience: int = 5,
-    quiet: bool = False
+    quiet: bool = False,
+    **trainer_kwargs,
 ):
     """Run a single train/validate and test iteration.
 
@@ -227,6 +228,7 @@ def train_and_test(
         number_epochs (int, optional): Maximum number of epochs for training. Defaults to 30.
         patience (int, optional): Number of epochs for early stopping. Defaults to 5.
         quiet (bool, optional): Set True to disable some printing. Default to False.
+        trainer_kwargs (dict, optional): Additional arguments to pass the the pl.Trainer
 
     Returns:
         list[dict]: Lightning model output.
@@ -267,6 +269,7 @@ def train_and_test(
         enable_checkpointing=True,
         check_val_every_n_epoch=1,
         callbacks=callbacks,
+        **trainer_kwargs,
     )
 
     t1_start = perf_counter()
