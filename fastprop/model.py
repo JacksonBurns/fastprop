@@ -18,6 +18,18 @@ from fastprop.metrics import SCORE_LOOKUP
 logger = init_logger(__name__)
 
 
+class ClampN(torch.nn.Module):
+    def __init__(self, n: float) -> None:
+        super().__init__()
+        self.n = n
+
+    def forward(self, batch: torch.Tensor):
+        return torch.clamp(batch, min=-self.n, max=self.n)
+
+    def extra_repr(self) -> str:
+        return f"n={self.n}"
+
+
 class fastprop(pl.LightningModule):
     def __init__(
         self,
@@ -27,6 +39,7 @@ class fastprop(pl.LightningModule):
         num_tasks: int = 1,
         learning_rate: float = 0.001,
         fnn_layers: int = 2,
+        clamp_input: bool = False,
         problem_type: Literal["regression", "binary", "multiclass", "multilabel"] = "regression",
         target_names: List[str] = [],
         feature_means: Optional[torch.Tensor] = None,
@@ -43,6 +56,7 @@ class fastprop(pl.LightningModule):
             num_tasks (int, optional): Number of distinct tasks. Defaults to 1.
             learning_rate (float, optional): Learning rate for SGD. Defaults to 0.001.
             fnn_layers (int, optional): Number of hidden layers. Defaults to 2.
+            clamp_input (bool, optional): Clamp inputs to +/-3 to aid extrapolation. Defaults to False.
             problem_type (Literal["regression", "binary", "multiclass", "multilabel"], optional): Type of training task. Defaults to "regression".
             target_names (list[str], optional): Names for targets in dataset, blank for simple integer names. Defaults to [].
             feature_means (Optional[torch.Tensor], optional): Means for scaling features in regression. Defaults to None.
@@ -63,6 +77,7 @@ class fastprop(pl.LightningModule):
 
         # fully-connected nn
         layers = OrderedDict()
+        layers["clamp"] = ClampN(3)
         for i in range(fnn_layers):
             layers[f"lin{i+1}"] = torch.nn.Linear(input_size if i == 0 else hidden_size, hidden_size)
             if fnn_layers == 1 or i < (fnn_layers - 1):  # no output activation, unless single layer
