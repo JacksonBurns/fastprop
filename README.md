@@ -53,7 +53,7 @@ See the `examples` and `benchmarks` directories to see how to run training - the
 There are four distinct steps in `fastprop` that define its framework:
  1. Featurization - transform the input molecules (as SMILES strings) into an array of molecular descriptors which are saved
  2. Preprocessing - clean the descriptors by removing or imputing missing values then rescaling the remainder
- 3. Training - send the processed input to the neural network, which is a simple FNN (sequential fully-connected layers with an activation function between), optionally limiting the inputs to +/-3 standard deviations to aid in extrapolation
+ 3. Training - send the processed input to the neural network, which is a simple FNN (sequential fully-connected layers with an activation function between)
  4. Prediction - save the trained model for future use
 
 ## Configurable Parameters
@@ -76,7 +76,6 @@ There are four distinct steps in `fastprop` that define its framework:
     _and_
     - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
     - Hidden Size: number of neurons per FNN layer (default 1800)
-    - Clamp Input: Enable/Disable input clamp to +/-3 to aid in extrapolation (default False).
 
     _or_
     - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size
