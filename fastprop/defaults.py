@@ -45,6 +45,7 @@ DEFAULT_TRAINING_CONFIG = MappingProxyType(
         enable_cache=True,
         precomputed=None,
         fnn_layers=2,
+        clamp_input=False,
         learning_rate=0.0001,
         batch_size=2048,
         number_epochs=30,
