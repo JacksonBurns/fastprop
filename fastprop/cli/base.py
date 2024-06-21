@@ -94,7 +94,7 @@ def main():
         training_default = dict(DEFAULT_TRAINING_CONFIG)
         optim_requested = args.pop("optimize")
         if args["config_file"] is not None:
-            if sum(map(lambda i: i is not None, args.values())) > 1:
+            if any(value is not None and arg_name not in {"clamp_input", "config_file"} for arg_name, value in args.items()):
                 raise parser.error("Cannot specify config_file with other command line arguments (except --optimize).")
             with open(args["config_file"], "r") as f:
                 cfg = yaml.safe_load(f)
