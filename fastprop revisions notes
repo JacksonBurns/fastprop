@@ -1,0 +1,44 @@
+I currently have training files for:
+ - ara
+ - delat fubrain
+ - flash
+ - fubrain
+ - hiv
+ - ocelot
+ - pah
+ - pgp
+ - qm8
+ - qm9
+ - quantumscents
+ - ysi
+
+The paper presents:
+ - qm9
+ - ocelot
+ - qm8
+ - flash
+ - ysi
+ - fubrain
+ - delta_fubrain
+ - pah
+ - hiv
+ - quantumscents
+ - pgp
+ - ara
+
+Pat Walters suggests:
+ - no HIV, QMn
+ - ADMET dataset
+
+So perhaps we cut down to just...
+positive results:
+ - flash
+ - admet
+ - ysi
+ - pah
+ - pgp
+ - ara
+special case - avoiding delta learning:
+ - (delta) fubrain
+negative result:
+ - quantumscents

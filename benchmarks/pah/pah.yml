@@ -4,10 +4,8 @@
 # The reference study did not include a digitized version of their dataset,
 # so I have included one here that I curated manually. All that was done
 # was to look up the SMILES strings for the PAHs, using either OPSIN (via
-# py22opsin), PubChem, or ChemSpider.
+# py2opsin), PubChem, or ChemSpider.
 #
-# Additional Comments:
-# 
 
 # generic args
 output_directory: pah

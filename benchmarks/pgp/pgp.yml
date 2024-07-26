@@ -6,7 +6,7 @@
 # and using sheets, excel, ssconvert, etc. extract the 
 # sheet with the dataset to a csv file. On bash this looks like
 # ssconvert jm101421d_si_001.xls benchmark_data.csv -S
-# mv benchmark_data.csv.0 > benchmark_data.csv
+# mv benchmark_data.csv.0 benchmark_data.csv
 #
 # Additional Comments:
 # The literature precedent is to do a 70/10/20 scaffold-based
@@ -28,7 +28,7 @@ descriptor_set: all
 # training
 number_repeats: 4
 number_epochs: 150
-batch_size: 2048
+batch_size: 32
 patience: 15
 
 # dataset splitting

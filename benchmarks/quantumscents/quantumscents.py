@@ -20,6 +20,7 @@ import pandas as pd
 import torch
 from rdkit import Chem
 from rdkit.Chem import rdDetermineBonds
+from mordred import Calculator
 
 from fastprop.data import (
     clean_dataset,
@@ -27,7 +28,8 @@ from fastprop.data import (
     fastpropDataset,
     standard_scale,
 )
-from fastprop.descriptors import _descriptor_names_to_mordred_class, get_descriptors
+from fastprop.defaults import ALL_2D
+from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors
 from fastprop.model import fastprop, train_and_test
 
@@ -40,7 +42,7 @@ from dataset.loader import CID_TO_SMILES, QS_DATA  # isort:skip
 DATASPLIT = os.path.join(os.path.dirname(__file__), "models", "dataset-partitioning", "szymanski-splits", "szy-splits-3-folds.pkl")
 
 # for comparison, can either generate 2d or 3d descriptors
-DESCRIPTOR_SET = "2d"  # "3d"
+DESCRIPTOR_SET = "3d"  # "2d"
 
 # to save time between runs, we save the calculated descriptors
 CACHED_DESCRIPTORS = "cached_" + DESCRIPTOR_SET + "_quantumscents_descriptors.csv"
@@ -83,11 +85,15 @@ else:
         all_mols.append(Chem.MolFromSmiles(CID_TO_SMILES[cid]))
 
     # calculate the descriptors for each
-    descriptors = get_descriptors(
-        CACHED_DESCRIPTORS,
-        _descriptor_names_to_mordred_class(include_3d=DESCRIPTOR_SET == "3d"),
-        all_mols,
-    )
+    if DESCRIPTOR_SET == "2d":
+        descriptors = get_descriptors(
+            CACHED_DESCRIPTORS,
+            ALL_2D,
+            all_mols,
+        )
+    else:
+        mordred_calc = Calculator()
+        descriptors = np.array(list(mordred_calc.map(all_mols)))
 
     descriptors = pd.DataFrame(descriptors)
     descriptors.to_csv(CACHED_DESCRIPTORS)
@@ -99,7 +105,7 @@ targets = QS_DATA.to_numpy()
 targets, rdkit_mols, smiles = clean_dataset(targets, np.array([CID_TO_SMILES[i] for i in QS_DATA.index]))
 
 targets = torch.tensor(QS_DATA.to_numpy(), dtype=torch.float32)
-descriptors_og = torch.tensor(descriptors.to_numpy(), dtype=torch.float32)
+descriptors_og = torch.tensor(descriptors.to_numpy(dtype=np.float32), dtype=torch.float32)
 
 # iterate through the three folds
 all_test_results, all_validation_results = [], []
