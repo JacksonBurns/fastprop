@@ -3,7 +3,7 @@
 #
 # Download the data from ACS:
 # https://pubs.acs.org/doi/suppl/10.1021/acs.jcim.9b00180/suppl_file/ci9b00180_si_002.xlsx
-# and convert it to benchmark_data.csv
+# and convert it to benchmark_data.csv renaming the "Obs. Value" column to fraction
 #
 # Additional Comments:
 # Original used the two external sets as test, 46 + 25 = 73 total in test set.

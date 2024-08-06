@@ -263,26 +263,31 @@ and classification:
 
 ## Benchmark Results
 See Table \ref{results_table} for a summary of all the results.
+Subsequent sections explore each in greater detail.
 
 Table: Summary of benchmark results. \label{results_table}
 
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |
-+===============+====================+=============+===================================+============+=========================+
-|QM9            |~134                |MAE          |0.0047$^a$                         |0.0060      |0.0081$^a$               |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|Pgp            |~1.3                |AUROC        |0.94$^b$                           |0.90        |0.89$^b$                 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|ARA            |~0.8                |Accuracy     |91$^c$                             |0.88        |82*                      |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|Flash          |~0.6                |RMSE         |13.2$^d$                           |13.0        |21.2*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|YSI            |~0.4                |MAE          |22.3$^e$                           |25.0        |28.9*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
-|PAH            |~0.06               |R2           |0.96$^f$                           |n.nn        |0.59*                    |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |  p   |
++===============+====================+=============+===================================+============+=========================+======+
+|QM9            |~134                |MAE          |0.0047$^a$                         |0.0060      |0.0081$^a$               |  ~   |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|Pgp            |~1.3                |AUROC        |0.94$^b$                           |0.90        |0.89$^b$                 |  ~   |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|ARA            |~0.8                |Accuracy     |91$^c$                             |0.88        |82*                      |0.083 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|Flash          |~0.6                |RMSE         |13.2$^d$                           |13.0        |21.2*                    |0.021 |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|YSI            |~0.4                |MAE          |22.3$^e$                           |25.0        |28.9*                    |0.29  |
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
+|PAH            |~0.06               |R2           |0.96$^f$                           |0.97        |0.59*                    |0.0012|
++---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
 
-a [@unimol] b [@pgp_best] c [@ara] d [@flash] e [@ysi] f [@pah] * These results were generated for this study.
+a [@unimol] b [@pgp_best] c [@ara] d [@flash] e [@ysi] f [@pah] * These reference results were generated for this study.
+
+Statistical comparisons of `fastprop` to Chemprop (shown in the `p` column) are performed using the non-parametric Wilcoxon-Mann-Whitney Test as implemented in GNumeric.
+Values are only shown for results generated in this study which are known to be performed using the same methods.
+Only the results for Flash and PAH are statistically significant at 95% confidence (p<0.05).
 
 ### QM9
 Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for all small molecules containing one to nine heavy atoms, totaling ~134k.
@@ -588,34 +593,41 @@ user    1m6.715s
 sys     0m30.473s
 -->
 
-## Additional Case Studies
+# Limitations and Future Work
+## Negative Results
+### Delta Learning with Fubrain
+First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
+This specific target in combination with the small dataset size makes this benchmark highly relevant for typical QSPR studies, particular via delta learning.
+DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were intra-combined to generate all possible pairs and then the differences in the property [^5] were predicted rather than absolute values, increasing the amount of training data by a power of two.
 
-### Avoiding Delta-learning
+DeepDelta reported an RMSE of 0.830 $\pm$ 0.023, whereas a Chemprop model trained to directly predict property values was only able to reach an accuracy of 0.965 $\pm$ 0.019 when evaluated on its capacity to predict property differences.
+`fastprop` is able to outperform Chemprop, though not DeepDelta, achieving an RMSE of 0.930 $\pm$ 0.029 when using the same splitting procedure above.
+It is evident that delta learning is still a powerful technique for regressing small datasets.
 
-First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimental experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
-This specific target in combination with this dataset size makes this benchmark highly relevant for typical QSPR studies.
-
+For completeness, the performance of Chemprop and `fastprop` on Fubrain are also compared to the original study.
 The study that first generated this dataset used `mordred` descriptors but as is convention they strictly applied linear modeling methods.
 Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
 All told, their model achieved an RMSE of 0.53 averaged across all testing data.
+In only 39 seconds, of which 31 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.207 $\pm$ 0.024.
+This also surpasses Chemprop, itself outperforming the reference model with an RMSE of 0.223 $\pm$ 0.036.
 
-In only 44 seconds, of which 36 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.207 $\pm$ 0.023 
-Under the same conditions Chemprop approaches `fastprop`'s performance with an RMSE of 0.22 $\pm$ 0.04 but requires 5 minutes and 11 seconds to do so, in this case a 7 times performance improvement for `fastprop` over Chemprop.
-
-Also noteworthy for the Fubrain dataset is that it has been subject to the delta-learning approach to small dataset limitations.
-DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were used to generate all possible pairs and then the differences in the property [^5] were predicted rather than absolute values.
-They reported an RMSE of 0.830 $\pm$ 0.023, whereas a Chemprop model trained to directly predict property values was only able to reach an accuracy of 0.965 $\pm$ 0.019 when evaluated on its capacity to predict property differences.
-
-`fastprop` is able to overcome these limitations.
-Using the same model from above (re-trained to predict log-transformed values), which has _less_ training data than DeepDelta even _before_ the augmentation, `fastprop` achieves 0.740 $\pm$ 0.087 RMSE after pairing all withheld test molecules.
-Increasing the amount of training data while retaining some samples for early stopping yields only small improvements, showing that `fastprop` may be approaching the irreducible error of Fubrain.
-With an 89/1/10 split the RMSE of `fastprop` decreases to 0.7118 $\pm$ 0.1381, though with significantly increased variance due to small size of the testing data.
-Regardless, the execution time and scaling issues of DeepDelta and the inaccuracy of Chemprop are effectively circumvented by `fastprop`.
-
-[^5]: Although the original Fubrain study reported untransformed fractions, the DeepDelta authors confirmed [via GitHub](https://github.com/RekerLab/DeepDelta/issues/2#issuecomment-1917936697) that DeepDelta was trained on log base-10 transformed fraction values, which is replicated here.
-
-<!-- 
-
+<!--
+[08/06/2024 01:24:26 PM fastprop.cli.train] INFO: Displaying validation results:
+                                                          count      mean       std       min       25%       50%       75%       max
+validation_mse_scaled_loss                                  4.0  0.445959  0.166927  0.199223  0.416297  0.515219  0.544881  0.554174
+validation_r2_score                                         4.0  0.595322  0.154344  0.476649  0.511786  0.541765  0.625301  0.821108
+validation_mean_absolute_percentage_error_score             4.0  5.567747  2.504782  3.087414  4.139117  5.113917  6.542548  8.955740
+validation_weighted_mean_absolute_percentage_error_score    4.0  0.635260  0.175969  0.440934  0.524161  0.628305  0.739404  0.843495
+validation_mean_absolute_error_score                        4.0  0.122766  0.027147  0.083292  0.116007  0.132480  0.139240  0.142813
+validation_root_mean_squared_error_loss                     4.0  0.171753  0.041262  0.112220  0.159812  0.187137  0.199077  0.200518
+[08/06/2024 01:24:26 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                    count      mean       std       min       25%       50%       75%        max
+test_mse_scaled_loss                                  4.0  0.646342  0.196778  0.439533  0.498014  0.658189  0.806517   0.829457
+test_r2_score                                         4.0  0.357382  0.049868  0.311554  0.328430  0.345598  0.374550   0.426779
+test_mean_absolute_percentage_error_score             4.0  8.201145  2.286469  5.670279  7.327289  7.954490  8.828346  11.225323
+test_weighted_mean_absolute_percentage_error_score    4.0  0.817863  0.129580  0.707232  0.710772  0.798212  0.905304   0.967796
+test_mean_absolute_error_score                        4.0  0.147366  0.018656  0.127301  0.140443  0.144859  0.151782   0.172445
+test_root_mean_squared_error_loss                     4.0  0.206569  0.024271  0.178577  0.190217  0.209359  0.225711   0.228979
 
 Chemprop:
 RMSE:
@@ -656,19 +668,21 @@ sys     0m15.378s
 
 Timing for fastprop: descriptor generation was 30 seconds, total was 54s. -->
 
+[^5]: Although the original Fubrain study reported untransformed fractions, the DeepDelta authors confirmed [via GitHub](https://github.com/RekerLab/DeepDelta/issues/2#issuecomment-1917936697) that DeepDelta was trained on log base-10 transformed fraction values, which is replicated here.
+
 ### `fastprop` Fails on QuantumScents
 Compiled by Burns and Rogers [@quantumscents], this dataset contains approximately 3.5k SMILES and 3D structures for a collection of molecules labeled with their scents.
 Each molecule can have any number of reported scents from a possible 113 different labels, making this benchmark a a Quantitative Structure-Odor Relationship.
 Due to the highly sparse nature of the scent labels a unique sampling algorithm (Szymanski sampling [@szymanski]) was used in the reference study and the exact splits are replicated here for a fair comparison.
 
 In the reference study, Chemprop achieved an AUROC of 0.85 with modest hyperparameter optimization and an improved AUROC of 0.88 by incorporating the atomic descriptors calculated as part of QuantumScents.
-`fastprop`is incapable of incorporating atomic features, so they are not included.
+`fastprop` is incapable of incorporating atomic features, so they are not included.
 Using only the 2D structural information, `fastprop` falls far behind the reference study with an AUROC of only 0.651 $\pm$ 0.005.
 Even when using the high-quality 3D structures and calculating additional descriptors (demonstrated in the GitHub repository), the performance does not improve.
 
 The exact reason for this failure is unknown.
 Possible reasons include that the descriptors in `mordred` are simply not correlated with this target, and thus the model struggles to make predictions.
-This is a fundamental drawback of this fixed representation method - whereas a LR could adapt to this unique target, `fastprop` struggles.
+This is a fundamental drawback of this fixed representation method - whereas a LR could adapt to this unique target, `fastprop` fails.
 
 <!-- 
 Displaying testing results:
@@ -686,7 +700,6 @@ test_multilabel_average_precision    3.0  0.533800  0.004271  0.529235  0.531851
 test_multilabel_f1_score             3.0  0.445995  0.017368  0.425965  0.440550  0.455136  0.456010  0.456884
  -->
 
-# Limitations and Future Work
 ## Execution Time
 `fastprop` is consistently faster to train than Chemprop when using a GPU, helping exploit the 'time value' of data.
 Note that due to the large size of the FNN in `fastprop` it will typically be slower than Chemprop when training on a CPU since Chemprop uses a much smaller FNN and associated components.
