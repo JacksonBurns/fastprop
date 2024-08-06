@@ -1,0 +1,27 @@
+# Copy of the ara.yml file, but with a linear model (as a baseline).
+
+fnn_layers: 0
+hidden_size: 1613
+
+# generic args
+output_directory: ara
+random_seed: 1989
+problem_type: binary
+
+# featurization
+input_file: ara/benchmark_data.csv
+target_columns: Activity
+smiles_column: Smiles
+descriptor_set: all
+
+# training
+number_epochs: 40
+batch_size: 1024
+patience: 3
+
+# dataset splitting
+number_repeats: 4
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: random

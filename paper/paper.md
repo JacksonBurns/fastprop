@@ -44,11 +44,10 @@ note: |
 # Abstract
 Quantitative Structure-Property/Activity Relationship studies, often referred to interchangeably as QS(P/A)R, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
 Since its inception this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI.
-This continued for years and culminated in packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy),  Mordred, and many others.
-The sheer number of different packages resulted in the creation of 'meta-packages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes,  Parameter Client, and AIMSim.
-Despite the creation of these aggregation tools, QSPR studies have continued to focus on QOI-by-QOI studies rather than attempting to create a generalizable approach which is capable of modeling across chemical domains.
+This continued for years and culminated in packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy), Mordred, and many others.
+The sheer number of different packages resulted in the creation of 'meta-packages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes, Parameter Client, and AIMSim.
 
-One contributing factor to this is that QSPR studies have relied almost exclusively on linear methods for regression.
+Generalizable descriptor-based modeling was a natural evolution of these meta-packages' development, though it historically focused almost exclusively on linear methods.
 Efforts to incorporate Deep Learning (DL) as a regression technique (Deep-QSPR), which would be capable of capturing the non-linear behavior of arbitrary QOIs, have instead focused on using molecular fingerprints as inputs.
 The combination of bulk molecular-level descriptors with DL has remained largely unexplored, in significant part due to the orthogonal domain expertise required to combine the two.
 Generalizable QSPR has turned to learned representations primarily via message passing graph neural networks.
@@ -133,13 +132,13 @@ Other increasingly complex approaches are discussed in the outstanding review by
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
 A turning point in this domain was the release of `mordred`, a fast and well-developed package capable of calculating more than 1600 molecular descriptors.
 Critically this package was fully open source and written in Python, allowing it to readily interoperate with the world-class Python DL software ecosystem that greatly benefitted the LR community.
-Now despite previous evidence that molecular descriptors _cannot_ achieve generalizable QSPR in combination with DL, the opposite is shown.
+Now despite previous evidence that molecular descriptors _cannot_ achieve generalizable QSPR in combination with DL, the opposite is shown with `fastprop`.
 
 [^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon by researchers.
 For the purposes of this study, it will be used to refer to datasets with ~1000 samples or less, which the authors believe better reflects the size of real-world datasets.
 
 # Implementation
-At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}).
+At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}) - an existing approach formalized into an easy to use, reliable, and correct implementation.
 The user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding properties.
 `fastprop` automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN with to predict the indicated target properties.
 By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the command line interface or configuration file.
@@ -190,8 +189,7 @@ target_columns: log_p
 smiles_column: smiles
 descriptor_set: all
 # preprocessing
-zero_variance_drop: False
-colinear_drop: False
+clamp_input: True
 # training
 number_repeats: 4
 number_epochs: 100
@@ -217,11 +215,9 @@ These studies relied on more complex and slow modeling techniques ([ARA](#ara)) 
 In these data-limited regimes where LRs sometimes struggle, `fastprop` and its intuition-loaded initialization are highly powerful.
 To emphasize this point further, the benchmarks are presented in order of size, descending.
 
-Two additional benchmarks are included after the main group of benchmarks: Fubrain and QuantumScents.
-The former demonstrates how `fastprop` can avoid the immense computational cost of delta-learning on small datasets.
+Two additional benchmarks showing the limitations of `fastprop` are included after the main group of benchmarks: Fubrain and QuantumScents.
+The former demonstrates how `fastprop` can outperform LRs but still trail approaches like delta learning.
 The later is a negative result showing how `fastprop` can fail on especially difficult, atypical targets.
-
-<!-- The authors of Chemprop have even suggested on GitHub issues in the past that molecular-level features be added to Chemprop learned representations (see https://github.com/chemprop/chemprop/issues/146#issuecomment-784310581) to avoid over-fitting. -->
 
 All of these `fastprop` benchmarks are reproducible, and complete instructions for installation, data retrieval and preparation, and training are publicly available on the `fastprop` GitHub repository at [github.com/jacksonburns/fastprop](https://github.com/jacksonburns/fastprop).
 
@@ -233,6 +229,7 @@ For datasets containing missing target values or invalid SMILES strings, those e
 Results for `fastprop` are reported as the average value of a metric and its standard deviation across a number of repetitions (repeated re-sampling of the dataset).
 The number of repetitions is chosen to either match referenced literature studies or else increased from two until the performance no longer meaningfully changes.
 Note that this is _not_ the same as cross-validation.
+Each section also includes the performance of a zero-layer (i.e. linear regression) network as a baseline to demonstrate the importance of non-linearity in a deep NN.
 
 For performance metrics retrieved from literature it is assumed that the authors optimized their respective models to achieve the best possible results; therefore, `fastprop` metrics are reported after model optimization using the `fastprop train ... --optimize` option.
 When results are generated for this study using Chemprop, the default settings are used except that the number of epochs is increased to allow the model to converge and batch size is increased to match dataset size and speed up training.
@@ -299,6 +296,7 @@ In that study they trained on only three especially difficult QOIs (homo, lumo, 
 This places the `fastprop` framework ahead of previous learned representation approaches but still trailing UniMol.
 This is not completely unexpected since UniMol encodes 3D information from the dataset whereas Chemprop and `fastprop` use only 2D.
 Future work could evaluate the use of 3D-based descriptors to improve `fastprop` performance in the same manner that UniMol has with LRs.
+All methods are better than a purely linear model trained on the molecular descriptors, which manages only a 0.0095 $\pm$ 0.0006 MAE.
 <!-- 
 [07/26/2024 12:29:08 PM fastprop.descriptors] INFO: Descriptor calculation complete, elapsed time: 0:47:15.814133
 [07/26/2024 12:42:22 PM fastprop.cli.train] INFO: Displaying validation results:
@@ -350,6 +348,33 @@ test_gap_root_mean_squared_error_loss                      3.0  9.923354e-03  5.
 [07/26/2024 12:42:22 PM fastprop.cli.train] INFO: 2-sided T-test between validation and testing mse yielded p value of p=0.383>0.05.
 [07/26/2024 12:42:23 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 12:42:23 PM fastprop.cli.base] INFO: Total elapsed time: 1:00:36.573428
+
+linear model:
+
+[08/06/2024 02:10:06 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                         count          mean           std           min           25%           50%           75%           max
+test_mse_scaled_loss                                       3.0  1.262438e-01  1.304001e-02  1.158136e-01  1.189339e-01  1.220542e-01  1.314590e-01  1.408637e-01
+test_r2_score                                              3.0  7.482870e-01  4.923380e-02  7.051906e-01  7.214583e-01  7.377261e-01  7.698352e-01  8.019443e-01
+test_homo_r2_score                                         3.0  7.028322e-01  1.334355e-02  6.883467e-01  6.969371e-01  7.055274e-01  7.100749e-01  7.146224e-01
+test_lumo_r2_score                                         3.0  8.507954e-01  4.754509e-02  8.059677e-01  8.258645e-01  8.457612e-01  8.732092e-01  9.006573e-01
+test_gap_r2_score                                          3.0  6.912336e-01  8.837971e-02  6.212581e-01  6.415739e-01  6.618897e-01  7.262213e-01  7.905529e-01
+test_mean_absolute_percentage_error_score                  3.0  1.304759e+10  4.542068e+09  8.576868e+09  1.074249e+10  1.290810e+10  1.528295e+10  1.765779e+10
+test_homo_mean_absolute_percentage_error_score             3.0  2.968750e-02  1.181363e-03  2.832339e-02  2.934478e-02  3.036617e-02  3.036956e-02  3.037295e-02
+test_lumo_mean_absolute_percentage_error_score             3.0  3.914276e+10  1.362620e+10  2.573061e+10  3.222745e+10  3.872430e+10  4.584884e+10  5.297337e+10
+test_gap_mean_absolute_percentage_error_score              3.0  5.384798e-02  4.987951e-03  4.884226e-02  5.136298e-02  5.388371e-02  5.635084e-02  5.881796e-02
+test_weighted_mean_absolute_percentage_error_score         3.0  7.036779e-02  1.444914e-02  5.368625e-02  6.606294e-02  7.843963e-02  7.870857e-02  7.897750e-02
+test_homo_weighted_mean_absolute_percentage_error_score    3.0  2.920091e-02  1.110940e-03  2.791989e-02  2.885137e-02  2.978285e-02  2.984142e-02  2.989998e-02
+test_lumo_weighted_mean_absolute_percentage_error_score    3.0  1.317752e-01  4.443777e-02  8.073083e-02  1.167465e-01  1.527622e-01  1.572974e-01  1.618326e-01
+test_gap_weighted_mean_absolute_percentage_error_score     3.0  5.012726e-02  4.418265e-03  4.556634e-02  4.799713e-02  5.042793e-02  5.240772e-02  5.438751e-02
+test_mean_absolute_error_score                             3.0  9.520948e-03  5.850805e-04  8.872832e-03  9.276338e-03  9.679845e-03  9.845006e-03  1.001017e-02
+test_homo_mean_absolute_error_score                        3.0  6.945320e-03  2.567250e-04  6.648930e-03  6.868839e-03  7.088748e-03  7.093514e-03  7.098280e-03
+test_lumo_mean_absolute_error_score                        3.0  9.484590e-03  7.894157e-04  8.628236e-03  9.135252e-03  9.642268e-03  9.912767e-03  1.018327e-02
+test_gap_mean_absolute_error_score                         3.0  1.213293e-02  7.230207e-04  1.134133e-02  1.182016e-02  1.229899e-02  1.252873e-02  1.275848e-02
+test_root_mean_squared_error_loss                          3.0  1.262690e-02  7.497521e-04  1.183138e-02  1.228012e-02  1.272887e-02  1.302466e-02  1.332045e-02
+test_homo_root_mean_squared_error_loss                     3.0  8.922886e-03  3.264740e-04  8.546313e-03  8.821158e-03  9.096003e-03  9.111172e-03  9.126341e-03
+test_lumo_root_mean_squared_error_loss                     3.0  1.222515e-02  9.112443e-04  1.131449e-02  1.176923e-02  1.222397e-02  1.268047e-02  1.313698e-02
+test_gap_root_mean_squared_error_loss                      3.0  1.556471e-02  8.868964e-04  1.462099e-02  1.515656e-02  1.569214e-02  1.603657e-02  1.638099e-02
+
  -->
 
 ### Pgp
@@ -360,8 +385,9 @@ The recommended splitting approach is a 70/10/20 scaffold-based split which is d
 
 The model in the original study uses a molecular interaction field but has since been surpassed by other models.
 According to TDC the current leader [@pgp_best] on this benchmark has achieved an AUROC of 0.938 $\pm$ 0.002 [^3].
-AOn the same leaderboard Chemprop [@chemprop_theory] achieves 0.886 $\pm$ 0.016 with the inclusion of additional molecular features.
+On the same leaderboard Chemprop [@chemprop_theory] achieves 0.886 $\pm$ 0.016 with the inclusion of additional molecular features.
 `fastprop` yet again approaches the performance of the leading methods and outperforms Chemprop, here with an AUROC of 0.903 $\pm$ 0.033 and an accuracy of 83.6 $\pm$ 4.6%.
+Remarkably, the linear model outperforms both Chemprop and `fastprop`, approaching the performance of the current leader with an AUROC of 0.917 $\pm$ 0.016 and an accuracy of 83.8 $\pm$ 3.9%.
 <!-- 
 [07/26/2024 02:57:14 PM fastprop.descriptors] INFO: Descriptor calculation complete, elapsed time: 0:02:10.865505
 [07/26/2024 02:57:31 PM fastprop.cli.train] INFO: Displaying validation results:
@@ -381,6 +407,17 @@ test_binary_average_precision    4.0  0.921767  0.006116  0.912890  0.920745  0.
 [07/26/2024 02:57:31 PM fastprop.cli.train] INFO: 2-sided T-test between validation and testing bce yielded p value of p=0.255>0.05.
 [07/26/2024 02:57:31 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 02:57:31 PM fastprop.cli.base] INFO: Total elapsed time: 0:02:27.833184
+
+linear model:
+
+[08/06/2024 01:55:24 PM fastprop.cli.train] INFO: Displaying testing results:
+                               count      mean       std       min       25%       50%       75%       max
+test_bce_scaled_loss             4.0  0.389468  0.052250  0.346798  0.353294  0.374777  0.410952  0.461519
+test_binary_accuracy_score       4.0  0.838776  0.038506  0.783673  0.826531  0.853061  0.865306  0.865306
+test_binary_f1_score             4.0  0.841359  0.040467  0.784639  0.830083  0.850547  0.861824  0.879703
+test_binary_auroc                4.0  0.917419  0.018365  0.889960  0.915951  0.925768  0.927236  0.928180
+test_binary_average_precision    4.0  0.925318  0.015881  0.911060  0.913512  0.922362  0.934168  0.945487
+
  -->
 
 [^3]: See [the TDC Pgp leaderboard](https://tdcommons.ai/benchmark/admet_group/03pgp/).
@@ -390,8 +427,9 @@ Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps ~0.8k small mo
 The reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 0.911 and an AUROC of 0.945.
 
 For this study an 80/10/10 random splitting is repeated four times on the dataset since no analogous split to the reference study can be determined.
-Chemprop takes 16 minutes and 55 seconds to run on this dataset and achieves only 0.824+/-0.020 accuracy and 0.898+/-0.022 AUROC.
-`fastprop` takes only 1 minute and 54 seconds (1 minute and 39 seconds for descriptor calculation) and is competitive with the reference study in performance, achieving a 88.2+/-3.7% accuracy and 0.935+/-0.034 AUROC.
+Chemprop takes 16 minutes and 55 seconds to run on this dataset and achieves only 0.824 $\pm$ 0.020 accuracy and 0.898 $\pm$ 0.022 AUROC.
+`fastprop` takes only 1 minute and 54 seconds (1 minute and 39 seconds for descriptor calculation) and is competitive with the reference study in performance, achieving a 88.2 $\pm$ 3.7% accuracy and 0.935 $\pm$ 0.034 AUROC.
+The purely model falls far behind these methods with a 71.8 $\pm$ 6.6% accuracy and 0.824 $\pm$ 0.052 AUROC, as expected.
 <!--
 [07/26/2024 04:08:23 PM fastprop.descriptors] INFO: Descriptor calculation complete, elapsed time: 0:01:39.167050
 [07/26/2024 04:08:38 PM fastprop.cli.train] INFO: Displaying validation results:
@@ -411,6 +449,16 @@ test_binary_average_precision    4.0  0.908971  0.065320  0.821435  0.881043  0.
 [07/26/2024 04:08:38 PM fastprop.cli.train] INFO: 2-sided T-test between validation and testing bce yielded p value of p=0.835>0.05.
 [07/26/2024 04:08:38 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 04:08:38 PM fastprop.cli.base] INFO: Total elapsed time: 0:01:54.651789
+
+linear model:
+
+[08/06/2024 01:48:06 PM fastprop.cli.train] INFO: Displaying testing results:
+                               count      mean       std       min       25%       50%       75%       max
+test_bce_scaled_loss             4.0  0.541295  0.042253  0.478426  0.537446  0.558557  0.562406  0.569639
+test_binary_accuracy_score       4.0  0.717647  0.065854  0.623529  0.702941  0.735294  0.750000  0.776471
+test_binary_f1_score             4.0  0.704753  0.064048  0.627907  0.664019  0.715806  0.756540  0.759494
+test_binary_auroc                4.0  0.823776  0.051937  0.770903  0.795297  0.815315  0.843794  0.893570
+test_binary_average_precision    4.0  0.816956  0.074735  0.729266  0.784316  0.813911  0.846552  0.910737
 
 Chemprop: 
 real	16m54.734s
@@ -456,6 +504,7 @@ Using a complex multi-model ensembling method, the reference study achieved an R
 `fastprop` matches this performance, achieving 13.0 $\pm$ 2.0 RMSE, 9.0 $\pm$ 0.5 MAE, and 2.7% $\pm$ 0.1% MAPE.
 Chemprop, however, struggles to match the accuracy of either method.
 It manages an RMSE of 21.2 $\pm$ 2.2 and an MAE of 13.8 $\pm$ 2.1 and does not report MAPE.
+This is worse than the performance of the linear model, with an RMSE of 16.1 $\pm$ 4.0, an MAE of 11.3 $\pm$ 2.9, and an MAPE of 3.36 $\pm$ 0.77%
 
 Critically, `fastprop` dramatically outperforms both methods in terms of training time.
 The reference model required significant manual intervention to create a model ensemble, so no single training time can be fairly identified.
@@ -481,6 +530,16 @@ test_mean_absolute_error_score                        4.0   9.040832  0.533608  
 test_root_mean_squared_error_loss                     4.0  13.035019  1.983146  11.030409  12.091901  12.675693  13.618810  15.758280
 [07/26/2024 04:24:26 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 04:24:26 PM fastprop.cli.base] INFO: Total elapsed time: 0:00:32.380891
+
+linear model:
+[08/06/2024 01:44:19 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                    count       mean       std        min        25%        50%        75%        max
+test_mse_scaled_loss                                  4.0   0.090131  0.038312   0.051589   0.060133   0.091287   0.121285   0.126363
+test_r2_score                                         4.0   0.911936  0.038512   0.871687   0.882673   0.914730   0.943993   0.946599
+test_mean_absolute_percentage_error_score             4.0   0.033647  0.007672   0.027429   0.028669   0.031345   0.036322   0.044468
+test_weighted_mean_absolute_percentage_error_score    4.0   0.034863  0.008066   0.027648   0.029142   0.033169   0.038891   0.045467
+test_mean_absolute_error_score                        4.0  11.332869  2.913781   8.746270   9.327742  10.673150  12.678277  15.238905
+test_root_mean_squared_error_loss                     4.0  16.066076  3.990219  11.862206  13.073341  16.270329  19.263064  19.861439
 
 chemprop:
 real    5m43.666s
@@ -511,20 +570,23 @@ Results are summarized in Table \ref{ysi_results_table}.
 
 Table: YSI results. \label{ysi_results_table}
 
-+------------+----------------+----------------+----------------+
-| Model      | MAE            | RMSE           | WMAPE          |
-+============+================+================+================+
-| Reference  | 22.3           | 50             | 14             |
-+------------+----------------+----------------+----------------+
-| `fastprop` | 25.0 $\pm$ 5.2 | 52 $\pm$ 20    | 13.6 $\pm$ 1.3 |
-+------------+----------------+----------------+----------------+
-| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~              |
-+------------+----------------+----------------+----------------+
++------------+----------------+----------------+-----------------+
+| Model      | MAE            | RMSE           | WMAPE           |
++============+================+================+=================+
+| Reference  | 22.3           | 50             | 14              |
++------------+----------------+----------------+-----------------+
+| `fastprop` | 25.0 $\pm$ 5.2 | 52 $\pm$ 20    | 13.6 $\pm$ 1.3  |
++------------+----------------+----------------+-----------------+
+| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~               |
++------------+----------------+----------------+-----------------+
+| Linear     | 82 $\pm$ 39    | 180 $\pm$ 120  | 0.47 $\pm$ 0.23 |
++------------+----------------+----------------+-----------------+
 
 `fastprop` again outperforms Chemprop, in this case approaching the overly-optimistic performance of the reference model.
 Taking into account that reference model has been trained on a significantly larger amount of data, this performance is admirable.
 Also notable is the difference in training times.
 Chemprop takes 7 minutes and 2 seconds while `fastprop` completes in only 42 seconds, again a factor of ten faster.
+The linear model fails entirely, performing dramatically worse than all other models.
 <!-- 
 [07/26/2024 04:28:28 PM fastprop.descriptors] INFO: Descriptor calculation complete, elapsed time: 0:00:08.613929
 [07/26/2024 04:29:01 PM fastprop.cli.train] INFO: Displaying validation results:
@@ -546,6 +608,24 @@ test_root_mean_squared_error_loss                     8.0  51.897439  20.464189 
 [07/26/2024 04:29:01 PM fastprop.cli.train] INFO: 2-sided T-test between validation and testing mse yielded p value of p=0.216>0.05.
 [07/26/2024 04:29:01 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 04:29:01 PM fastprop.cli.base] INFO: Total elapsed time: 0:00:41.651720
+
+linear model:
+[08/06/2024 01:30:55 PM fastprop.cli.train] INFO: Displaying validation results:
+                                                          count        mean         std        min        25%        50%         75%         max
+validation_mse_scaled_loss                                  8.0    1.782322    2.459989   0.025382   0.046804   0.100248    3.904669    6.047585
+validation_r2_score                                         8.0   -2.554322    7.034404 -19.411644  -2.486760   0.906504    0.953913    0.964348
+validation_mean_absolute_percentage_error_score             8.0    1.607565    1.332180   0.481278   0.833980   1.062793    2.017346    4.424526
+validation_weighted_mean_absolute_percentage_error_score    8.0    0.544973    0.544294   0.187772   0.219358   0.262427    0.697047    1.762439
+validation_mean_absolute_error_score                        8.0   89.298786   71.005340  31.348509  41.932364  47.666235  137.419773  226.654160
+validation_root_mean_squared_error_loss                     8.0  202.332909  199.009173  43.081791  57.383880  79.881218  371.361580  543.385315
+[08/06/2024 01:30:55 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                    count        mean         std        min        25%         50%         75%         max
+test_mse_scaled_loss                                  8.0    1.110561    1.699195   0.040328   0.101340    0.348682    1.204710    4.954531
+test_r2_score                                         8.0   -0.073488    1.694859  -4.114374   0.001652    0.566954    0.828363    0.923891
+test_mean_absolute_percentage_error_score             8.0    1.392105    0.877828   0.563580   0.792891    0.938259    1.953995    2.865982
+test_weighted_mean_absolute_percentage_error_score    8.0    0.469963    0.229644   0.245020   0.317786    0.466987    0.508767    0.966923
+test_mean_absolute_error_score                        8.0   81.887387   38.735396  39.349533  59.377875   78.500698   89.702042  161.834244
+test_root_mean_squared_error_loss                     8.0  175.053466  119.504669  56.758713  85.489279  150.429375  223.476109  409.616058
 -->
 
 [^4]: Predictions are available at this [permalink](https://github.com/pstjohn/ysi-fragment-prediction/blob/bdf8b16a792a69c3e3e63e64fba6f1d190746abe/data/ysi_predictions.csv) to the CSV file on GitHub.
@@ -559,6 +639,7 @@ For comparison, `fastprop` and Chemprop are trained using 8 repetitions of a typ
 `fastprop` matches the performance of the bespoke descriptors with a correlation coefficient of 0.972 $\pm$ 0.025.
 This corresponds to an MAE of 0.19 $\pm$ 0.10 and an MAPE of 2.5 $\pm$ 1.5%.
 Chemprop effectively fails on this dataset, achieving a correlation coefficient of only 0.59 $\pm$ 0.24, an MAE of 1.04 $\pm$ 0.33 (one anti-correlated outlier replicate removed).
+This is worse even than the purely linear model, which manages a correlation coefficient of 0.78 $\pm$ 0.22, an MAE of 0.59 $\pm$ 0.22, and an RMSE of 0.75 $\pm$ 0.32.
 Despite the large parameter size of the `fastprop` model relative to the training data, it readily outperforms Chemprop in the small-data limit.
 
 For this unique dataset, execution time trends are inverted.
@@ -585,6 +666,17 @@ test_root_mean_squared_error_loss                     8.0  0.236781  0.110437  0
 [07/26/2024 04:37:11 PM fastprop.cli.train] INFO: 2-sided T-test between validation and testing mse yielded p value of p=0.734>0.05.
 [07/26/2024 04:37:11 PM fastprop.cli.base] INFO: If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058
 [07/26/2024 04:37:11 PM fastprop.cli.base] INFO: Total elapsed time: 0:01:43.174466
+
+linear model:
+
+[08/06/2024 01:40:53 PM fastprop.cli.train] INFO: Displaying testing results:
+                                                    count      mean       std       min       25%       50%       75%       max
+test_mse_scaled_loss                                  8.0  0.155622  0.157510  0.032892  0.057053  0.073111  0.213564  0.469946
+test_r2_score                                         8.0  0.781259  0.216684  0.293357  0.742562  0.878880  0.906789  0.942883
+test_mean_absolute_percentage_error_score             8.0  0.081609  0.048380  0.051792  0.055160  0.057795  0.079304  0.182489
+test_weighted_mean_absolute_percentage_error_score    8.0  0.073567  0.028178  0.048521  0.056440  0.061872  0.082388  0.123405
+test_mean_absolute_error_score                        8.0  0.589127  0.216229  0.369163  0.451514  0.486528  0.753469  0.909290
+test_root_mean_squared_error_loss                     8.0  0.747754  0.324937  0.421131  0.531061  0.594271  1.011191  1.292799
 
 chemprop
 

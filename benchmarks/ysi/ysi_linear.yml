@@ -1,0 +1,25 @@
+# Copy of the ysi.yml file, but with a linear model (as a baseline).
+
+fnn_layers: 0
+hidden_size: 1613
+
+# generic args
+output_directory: ysi
+random_seed: 987654321
+problem_type: regression
+
+# featurization
+input_file: ysi/benchmark_data.csv
+target_columns: YSI
+smiles_column: SMILES
+descriptor_set: all
+
+# training
+number_repeats: 8
+number_epochs: 100
+batch_size: 32
+patience: 15
+train_size: 0.6
+val_size: 0.2
+test_size: 0.2
+sampler: random
