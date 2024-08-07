@@ -12,10 +12,11 @@
 # but in an unhelpful format (100,000 xyz files).
 #
 # From here, you can either run fastprop as-is, or you can run the calculation
-# of descriptors separately (suggested for this size dataset).
+# of descriptors separately.
 # To do so, use a tool like csvtool (or just excel) and copy the smiles
 # column into a file on its own (no header). Then run:
 # python -m mordred -o precomputed.csv -t smi benchmark_smiles.smi
+# finally, add precomputed: qm9/precomputed.csv to the yaml lines below.
 #
 # Additional Comments:
 # Most well established molecular property prediction benchmark.
@@ -37,11 +38,10 @@ number_repeats: 3
 
 # featurization
 descriptor_set: all
-precomputed: qm9/precomputed.csv
 
 # training
 random_seed: 27
-batch_size: 163072
+batch_size: 128
 number_epochs: 300
 patience: 10
 

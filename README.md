@@ -116,46 +116,7 @@ See `fastprop train --help` or `fastprop predict --help` for more information.
 ## Python Module
 
 ### Example
-Here's an example of training `fastprop` as a Python module on the `Arockiaraj` Polycyclic Aromatic Hydrocarbon dataset, pulled largely from `fastprop/cli/train.py`.
-With `fastprop` installed you can copy and run this script as-is!
-
-```python
-import pandas as pd
-import torch
-
-from fastprop.data import (
-    clean_dataset,
-    fastpropDataLoader,
-    fastpropDataset,
-    split,
-    standard_scale,
-)
-from fastprop.defaults import DESCRIPTOR_SET_LOOKUP, _init_loggers, init_logger
-from fastprop.descriptors import get_descriptors
-from fastprop.io import load_saved_descriptors, read_input_csv
-from fastprop.model import fastprop, train_and_test
-
-# prepare the dataset
-targets, smiles = read_input_csv("https://raw.githubusercontent.com/JacksonBurns/fastprop/main/benchmarks/pah/arockiaraj_pah_data.csv")
-targets, rdkit_mols = clean_dataset(targets, smiles)
-descriptors = get_descriptors(".", DESCRIPTOR_SET_LOOKUP["all"], rdkit_mols)
-descriptors = descriptors.to_numpy(dtype=float)
-descriptors = torch.tensor(descriptors, dtype=torch.float32)
-targets = torch.tensor(targets, dtype=torch.float32)
-# feature scaling
-train_indexes, val_indexes, test_indexes = split(smiles)
-descriptors[train_indexes], feature_means, feature_vars = standard_scale(descriptors[train_indexes])
-descriptors[val_indexes] = standard_scale(descriptors[val_indexes], feature_means, feature_vars)
-descriptors[test_indexes] = standard_scale(descriptors[test_indexes], feature_means, feature_vars)
-
-# initialize dataloaders and model, then train
-train_dataloader = fastpropDataLoader(fastpropDataset(descriptors[train_indexes], targets[train_indexes]), shuffle=True)
-val_dataloader = fastpropDataLoader(fastpropDataset(descriptors[val_indexes], targets[val_indexes]))
-test_dataloader = fastpropDataLoader(fastpropDataset(descriptors[test_indexes], targets[test_indexes]))
-model = fastprop(feature_means, feature_vars)
-test_results, validation_results = train_and_test(".", model, train_dataloader, val_dataloader, test_dataloader)
-
-```
+See `examples/fastprop_computational_adme_demo.ipynb`, `benchmarks/quantumscents/quantumscents.py`, and `benchmarks/fubrain/delta_fubrain.py`.
 
 ### Package Structure
 This section documents where the various modules and functions used in `fastprop` are located.

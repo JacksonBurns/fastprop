@@ -1,0 +1,71 @@
+# Before running this benchmark, see `benchmarks/fubrain` and run that model.
+#
+# Take the data from the fubrain directory and add a column that is the
+# base-10 log of the fraction column using your favorite spreadsheet
+# editor.
+#
+# Copy the calculated molecular descriptors (cached_benchmark_...csv)
+# into this directory, and change the name in `preprocess.py` to match.
+# Then run `preprocess.py` to generate the inputs.
+#
+# To save the results of prediction for later post-processing into pairs,
+# add this block of code to `fastprop_core.py` just before the return
+# statement in the `train_and_test` function (automatic saving of predictions
+# in a similar manner may be added in the future):
+# 
+# added this for DeepDelta comparison
+# train_features, train_labels = next(iter(datamodule.test_dataloader()))
+# with torch.no_grad():
+#     predictions = model(train_features)
+# rescaled_train_labels = model.target_scaler.inverse_transform(train_labels)
+# rescaled_prediction_labels = model.target_scaler.inverse_transform(predictions)
+# with open("temp.txt", "a") as f:
+#     f.write("real,pred\n")
+#     for real, pred in zip(rescaled_train_labels, rescaled_prediction_labels):
+#         f.write(f"{real.item()},{pred.item()}\n")
+#
+# The results from this benchmark can then be reproduced with this series of
+# commands:
+# fastprop train delta_fubrain/delta_fubrain.yml  # train the networks
+# csplit -z temp.txt /real,pred/ "{*}"  # split the output file into multiple
+# ls -v xx* | cat -n | while read n f; do mv -n "$f" "r$n.csv"; done  # rename the outputs
+# mv r*csv delta_fubrain/  # move the outputs
+# python delta_fubrain.py  # postprocess into pairs and report the accuracy
+
+# generic args
+output_directory: delta_fubrain
+random_seed: 12345
+problem_type: regression
+
+# featurization
+input_file: delta_fubrain/log_benchmark_data.csv
+target_columns: log_fraction
+smiles_column: SMILES
+descriptors: all
+enable_cache: True
+
+# preprocessing
+zero_variance_drop: False
+colinear_drop: False
+
+# training
+
+# re-use architecture from regular fubrain model
+# number_repeats: 4
+# number_epochs: 20
+# batch_size: 256
+# patience: 2
+# train_size: 0.64
+# val_size: 0.07
+# test_size: 0.29
+
+# match the deepdelta paper
+number_repeats: 10
+number_epochs: 15
+batch_size: 256
+patience: 20
+train_size: 0.90
+val_size: 0.01
+test_size: 0.10
+
+sampler: random

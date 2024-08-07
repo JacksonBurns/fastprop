@@ -1,0 +1,27 @@
+# Copy of the pgp.yml file, but with a linear model (as a baseline).
+
+fnn_layers: 0
+hidden_size: 1613
+
+# generic args
+output_directory: pgp
+random_seed: 0575077166
+problem_type: binary
+
+# featurization
+input_file: pgp/benchmark_data.csv
+target_columns: Activity
+smiles_column: SMILES
+descriptor_set: all
+
+# training
+number_repeats: 4
+number_epochs: 150
+batch_size: 32
+patience: 15
+
+# dataset splitting
+train_size: 0.7
+val_size: 0.1
+test_size: 0.2
+sampler: scaffold

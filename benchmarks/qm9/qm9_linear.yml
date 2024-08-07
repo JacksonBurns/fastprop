@@ -1,0 +1,26 @@
+# Copy of the qm9.yml file, but with a linear model (as a baseline).
+
+fnn_layers: 0
+hidden_size: 1613
+
+# generic
+output_directory: qm9
+input_file: qm9/benchmark_data.csv
+target_columns: homo lumo gap
+smiles_column: smiles
+number_repeats: 3
+
+# featurization
+descriptor_set: all
+
+# training
+random_seed: 27
+batch_size: 128
+number_epochs: 300
+patience: 10
+
+# data splitting
+train_size: 0.8
+val_size: 0.1
+test_size: 0.1
+sampler: scaffold

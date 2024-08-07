@@ -32,7 +32,7 @@ descriptor_set: all
 # training
 number_repeats: 8
 number_epochs: 100
-batch_size: 1024
+batch_size: 32
 patience: 15
 train_size: 0.6
 val_size: 0.2

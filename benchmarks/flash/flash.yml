@@ -3,8 +3,12 @@
 #
 # Download the data from acs:
 # https://pubs.acs.org/doi/suppl/10.1021/ef200795j/suppl_file/ef200795j_si_001.xls
-# pull out the SMILES and Flash Point columns (rename to smiles and flash) using your favorite spreadsheet
-# editor, and save it as a csv file called 'benchmark_data.csv'
+# pull out the "SMILES" and "FP Exp" columns (rename to smiles and flash) using your favorite spreadsheet
+# editor, and save it as a csv file.
+#
+# Remove all of the rows which are missing the target value (for compatibility with Chemprop)
+# using a command like this:
+# grep -v NA data.csv > benchmark_data.csv
 #
 # Additional Comments:
 # The dataset also includes the cetane number, but it is missing in most
@@ -20,7 +24,7 @@ random_seed: 195091191
 problem_type: regression
 
 # featurization
-input_file: flash/chemprop_data.csv
+input_file: flash/benchmark_data.csv
 target_columns: flash
 smiles_column: smiles
 descriptor_set: all
@@ -28,7 +32,7 @@ descriptor_set: all
 # training
 number_repeats: 4
 number_epochs: 100
-batch_size: 1024
+batch_size: 32
 patience: 15
 train_size: 0.7
 val_size: 0.2

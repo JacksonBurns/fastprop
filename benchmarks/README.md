@@ -3,13 +3,16 @@
 This directory contains all of the scripts needed to benchmark `fastprop`.
 Each subdirectory contains instructions to retrieve the input data (and possibly pre-process it) inside the `fastprop` configuration file and a logfile of a completed run.
 
-The input files are intended to be executed from this directory, i.e. `fastprop train hopv15/hopv15.yml` (or rather, `fastprop train hopv15/hopv15.yml > hopv15/run_log.txt 2>&1` to save the output for later).
-If you're running from bash, you can execute the `run_all.sh` script in this directory - it will take a while!
+The input files are intended to be executed from this directory, i.e. `fastprop train pah/pah.yml`.
 
-## Special Benchmark - QuantumScents
+## Special Benchmarks
+### QuantumScents
 All of the other benchmarks in this directory use the `fastprop` configuration file interface.
 For QuantumScents the model is trained using `fastprop` as a Python module in order to pass in custom descriptors, re-use published splits, and load molecules from XYZ files (although an example configuration file is included).
 If you are interested in using either QuantumScents generally or `fastprop` as a module, be sure to check out `quantumscents/quantumscents.py`!
+
+### Fubrain
+This directory contains a method for training a 'regular' `fastprop` model that directly predicts the target value and a comparison via delta-learning.
 
 ## Comparisons with Chemprop
 In some of the benchmark directories, there are scripts following the naming pattern `chemprop_benchmark.sh` which will train the reference Chemprop model used for comparison to `fastprop`.
