@@ -33,6 +33,7 @@ examples/*
 !examples/track_dropped.py
 !examples/example_fastprop_train_config.yml
 !examples/oom_training.py
+!examples/fastprop_computational_adme_demo.ipynb
 
 # todo's
 benchmarks/tox21
