@@ -48,7 +48,6 @@ def _mols_to_desciptors(descriptors: List[Descriptor], rdkit_mols: List[rdchem.M
     Returns:
         np.array: Calculated descriptors.
     """
-    print(len(descriptors))
     start = perf_counter()
     mordred_calc = Calculator(descriptors)
     logger.info("Calculating descriptors")
