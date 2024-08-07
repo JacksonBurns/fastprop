@@ -1,6 +1,5 @@
 ---
 title: "Generalizable, Fast, and Accurate DeepQSPR with `fastprop`"
-subtitle: "Part 1: Framework and Benchmarks"
 author: 
   - name: Jackson W. Burns \orcidlink{0000-0002-0657-9426}
     affil-id: 1
@@ -202,7 +201,7 @@ sampler: random
 ```
 
 Training, prediction, and feature importance and then readily accessible via the commands `fastprop train`, `fastprop predict`, or `fastprop shap`, respectively.
-The `fastprop` GitHub repository contains a Jupyter notebook runnable from the browser via Google colab which allows users to actually execute the above example, which is also discussed at length in the [PAHs section](#pahs), as well as further details about each configurable option.
+The `fastprop` GitHub repository contains a Jupyter notebook runnable from the browser via Google colab which allows users to actually execute the above example, which is also discussed at length in the [PAHs section](#pah), as well as further details about each configurable option.
 
 # Results & Discussion
 There are a number of established molecular property prediction benchmarks commonly used in LR studies, especially those standardized by MoleculeNet [@moleculenet].
@@ -211,7 +210,7 @@ These are important benchmarks and QM9 is included for completeness, though the 
 
 Real world datasets, particularly those common in QSPR studies, often number in the hundreds.
 To demonstrate the applicability of `fastprop` to these regimes, many smaller datasets are selected including some from the QSPR literature that are not established benchmarks.
-These studies relied on more complex and slow modeling techniques ([ARA](#ara)) or the design of a bespoke descriptor ([PAHs](#pahs)) and have not yet come to rely on learned representations as a go-to tool.
+These studies relied on more complex and slow modeling techniques ([ARA](#ara)) or the design of a bespoke descriptor ([PAHs](#pah)) and have not yet come to rely on learned representations as a go-to tool.
 In these data-limited regimes where LRs sometimes struggle, `fastprop` and its intuition-loaded initialization are highly powerful.
 To emphasize this point further, the benchmarks are presented in order of size, descending.
 
@@ -264,21 +263,21 @@ Subsequent sections explore each in greater detail.
 
 Table: Summary of benchmark results. \label{results_table}
 
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|   Benchmark   | Samples (k)        |   Metric    |          Literature Best          | `fastprop` |        Chemprop         |  p   |
-+===============+====================+=============+===================================+============+=========================+======+
-|QM9            |~134                |MAE          |0.0047$^a$                         |0.0060      |0.0081$^a$               |  ~   |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|Pgp            |~1.3                |AUROC        |0.94$^b$                           |0.90        |0.89$^b$                 |  ~   |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|ARA            |~0.8                |Accuracy     |91$^c$                             |0.88        |82*                      |0.083 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|Flash          |~0.6                |RMSE         |13.2$^d$                           |13.0        |21.2*                    |0.021 |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|YSI            |~0.4                |MAE          |22.3$^e$                           |25.0        |28.9*                    |0.29  |
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
-|PAH            |~0.06               |R2           |0.96$^f$                           |0.97        |0.59*                    |0.0012|
-+---------------+--------------------+-------------+-----------------------------------+------------+-------------------------+------+
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|   Benchmark   | Samples (k)        |   Metric    |     SOTA     | `fastprop` |        Chemprop         |  p   |
++===============+====================+=============+==============+============+=========================+======+
+|QM9            |~134                |MAE          |0.0047$^a$    |0.0060      |0.0081$^a$               |  ~   |
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|Pgp            |~1.3                |AUROC        |0.94$^b$      |0.90        |0.89$^b$                 |  ~   |
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|ARA            |~0.8                |Accuracy     |91$^c$        |0.88        |82*                      |0.083 |
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|Flash          |~0.6                |RMSE         |13.2$^d$      |13.0        |21.2*                    |0.021 |
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|YSI            |~0.4                |MAE          |22.3$^e$      |25.0        |28.9*                    |0.29  |
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
+|PAH            |~0.06               |R2           |0.96$^f$      |0.97        |0.59*                    |0.0012|
++---------------+--------------------+-------------+--------------+------------+-------------------------+------+
 
 a [@unimol] b [@pgp_best] c [@ara] d [@flash] e [@ysi] f [@pah] * These reference results were generated for this study.
 
@@ -794,10 +793,10 @@ test_multilabel_f1_score             3.0  0.445995  0.017368  0.425965  0.440550
 
 ## Execution Time
 `fastprop` is consistently faster to train than Chemprop when using a GPU, helping exploit the 'time value' of data.
-Note that due to the large size of the FNN in `fastprop` it will typically be slower than Chemprop when training on a CPU since Chemprop uses a much smaller FNN and associated components.
+Note that due to the large size of the FNN in `fastprop` it can be slower than small Chemprop models when training on a CPU since Chemprop uses a much smaller FNN and associated components.
 
 There is a clear performance improvement to be had by reducing the number of descriptors to a subset of only the most important.
-Future work will address this possibility to decrease time requirements for both training by reducing network size and inference by decreasing the number of descriptors to be calculated for new molecules.
+Future work can address this possibility to decrease time requirements for both training by reducing network size and inference by decreasing the number of descriptors to be calculated for new molecules.
 This has _not_ been done in this study for two reasons: (1) to emphasize the capacity of the DL framework to effectively perform feature selection on its own via the training process, de-emphasizing unimportant descriptors; (2) as discussed above, training time is small compared ot dataset generation time.
 
 ## Coverage of Descriptors
@@ -810,7 +809,7 @@ While some of the 3D descriptors it implements could implicitly reflect steroche
 ## Interpretability
 Though not discussed here for the sake of length, `fastprop` already contains the functionality to perform feature importance studies on trained models.
 By using SHAP values [@shap] to assign a scalar 'importance' to each of the input features, users can determine which of the `mordred` descriptors has the largest impact on model predictions.
-Future studies will demonstrate this in greater detail.
+The utility of these values can be explored in greater detail on a case-by-case basis.
 
 # Availability
  - Project name: fastprop
