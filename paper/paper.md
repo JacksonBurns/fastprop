@@ -89,9 +89,10 @@ All of this is not to say that DL has _never_ been applied to QSPR.
 Applications of DL to QSPR, i.e. DeepQSPR, were attempted throughout this time period but focused on the use of molecular fingerprints rather than descriptors.
 This may be at least partially attributed to knowledge overlap between deep learning experts and this sub-class of descriptors.
 Molecular fingerprints are bit vectors which encode the presence or absence of human-chosen sub-structures in an analogous manner to the "bag of words" featurization strategy common to natural language processing.
-It is reasonable to assume a DL expert may have bridged this gap to open this subdomain, and its effectiveness proved worthwhile.
-In the review of DL for QSPR by Ma and coauthors [@ma_deep_qsar] claim that combinations of fingerprint descriptors are more effective than molecular-level descriptors, either matching our outperforming linear methods across a number of ADME-related datasets.
-This study will later refute that suggestion.
+Experts have bridged this gap to open this subdomain and proved its effectiveness.
+In Ma and coauthors' review of DL for QSPR [@ma_deep_qsar], for example, it is claimed that DL with fingerprint descriptors is more effective than with molecular-level descriptors.
+They also demonstrate that DL outperforms or at least matches classical machine learning methods across a number of ADME-related datasets.
+The results of this study demonstrate that molecular-level descriptors actually _are_ effective and reaffirm that DL matches or outperforms baselines, in this case linear.
 
 Despite their differences, both classical- and Deep-QSPR shared a lack of generalizability.
 Beyond the domains of chemistry where many of the descriptors had been originally devised, models were either unsuccessful or more likely simply never evaluated.
