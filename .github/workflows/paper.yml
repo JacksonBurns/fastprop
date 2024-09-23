@@ -32,8 +32,12 @@ jobs:
       - name: Build
         run: |
           cd paper
-          pandoc --citeproc --bibliography=paper.bib -s paper.md -o paper.pdf
+          pandoc --citeproc -s paper.md -o paper.pdf --template default.latex --pdf-engine=pdflatex --pdf-engine-opt=-output-directory=foo
       - uses: actions/upload-artifact@v1
         with:
           name: paper
           path: paper/paper.pdf
+      - uses: actions/upload-artifact@v1
+        with:
+          name: build_files
+          path: paper/foo
