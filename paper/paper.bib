@@ -21,17 +21,19 @@
 }
 
 @article{representation_review,
-  title = {From intuition to AI: evolution of small molecule representations in drug discovery},
-  volume = {25},
-  ISSN = {1477-4054},
-  url = {http://dx.doi.org/10.1093/bib/bbad422},
-  DOI = {10.1093/bib/bbad422},
-  number = {1},
-  journal = {Briefings in Bioinformatics},
-  publisher = {Oxford University Press (OUP)},
-  author = {McGibbon,  Miles and Shave,  Steven and Dong,  Jie and Gao,  Yumiao and Houston,  Douglas R and Xie,  Jiancong and Yang,  Yuedong and Schwaller,  Philippe and Blay,  Vincent},
-  year = {2023},
-  month = nov 
+    author = {McGibbon, Miles and Shave, Steven and Dong, Jie and Gao, Yumiao and Houston, Douglas R and Xie, Jiancong and Yang, Yuedong and Schwaller, Philippe and Blay, Vincent},
+    title = "{From intuition to AI: evolution of small molecule representations in drug discovery}",
+    journal = {Briefings in Bioinformatics},
+    volume = {25},
+    number = {1},
+    pages = {bbad422},
+    year = {2023},
+    month = {11},
+    abstract = "{Within drug discovery, the goal of AI scientists and cheminformaticians is to help identify molecular starting points that will develop into safe and efficacious drugs while reducing costs, time and failure rates. To achieve this goal, it is crucial to represent molecules in a digital format that makes them machine-readable and facilitates the accurate prediction of properties that drive decision-making. Over the years, molecular representations have evolved from intuitive and human-readable formats to bespoke numerical descriptors and fingerprints, and now to learned representations that capture patterns and salient features across vast chemical spaces. Among these, sequence-based and graph-based representations of small molecules have become highly popular. However, each approach has strengths and weaknesses across dimensions such as generality, computational cost, inversibility for generative applications and interpretability, which can be critical in informing practitioners’ decisions. As the drug discovery landscape evolves, opportunities for innovation continue to emerge. These include the creation of molecular representations for high-value, low-data regimes, the distillation of broader biological and chemical knowledge into novel learned representations and the modeling of up-and-coming therapeutic modalities.}",
+    issn = {1477-4054},
+    doi = {10.1093/bib/bbad422},
+    url = {https://doi.org/10.1093/bib/bbad422},
+    eprint = {https://academic.oup.com/bib/article-pdf/25/1/bbad422/53933271/bbad422.pdf},
 }
 
 @article{estrada_abc,
@@ -39,8 +41,18 @@
   author={Estrada, Ernesto and Torres, Luis and Rodriguez, Lissette and Gutman, Ivan},
   year={1998},
   publisher={NISCAIR-CSIR, India},
-  url={http://nopr.niscpr.res.in/handle/123456789/40308},
+  url={},
 }
+
+ @article{estrada_abc,
+        title={An atom-bond connectivity index: Modelling the.enthalpy of formation of alkanes},
+        volume={37},
+        url={http://nopr.niscpr.res.in/handle/123456789/40308},
+        journal={Indian Journal of Chemistry},
+        author={Estrada', Ernesto and Torres', Luis and Rodriguez', Lissette and Gutman=, Ivan},
+        year={1998}, 
+        pages={849-855}
+ }
 
 @article{quantumscents,
         author = {Burns, Jackson W. and Rogers, David M.},
@@ -120,18 +132,19 @@ eprint = {
         author={Gengmo Zhou and Zhifeng Gao and Qiankun Ding and Hang Zheng and Hongteng Xu and Zhewei Wei and Linfeng Zhang and Guolin Ke},
         booktitle={The Eleventh International Conference on Learning Representations },
         year={2023},
-        url={https://openreview.net/forum?id=6K2RM6wVqKu},
         doi={10.26434/chemrxiv-2022-jjm0j},
         url={https://doi.org/10.26434/chemrxiv-2022-jjm0j}
 }
 
-@misc{sggrl,
-      title={Multi-Modal Representation Learning for Molecular Property Prediction: Sequence, Graph, Geometry}, 
-      author={Zeyu Wang and Tianyi Jiang and Jinhuan Wang and Qi Xuan},
-      year={2024},
-      eprint={2401.03369},
-      archivePrefix={arXiv},
-      primaryClass={q-bio.MN}
+@article{sggrl,
+  doi = {10.48550/ARXIV.2401.03369},
+  url = {https://arxiv.org/abs/2401.03369},
+  author = {Wang,  Zeyu and Jiang,  Tianyi and Wang,  Jinhuan and Xuan,  Qi},
+  keywords = {Molecular Networks (q-bio.MN),  Machine Learning (cs.LG),  Biomolecules (q-bio.BM),  FOS: Biological sciences,  FOS: Biological sciences,  FOS: Computer and information sciences,  FOS: Computer and information sciences},
+  title = {Multi-Modal Representation Learning for Molecular Property Prediction: Sequence,  Graph,  Geometry},
+  publisher = {arXiv},
+  year = {2024},
+  copyright = {arXiv.org perpetual,  non-exclusive license}
 }
 
 @article{gslmpp,
@@ -272,7 +285,7 @@ eprint = {
         }
 }
 
-@misc{mhnn,
+@article{mhnn,
       title={Molecular Hypergraph Neural Networks}, 
       author={Junwu Chen and Philippe Schwaller},
       year={2023},
@@ -312,17 +325,22 @@ eprint = {
 }
 
 @article{mordred,
-  title = {Mordred: a molecular descriptor calculator},
-  volume = {10},
-  ISSN = {1758-2946},
-  url = {http://dx.doi.org/10.1186/s13321-018-0258-y},
-  DOI = {10.1186/s13321-018-0258-y},
-  number = {1},
-  journal = {Journal of Cheminformatics},
-  publisher = {Springer Science and Business Media LLC},
-  author = {Moriwaki,  Hirotomo and Tian,  Yu-Shi and Kawashita,  Norihito and Takagi,  Tatsuya},
-  year = {2018},
-  month = feb 
+        author={Moriwaki, Hirotomo
+        and Tian, Yu-Shi
+        and Kawashita, Norihito
+        and Takagi, Tatsuya},
+        title={Mordred: a molecular descriptor calculator},
+        journal={Journal of Cheminformatics},
+        year={2018},
+        month={Feb},
+        day={06},
+        volume={10},
+        number={1},
+        pages={4},
+        abstract={Molecular descriptors are widely employed to present molecular characteristics in cheminformatics. Various molecular-descriptor-calculation software programs have been developed. However, users of those programs must contend with several issues, including software bugs, insufficient update frequencies, and software licensing constraints. To address these issues, we propose Mordred, a developed descriptor-calculation software application that can calculate more than 1800 two- and three-dimensional descriptors. It is freely available via GitHub. Mordred can be easily installed and used in the command line interface, as a web application, or as a high-flexibility Python package on all major platforms (Windows, Linux, and macOS). Performance benchmark results show that Mordred is at least twice as fast as the well-known PaDEL-Descriptor and it can calculate descriptors for large molecules, which cannot be accomplished by other software. Owing to its good performance, convenience, number of descriptors, and a lax licensing constraint, Mordred is a promising choice of molecular descriptor calculation software that can be utilized for cheminformatics studies, such as those on quantitative structure--property relationships.},
+        issn={1758-2946},
+        doi={10.1186/s13321-018-0258-y},
+        url={https://doi.org/10.1186/s13321-018-0258-y}
 }
 
 @article{smiles,
@@ -348,7 +366,8 @@ month = mar,
 title = {{PyTorch Lightning}},
 url = {https://github.com/Lightning-AI/lightning},
 version = {1.4},
-year = {2019}
+year = {2019},
+doi = {10.5281/zenodo.3828935}
 }
 
 @article{stereo_signature,
@@ -366,7 +385,7 @@ year = {2019}
   pages = {887-897}
 }
 
-@misc{shap,
+@article{shap,
   doi = {10.48550/ARXIV.1705.07874},
   url = {https://arxiv.org/abs/1705.07874},
   author = {Lundberg,  Scott and Lee,  Su-In},
@@ -431,7 +450,7 @@ year = {2019}
   url = {http://dx.doi.org/10.1021/acs.iecr.0c03880},
   DOI = {10.1021/acs.iecr.0c03880},
   number = {42},
-  journal = {Industrial &amp; Engineering Chemistry Research},
+  journal = {Industrial and Engineering Chemistry Research},
   publisher = {American Chemical Society (ACS)},
   author = {Wu,  Jinkui and Wang,  Shihui and Zhou,  Li and Ji,  Xu and Dai,  Yiyang and Dang,  Yagu and Kraft,  Markus},
   year = {2020},
@@ -484,18 +503,25 @@ year = {2019}
 }
 
 @article{ara,
-  title = {DeepAR: a novel deep learning-based hybrid framework for the interpretable prediction of androgen receptor antagonists},
-  volume = {15},
-  ISSN = {1758-2946},
-  url = {http://dx.doi.org/10.1186/s13321-023-00721-z},
-  DOI = {10.1186/s13321-023-00721-z},
-  number = {1},
-  journal = {Journal of Cheminformatics},
-  publisher = {Springer Science and Business Media LLC},
-  author = {Schaduangrat,  Nalini and Anuwongcharoen,  Nuttapat and Charoenkwan,  Phasit and Shoombuatong,  Watshara},
-  year = {2023},
-  month = may 
+        author={Schaduangrat, Nalini
+        and Anuwongcharoen, Nuttapat
+        and Charoenkwan, Phasit
+        and Shoombuatong, Watshara},
+        title={DeepAR: a novel deep learning-based hybrid framework for the interpretable prediction of androgen receptor antagonists},
+        journal={Journal of Cheminformatics},
+        year={2023},
+        month={May},
+        day={06},
+        volume={15},
+        number={1},
+        pages={50},
+        abstract={Drug resistance represents a major obstacle to therapeutic innovations and is a prevalent feature in prostate cancer (PCa). Androgen receptors (ARs) are the hallmark therapeutic target for prostate cancer modulation and AR antagonists have achieved great success. However, rapid emergence of resistance contributing to PCa progression is the ultimate burden of their long-term usage. Hence, the discovery and development of AR antagonists with capability to combat the resistance, remains an avenue for further exploration. Therefore, this study proposes a novel deep learning (DL)-based hybrid framework, named DeepAR, to accurately and rapidly identify AR antagonists by using only the SMILES notation. Specifically, DeepAR is capable of extracting and learning the key information embedded in AR antagonists. Firstly, we established a benchmark dataset by collecting active and inactive compounds against AR from the ChEMBL database. Based on this dataset, we developed and optimized a collection of baseline models by using a comprehensive set of well-known molecular descriptors and machine learning algorithms. Then, these baseline models were utilized for creating probabilistic features. Finally, these probabilistic features were combined and used for the construction of a meta-model based on a one-dimensional convolutional neural network. Experimental results indicated that DeepAR is a more accurate and stable approach for identifying AR antagonists in terms of the independent test dataset, by achieving an accuracy of 0.911 and MCC of 0.823. In addition, our proposed framework is able to provide feature importance information by leveraging a popular computational approach, named SHapley Additive exPlanations (SHAP). In the meanwhile, the characterization and analysis of potential AR antagonist candidates were achieved through the SHAP waterfall plot and molecular docking. The analysis inferred that N-heterocyclic moieties, halogenated substituents, and a cyano functional group were significant determinants of potential AR antagonists. Lastly, we implemented an online web server by using DeepAR (at http://pmlabstack.pythonanywhere.com/DeepAR). We anticipate that DeepAR could be a useful computational tool for community-wide facilitation of AR candidates from a large number of uncharacterized compounds.},
+        issn={1758-2946},
+        doi={10.1186/s13321-023-00721-z},
+        url={https://doi.org/10.1186/s13321-023-00721-z}
 }
+
+
 
 @article{qm9,
   title = {Quantum chemistry structures and properties of 134 kilo molecules},
@@ -506,12 +532,12 @@ year = {2019}
   number = {1},
   journal = {Scientific Data},
   publisher = {Springer Science and Business Media LLC},
-  author = {Ramakrishnan,  Raghunathan and Dral,  Pavlo O. and Rupp,  Matthias and von Lilienfeld,  O. Anatole},
+  author = {Raghunathan Ramakrishnan and Pavlo Dral and Matthias Rupp and {\noop{Liliendfeld}} von Liliendfeld, OA},
   year = {2014},
   month = aug 
 }
 
-@misc{moleculenet,
+@article{moleculenet,
       title={MoleculeNet: A Benchmark for Molecular Machine Learning}, 
       author={Zhenqin Wu and Bharath Ramsundar and Evan N. Feinberg and Joseph Gomes and Caleb Geniesse and Aneesh S. Pappu and Karl Leswing and Vijay Pande},
       year={2018},
@@ -530,7 +556,8 @@ year = {2019}
         volume = {8},
         number = {91},
         pages = {5996},
-        author = {Jackson W. Burns and Kevin A. Spiekermann and Himaghna Bhattacharjee and Dionisios G. Vlachos and William H. Green}, title = {Machine Learning Validation via Rational Dataset Sampling with astartes},
+        author = {Jackson Burns and Kevin Spiekermann and Himaghna Bhattacharjee and Dionisios Vlachos and William Green},
+        title = {Machine Learning Validation via Rational Dataset Sampling with astartes},
         journal = {Journal of Open Source Software}
 }
 
@@ -557,7 +584,7 @@ year = {2019}
   number = {8},
   journal = {The Journal of Chemical Physics},
   publisher = {AIP Publishing},
-  author = {Ramakrishnan,  Raghunathan and Hartmann,  Mia and Tapavicza,  Enrico and von Lilienfeld,  O. Anatole},
+  author = {Ramakrishnan,  Raghunathan and Hartmann,  Mia and Tapavicza,  Enrico and {\noop{Liliendfeld}} von Liliendfeld, OA},
   year = {2015},
   month = aug 
 }
@@ -670,7 +697,7 @@ year = {2019}
   doi = {10.48550/arXiv.2102.09548},
 }
 
-@misc{pgp_best,
+@article{pgp_best,
   doi = {10.48550/ARXIV.2310.00174},
   url = {https://arxiv.org/abs/2310.00174},
   author = {Notwell,  James H. and Wood,  Michael W.},
@@ -681,4 +708,19 @@ year = {2019}
   copyright = {Creative Commons Attribution 4.0 International},
   doi = {10.48550/arXiv.2310.00174},
   url = {https://doi.org/10.48550/arXiv.2310.00174}
+}
+
+@article{Coley2017,
+  title = {Prediction of Organic Reaction Outcomes Using Machine Learning},
+  volume = {3},
+  ISSN = {2374-7951},
+  url = {http://dx.doi.org/10.1021/acscentsci.7b00064},
+  DOI = {10.1021/acscentsci.7b00064},
+  number = {5},
+  journal = {ACS Central Science},
+  publisher = {American Chemical Society (ACS)},
+  author = {Coley,  Connor W. and Barzilay,  Regina and Jaakkola,  Tommi S. and Green,  William H. and Jensen,  Klavs F.},
+  year = {2017},
+  month = apr,
+  pages = {434–443}
 }
