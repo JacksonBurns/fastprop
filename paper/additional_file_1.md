@@ -13,9 +13,11 @@ header-includes:
 ## Table S1
 
 The following table shows the performance (see Metric column) for Chemprop, Transformer-CNN, and `fastprop` across various open datasets.
-All datasets are retrieved from MoleculeNet, except Tox24 which was retrieved from [OChem.eu](https://ochem.eu/static/challenge.do).
-Benchmarks are sorted by size, descending.
 
+For further information about exact software versions for reproducing these results, see this GitHub repository which hosts both the training code and the results: [github.com/JacksonBurns/fastprop-benchmark](https://github.com/JacksonBurns/fastprop-benchmark).
+All datasets are retrieved from MoleculeNet, except Tox24 which was retrieved from [OChem.eu](https://ochem.eu/static/challenge.do) - direct links are provided in the aforementioned repository.
+
+Benchmarks are sorted by size, descending.
 Each result is the average and standard deviation across five randomly selected train/val/test splits of 0.70/0.10/0.20.
 All models were trained with their default settings.
 Augmentation at training or inference time was not performed, although suggested for Transformer-CNN by its authors, to ensure a fair comparison is made.
@@ -23,7 +25,6 @@ For Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE) lower is better
 The Tukey test is used to check for pairwise statistical differences between the three models.
 The best performing model(s) which are statistically significantly different from the others are shown in bold.
 
-For further information about exact software versions for reproducing these results, see this GitHub repository which hosts both the training code and the results: [github.com/JacksonBurns/fastprop-benchmark](https://github.com/JacksonBurns/fastprop-benchmark).
 \newpage
 
 \blandscape
