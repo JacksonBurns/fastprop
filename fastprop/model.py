@@ -161,17 +161,18 @@ class fastprop(pl.LightningModule):
         self._human_loss(y_hat, batch, "test")
         return loss
 
-    def predict_step(self, batch: Tuple[torch.Tensor]):
+    def predict_step(self, batch: Tuple[torch.Tensor], rescale: bool = True):
         """Applies feature scaling and appropriate activation function to a Tensor of descriptors.
 
         Args:
             batch (tuple[torch.Tensor]): Unscaled descriptors.
+            rescale (bool, optional): Apply rescaling according to trained means and vars. Default True.
 
         Returns:
             torch.Tensor: Predictions.
         """
         descriptors = batch[0]
-        if self.feature_means is not None and self.feature_vars is not None:
+        if rescale and self.feature_means is not None and self.feature_vars is not None:
             descriptors = standard_scale(descriptors, self.feature_means, self.feature_vars)
         with torch.inference_mode():
             logits = self.forward(descriptors)
