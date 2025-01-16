@@ -162,7 +162,7 @@ Yalamanchi and coauthors used DL on `mordred` descriptors as part of a two-heade
 The reason `fastprop` stands out from these studies and contradicts previous reports is for the simple reason that it works.
 As discussed at length in the [Results & Discussion](#results--discussion) section, this approach matches the performance of leading LR approaches on common benchmark datasets and bespoke QSPR models on small real-world datasets.
 `fastprop` also overcomes the limitations of LRs discussed above.
-Because all inputs to the FNN are physically meaningful molecular descriptors, intermediate representations in the FNN are also physically meaningful and can be directly interpreted.
+The FNN architecture and use of physically meaningful molecular descriptors enables the application of SHAP [@shap], a common tool for feature importance analysis (see [Interpretability](#interpretability)).
 The simplicity of the framework enables domain experts to apply it easily and makes model training dramatically faster than LRs.
 Most importantly this approach is successful on the _smallest_ of real-world datasets.
 By starting from such an informed initialization the FNN can be readily trained on datasets with as few as _forty_ training examples (see [PAHs](#pahs)).
@@ -812,9 +812,11 @@ For example, in its current state `mordred` does not include any connectivity ba
 While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stereo Signature Molecular Descriptor [@stereo_signature] may prove helpful in the future if re-implemented in `mordred`.
 
 ## Interpretability
-Though not discussed here for the sake of length, `fastprop` already contains the functionality to perform feature importance studies on trained models.
-By using SHAP values [@shap] to assign a scalar 'importance' to each of the input features, users can determine which of the `mordred` descriptors has the largest impact on model predictions.
-The utility of these values can be explored in greater detail on a case-by-case basis.
+Though not discussed here for the sake of length, `fastprop` contains the functionality to perform feature importance studies on trained models.
+By using SHAP values [@shap] once can assign a scalar 'importance' to each of the input features with respect to the target value, such as molecular weight having a significant positive impact on boiling point in alkanes.
+Experts users can leverage this information to guide molecular design and optimization or inform future lines of inquiry.
+Via the `fastprop` CLI users can train a model and then use `fastprop shap` to analyze the resulting trained network.
+`fastprop shap` will then generate diagrams to visualize the SHAP values.
 
 # Availability
  - Project name: fastprop
