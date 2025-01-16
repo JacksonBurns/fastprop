@@ -140,10 +140,11 @@ For the purposes of this study, it will be used to refer to datasets with ~1000 
 
 # Implementation
 At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}) - an existing approach formalized into an easy-to-use, reliable, and correct implementation.
-`fastprop` is highly modular for seamless integration into existing workflows and includes end-to-end interfaces for general use.
-In the latter mode the user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding properties.
-`fastprop` automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated target properties.
-By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the command line interface or configuration file.
+`fastprop` is highly modular for seamless integration into existing workflows and includes and end-to-end Command Line Interface (CLI) for general use.
+In the latter mode the user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding target values.
+`fastprop` automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated targets.
+By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the CLI or configuration file.
+Multitask regression and multi-label classification are also supported and configurable in the same manner.
 `fastprop` principally owes its success to the cogent set of descriptors assembled by the developers of `mordred`.
 Multiple descriptor calculators from the very thorough review by McGibbon et al. [@representation_review] could be used instead, though none are as readily interoperable as `mordred`.
 Additionally, the ease of training FNNs with modern software like PyTorch Lightning and the careful application of Research Software Engineering best practices make `fastprop` as user friendly as the best-maintained alternatives.
