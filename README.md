@@ -12,8 +12,8 @@
 </p>
 
 # Announcements
-## alphaXiv
-The `fastprop` paper is freely available online at [arxiv.org/abs/2404.02058](https://arxiv.org/abs/2404.02058) and we are conducting open source peer review on [alphaXiv](https://alphaxiv.org/abs/2404.02058) - comments are appreciated!
+## alphaXiv Paper
+The companion academic paper describing `fastprop` is freely available online at [alphaXiv](https://www.alphaxiv.org/abs/2404.02058).
 The source for the paper is stored in this repository under the `paper` directory.
 
 ## Initial Release :tada:
@@ -22,7 +22,7 @@ Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
 
 # Installing `fastprop`
-`fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.12.
+`fastprop` supports Mac, Windows, and Linux on Python versions 3.8 or newer.
 Installing from `pip` is the best way to get `fastprop`, but if you need to check out a specific GitHub branch or you want to contribute to `fastprop` a source installation is recommended.
 Pending interest from users, a `conda` package will be added.
 
