@@ -1,3 +1,4 @@
+import os
 import datetime
 from importlib.metadata import version
 from time import perf_counter
@@ -13,6 +14,10 @@ from rdkit.Chem import rdchem
 from fastprop.defaults import init_logger
 
 logger = init_logger(__name__)
+
+_N_CPUS = psutil.cpu_count(logical=True)
+if (_n_cpus := int(os.environ.get("MORDRED_NUM_PROC", 0))) > 0:
+    _N_CPUS = _n_cpus
 
 
 def _descriptor_names_to_mordred_class(string_list: List[str] = [], include_3d: bool = False):
@@ -51,7 +56,7 @@ def _mols_to_desciptors(descriptors: List[Descriptor], rdkit_mols: List[rdchem.M
     start = perf_counter()
     mordred_calc = Calculator(descriptors)
     logger.info("Calculating descriptors")
-    mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=psutil.cpu_count(logical=True), quiet=False)))
+    mordred_descs = np.array(list(mordred_calc.map(rdkit_mols, nproc=_N_CPUS, quiet=False)))
     logger.info(f"Descriptor calculation complete, elapsed time: {str(datetime.timedelta(seconds=perf_counter() - start))}")
     return mordred_descs
 

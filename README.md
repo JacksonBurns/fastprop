@@ -103,6 +103,9 @@ After installation, `fastprop` is accessible from the command line via `fastprop
 
 Try `fastprop --help` or `fastprop subcommand --help` for more information and see below.
 
+> [!TIP]
+> `fastprop` will use all of your CPUs for descriptor calculation by default - set the `MORDRED_NUM_PROC` environment variable to some other number to change this behavior.
+
 ### Configuration File [recommended]
 See `examples/example_fastprop_train_config.yaml` for configuration files that show all options that can be configured during training.
 It is everything shown in the [Configurable Parameters](#configurable-parameters) section.
