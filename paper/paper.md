@@ -71,10 +71,9 @@ An abridged version of the history behind QSPR is presented here to contextualiz
 
 ## Historical Approaches
 Early in the history of computing, limited computational power meant that significant human expertise was required to guide QSPR models toward effectiveness.
-This materialized in the form of bespoke molecular descriptors: the Wiener Index in 1947 [@wiener_index], Atom-Bond Connectivity indices in 1998 [@estrada_abc], and _thousands_ of others.
+This materialized in the form of bespoke molecular descriptors - scalar-valued functions which operate on the molecular graph in such a way to reflect relevant structural and electronic information.
+Examples include rudimentary counting descriptors, the Wiener Index in 1947 [@wiener_index], Atom-Bond Connectivity indices in 1998 [@estrada_abc], and many others [@descriptors_book].
 To this day descriptors are still being developed - the geometric-harmonic-Zagreb degree based descriptors were proposed by Arockiaraj et al. in 2023 [@pah].
-In each case, domain experts devised an algorithm which mapped a molecular structure to some scalar value.
-This algorithm would take into account features of the molecule which that expert deduced were relevant to the property at hand.
 This time consuming technique is of course highly effective but the dispersed nature of this chemical knowledge means that these descriptors are spread out throughout many journals and domains with no single source to compute them all.
 
 The range of regression techniques applied to these descriptors has also been limited.
@@ -224,7 +223,7 @@ All of these `fastprop` benchmarks are reproducible, and complete instructions f
 ## Benchmark Methods
 The method for splitting data into training, validation, and testing sets varies on a per-study basis and is described in each sub-section.
 Sampling is performed using the `astartes` package [@astartes] which implements a variety of sampling algorithms and is highly reproducible.
-For datasets containing missing target values or invalid SMILES strings, those entries were dropped.
+For datasets containing missing target values or invalid SMILES strings, those entries were dropped, as is the default behavior of `fastprop`.
 
 Results for `fastprop` are reported as the average value of a metric and its standard deviation across a number of repetitions (repeated re-sampling of the dataset).
 The number of repetitions is chosen to either match referenced literature studies or else increased from two until the performance no longer meaningfully changes.
@@ -257,7 +256,7 @@ Those presented here are summarized below, first for regression:
 
 and classification:
  - Area Under the Receiver Operating Curve (AUROC, AUC, or ROC-AUC): Summary statistic combining all possible classification errors; scale-independent, range 0.5 (worst, random guessing) to 1.0 (perfect classifier).
- - Accuracy: Fraction of correct classifications, expressed as either a percentage or a number; scale-independent, range 0 (worst) to 1 (perfect classifier).
+ - Accuracy: Fraction of correct classifications, expressed as a percentage; scale-independent, range 0 (worst) to 100 (perfect classifier).
 
 ## Benchmark Results
 See Table \ref{results_table} for a summary of all the results.
@@ -266,29 +265,29 @@ Subsequent sections explore each in greater detail.
 Table: Summary of benchmark results, best state-of-the-art method vs. `fastprop` and Chemprop. \label{results_table}
 
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|   Benchmark   | Samples (k)        |   Metric    |     SOTA     | `fastprop` |        Chemprop         |  p   |
+|   Benchmark   | Samples            |   Metric    |     SOTA     | `fastprop` |        Chemprop         |  p   |
 +===============+====================+=============+==============+============+=========================+======+
-|QM9            |~134                |MAE          |0.0047$^a$    |0.0060      |0.0081$^a$               |  ~   |
+|QM9            |133,885             |MAE          |0.0047$^a$    |0.0060      |0.0081$^a$               |  ~   |
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|Pgp            |~1.3                |AUROC        |0.94$^b$      |0.90        |0.89$^b$                 |  ~   |
+|Pgp            |1,275               |AUROC        |0.94$^b$      |0.90        |0.89$^b$                 |  ~   |
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|ARA            |~0.8                |Accuracy     |91$^c$        |88          |82*                      |0.083 |
+|ARA            |842                 |Accuracy     |91$^c$        |88          |82*                      |0.083 |
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|Flash          |~0.6                |RMSE         |13.2$^d$      |13.0        |21.2*                    |0.021 |
+|Flash          |632                 |RMSE         |13.2$^d$      |__13.0__    |21.2*                    |0.021 |
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|YSI            |~0.4                |MAE          |22.3$^e$      |25.0        |28.9*                    |0.29  |
+|YSI            |442                 |MAE          |22.3$^e$      |25.0        |28.9*                    |0.29  |
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
-|PAH            |~0.06               |R2           |0.96$^f$      |0.97        |0.59*                    |0.0012|
+|PAH            |55                  |R2           |0.96$^f$      |__0.97__    |0.59*                    |0.0012|
 +---------------+--------------------+-------------+--------------+------------+-------------------------+------+
 
 a [@unimol] b [@pgp_best] c [@ara] d [@flash] e [@ysi] f [@pah] * These reference results were generated for this study.
 
 Statistical comparisons of `fastprop` to Chemprop (shown in the `p` column) are performed using the non-parametric Wilcoxon-Mann-Whitney Test as implemented in GNumeric.
 Values are only shown for results generated in this study which are known to be performed using the same methods.
-Only the results for Flash and PAH are statistically significant at 95% confidence (p<0.05).
+Only the results for Flash and PAH are statistically significant at 95% confidence (p<0.05), see benchmark-specific subsections for confidence intervals.
 
 ### QM9
-Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for many small molecules containing one to nine heavy atoms, totaling ~134k.
+Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for many small molecules containing one to nine heavy atoms, totaling 133,885.
 The data was retrieved from MoleculeNet [@moleculenet] in a readily usable format.
 As a point of comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol] previously mentioned.
 In that study they trained on only three especially difficult targets (homo, lumo, and gap) using scaffold-based splitting (a more challenging alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
@@ -380,7 +379,7 @@ test_gap_root_mean_squared_error_loss                      3.0  1.556471e-02  8.
 
 ### Pgp
 First reported in 2011 by Broccatelli and coworkers [@pgp], this dataset has since become a standard benchmark and is included in the Therapeutic Data Commons (TDC) [@tdc] model benchmarking suite.
-The dataset maps approximately 1.2k small molecule drugs to a binary label indicating if they inhibit P-glycoprotein (Pgp).
+The dataset maps 1,275 small molecule drugs to a binary label indicating if they inhibit P-glycoprotein (Pgp).
 TDC serves this data through a Python package, but due to installation issues the data was retrieved from the original study instead.
 The recommended splitting approach is a 70/10/20 scaffold-based split which is done here with 4 replicates.
 
@@ -424,11 +423,11 @@ test_binary_average_precision    4.0  0.925318  0.015881  0.911060  0.913512  0.
 [^3]: See [the TDC Pgp leaderboard](https://tdcommons.ai/benchmark/admet_group/03pgp/).
 
 ### ARA
-Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps ~0.8k small molecules to a binary label indicating if the molecule is an Androgen Receptor Antagonist (ARA).
-The reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 0.911 and an AUROC of 0.945.
+Compiled by Schaduangrat et al. in 2023 [@ara], this dataset maps 842 small molecules to a binary label indicating if the molecule is an Androgen Receptor Antagonist (ARA).
+The reference study introduced DeepAR, a highly complex modeling approach, which achieved an accuracy of 91.1% and an AUROC of 0.945.
 
 For this study an 80/10/10 random splitting is repeated four times on the dataset since no analogous split to the reference study can be determined.
-Chemprop takes 16 minutes and 55 seconds to run on this dataset and achieves only 0.824 $\pm$ 0.020 accuracy and 0.898 $\pm$ 0.022 AUROC.
+Chemprop takes 16 minutes and 55 seconds to run on this dataset and achieves only 82.4 $\pm$ 2.0% accuracy and 0.898 $\pm$ 0.022 AUROC.
 `fastprop` takes only 1 minute and 54 seconds (1 minute and 39 seconds for descriptor calculation) and is competitive with the reference study in performance, achieving a 88.2 $\pm$ 3.7% accuracy and 0.935 $\pm$ 0.034 AUROC.
 The purely linear QSPR model falls far behind these methods with a 71.8 $\pm$ 6.6% accuracy and 0.824 $\pm$ 0.052 AUROC.
 <!--
@@ -497,7 +496,7 @@ Sum	3.592470129096031
 Count	4 -->
 
 ### Flash
-First assembled and fitted to by Saldana and coauthors [@flash] the dataset (Flash) includes around 0.6k entries, primarily alkanes and some oxygen-containing compounds, and their literature-reported flash point.
+First assembled and fitted to by Saldana and coauthors [@flash] the dataset (Flash) includes around 632 entries, primarily alkanes and some oxygen-containing compounds, and their literature-reported flash point.
 The reference study reports the performance on only one repetition, but manually confirms that the distribution of points in the three splits follows the parent dataset.
 The split itself was a 70/20/10 random split, which is repeated four times for this study.
 
@@ -561,7 +560,7 @@ Mean	21.17199532359917
 Standard Error	1.1064790292313673 -->
 
 ### YSI
-Assembled by Das and coauthors [@ysi] from a collection of other smaller datasets, this dataset maps ~0.4k molecular structures to a unified-scale Yield Sooting Index (YSI), a molecular property of interest to the combustion community.
+Assembled by Das and coauthors [@ysi] from a collection of other smaller datasets, this dataset maps 442 molecular structures to a unified-scale Yield Sooting Index (YSI), a molecular property of interest to the combustion community.
 The reference study performs leave-one-out cross validation to fit a per-fragment contribution model, effectively a training size of >99%, without a holdout set.
 Though this is not standard practice and can lead to overly optimistic reported performance, the results will be carried forward regardless.
 The original study did not report overall performance metrics, so they have been re-calculated for this study using the predictions made by the reference model as provided on GitHub [^4].
@@ -692,7 +691,7 @@ First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brai
 This specific target in combination with the small dataset size makes this benchmark highly relevant for typical QSPR studies, particular via delta learning.
 DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were intra-combined to generate all possible pairs and then the differences in the property [^5] were predicted, rather than the absolute values, increasing the amount of training data by a factor of 300.
 
-DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an accuracy of 0.965 $\pm$ 0.019 when evaluated on its capacity to predict property differences.
+DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an accuracy of 96.5 $\pm$ 1.9% when evaluated on its capacity to predict property differences.
 `fastprop` is able to outperform Chemprop, though not DeepDelta, achieving an RMSE of 0.930 $\pm$ 0.029 when using the same splitting procedure above.
 It is evident that delta learning is still a powerful technique for regressing small datasets.
 
