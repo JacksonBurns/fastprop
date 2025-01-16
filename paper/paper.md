@@ -698,6 +698,13 @@ sys     0m30.473s
 
 # Limitations and Future Work
 ## Negative Results
+The `fastprop` framework is not without its drawbacks.
+The two subsequent sections explore in greater detail two specific cases where `fastprop` loses out to existing methods, but some general notes about out-of-distribution predictions and overfitting are also included here.
+Like all machine learning methods, `fastprop` is not intended to make predictions outside of its training feature space.
+The use of molecular descriptors, which can become out-of-distribution, may exacerbate this problem but `fastprop` can optionally winsorize the descriptors to counteract this issue.
+Additionally, hyperparameter optimization of machine learning models in cheminformatics has been known to cause overfitting [@tetko_overfit], especially on small datasets.
+Users should be cautious when optimizing `fastprop` models and rely on defaults when possible.
+
 ### Delta Learning with Fubrain
 First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brain (Fubrain) dataset is a collection of about 0.3k small molecule drugs and their corresponding experimentally measured unbound fraction in the brain, a critical metric for drug development [@fubrain].
 This specific target in combination with the small dataset size makes this benchmark highly relevant for typical QSPR studies, particular via delta learning.
