@@ -41,19 +41,15 @@ note: |
 <!-- Graphical Abstract Goes Here -->
 
 # Abstract
-Quantitative Structure-Property Relationship studies (QSPR), often referred to interchangeably as QSAR, seek to establish a mapping between molecular structure and an arbitrary Quantity of Interest (QOI).
-Historically this was done on a QOI-by-QOI basis with new descriptors being devised by researchers to _specifically_ map to their QOI.
-A large number of descriptors have been invented, and can be computed using packages like DRAGON (later E-dragon), PaDEL-descriptor (and padelpy), Mordred, CODESSA, and many others.
-The sheer number of different descriptor packages resulted in the creation of 'meta-packages' which served only to aggregate these other calculators, including tools like molfeat, ChemDes, Parameter Client, and AIMSim.
+Quantitative Structure-Property Relationship studies (QSPR), often referred to interchangeably as QSAR, seek to establish a mapping between molecular structure and an arbitrary target property.
+Historically this was done on a target-by-target basis with new descriptors being devised to _specifically_ map to a given target.
+Today software packages exist that calculate thousands of these descriptors, enabling general modeling typically with classical and machine learning methods.
+Also present today are learned representation methods in which deep learning models generate a target-specific representation during training.
+The former requires less training data and offers improved speed and interpretability while the latter offers excellent generality, while the intersection of the two remains under-explored.
 
-Generalizable descriptor-based modeling was a natural evolution of these meta-packages' development.
-Historically QSPR researchers focused almost exclusively on linear methods.
-Another community of researchers focused on finding nonlinear correlations between molecular structures and a QOI, often using Deep learning (DL).
-The DL community typically used molecular fingerprints instead of the complex descriptors popular in QSPR community.
-Recently the DL community has turned to learned representations primarily via message passing graph neural networks.
-This approach has proved remarkably effective but is not without drawbacks.
-Learning a representation requires large datasets to avoid over-fitting or even learn at all, loses interpretability since an embedding's meaning can only be induced retroactively, and needs significant execution time given the complexity of the underlying message passing algorithm.
-This paper introduces `fastprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with DL to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
+This paper introduces `fastprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with deep learning to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
+`fastprop` provides both a user-friendly Command Line Interface and highly interoperable set of Python modules for the training and deployment of feedforward neural networks for property prediction.
+This approach yields improvements in speed and interpretability over existing methods without sacrificing performance.
 `fastprop` is designed with Research Software Engineering best practices and is free and open source, hosted at github.com/jacksonburns/fastprop.
 
 ## Scientific Contribution
@@ -295,7 +291,7 @@ Only the results for Flash and PAH are statistically significant at 95% confiden
 Originally described in Scientific Data [@qm9] and perhaps the most established property prediction benchmark, Quantum Machine 9 (QM9) provides quantum mechanics derived descriptors for many small molecules containing one to nine heavy atoms, totaling ~134k.
 The data was retrieved from MoleculeNet [@moleculenet] in a readily usable format.
 As a point of comparison, performance metrics are retrieved from the paper presenting the UniMol architecture [@unimol] previously mentioned.
-In that study they trained on only three especially difficult QOIs (homo, lumo, and gap) using scaffold-based splitting (a more challenging alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
+In that study they trained on only three especially difficult targets (homo, lumo, and gap) using scaffold-based splitting (a more challenging alternative to random splitting), reporting mean and standard deviation across 3 repetitions.
 
 `fastprop` achieves 0.0060 $\pm$ 0.0002 mean absolute error, whereas Chemprop achieves 0.00814 $\pm$ 0.00001 and the UniMol framework manages 0.00467 $\pm$ 0.00004.
 This places the `fastprop` framework ahead of previous learned representation approaches but still trailing UniMol.
