@@ -1,9 +1,10 @@
+
 from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 import torch
-from astartes import train_val_test_split
-from astartes.molecules import train_val_test_split_molecules
+from astartes import train_val_test_split, train_test_split
+from astartes.molecules import train_val_test_split_molecules, train_test_split_molecules
 from rdkit import Chem
 from torch.utils.data import DataLoader as TorchDataloader
 from torch.utils.data import Dataset as TorchDataset
@@ -37,30 +38,45 @@ def split(
     Returns:
         tuple[np.ndarray, np.ndarray, np.ndarray]: Indices for training, validation, and testing.
     """
+    if sampler not in {"random", "scaffold"}:
+        raise TypeError(f"Unknown sampler {sampler=}.")
     split_kwargs = dict(
         train_size=train_size,
-        val_size=val_size,
-        test_size=test_size,
         sampler=sampler,
         random_state=random_seed,
         return_indices=True,
     )
     if sampler == "random":
-        (
-            *_,
-            train_idxs,
-            val_idxs,
-            test_idxs,
-        ) = train_val_test_split(np.arange(len(smiles)), **split_kwargs)
+        if test_size:
+            (
+                *_,
+                train_idxs,
+                val_idxs,
+                test_idxs,
+            ) = train_val_test_split(np.arange(len(smiles)), test_size=test_size, val_size=val_size, **split_kwargs)
+        else:
+            (
+                *_,
+                train_idxs,
+                val_idxs,
+            ) = train_test_split(np.arange(len(smiles)), test_size=val_size, **split_kwargs)
+            test_idxs = np.array([])
     elif sampler == "scaffold":
-        (
-            *_,
-            train_idxs,
-            val_idxs,
-            test_idxs,
-        ) = train_val_test_split_molecules(smiles, **split_kwargs)
-    else:
-        raise TypeError(f"Unknown sampler {sampler=}.")
+        if test_size:
+            (
+                *_,
+                train_idxs,
+                val_idxs,
+                test_idxs,
+            ) = train_val_test_split_molecules(smiles, test_size=test_size, val_size=val_size, **split_kwargs)
+        else:
+            (
+                *_,
+                train_idxs,
+                val_idxs,
+            ) = train_test_split_molecules(smiles, test_size=val_size, **split_kwargs)
+            test_idxs = np.array([])
+        
     return train_idxs, val_idxs, test_idxs
 
 

@@ -77,7 +77,7 @@ There are four distinct steps in `fastprop` that define its framework:
     _and_
     - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
     - Hidden Size: number of neurons per FNN layer (default 1800)
-    - Clamp Input: Enable/Disable input clamp to +/-3 to aid in extrapolation (default False).
+    - Clamp Input: Enable/Disable input clamp to +/-3 (winsorization) to aid in extrapolation (default False).
 
     _or_
     - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size
@@ -87,6 +87,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Learning rate
     - Batch size
     - Problem type (one of: regression, binary, multiclass (start labels from 0), multilabel)
+    - Training, Validation, and Testing fraction (set testing to zero to use all data for training and validation)
  4. Prediction
     - Input SMILES: either a single SMILES or file of SMILES strings on individual lines
     - Output format: filepath to write the results or nothing, defaults to stdout
