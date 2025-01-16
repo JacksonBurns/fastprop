@@ -32,7 +32,9 @@ def main():
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
     train_subparser.add_argument("-sc", "--smiles-column", help="column name for SMILES")
     train_subparser.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
-    train_subparser.add_argument("-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules")
+    train_subparser.add_argument(
+        "-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules"
+    )
     train_subparser.add_argument("-ec", "--enable-cache", type=bool, help="allow saving and loading of cached descriptors")
     train_subparser.add_argument("-p", "--precomputed", help="precomputed descriptors from fastprop or mordred")
 

@@ -1,4 +1,3 @@
-
 from typing import List, Literal, Optional, Tuple
 
 import numpy as np
@@ -76,7 +75,7 @@ def split(
                 val_idxs,
             ) = train_test_split_molecules(smiles, test_size=val_size, **split_kwargs)
             test_idxs = np.array([])
-        
+
     return train_idxs, val_idxs, test_idxs
 
 
