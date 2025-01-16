@@ -66,6 +66,7 @@ def train_fastprop(
     sampler: str,
     random_seed: int,
     patience: int,
+    standardize: bool,
     hopt: bool = False,
 ):
     if hopt and (tune is None or OptunaSearch is None):
@@ -93,7 +94,7 @@ def train_fastprop(
             logger.info(f"Found cached descriptor data at {cache_file}, loading instead of recalculating.")
             descriptors = load_saved_descriptors(cache_file)
         else:
-            targets, rdkit_mols, smiles = clean_dataset(targets, smiles)
+            targets, rdkit_mols, smiles = clean_dataset(targets, smiles, standardize=standardize)
             descriptors = get_descriptors(enable_cache and cache_file, DESCRIPTOR_SET_LOOKUP[descriptor_set], rdkit_mols)
             descriptors = descriptors.to_numpy(dtype=float)
 
@@ -145,6 +146,9 @@ def train_fastprop(
         targets_ref = ray.put(targets)
         descriptors_ref = ray.put(descriptors)
         metric = fastprop.get_metric(problem_type)
+        resources = {"cpu": psutil.cpu_count()}
+        if torch.cuda.is_available():
+            resources["gpu"] = 1
         tuner = tune.Tuner(
             tune.with_resources(
                 lambda trial: _hopt_objective(
@@ -172,7 +176,7 @@ def train_fastprop(
                     target_columns,
                     output_subdirectory,
                 ),
-                resources={"gpu": 1, "cpu": psutil.cpu_count()},
+                resources=resources,
             ),
             tune_config=tune.TuneConfig(
                 metric=metric,

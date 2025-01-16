@@ -12,8 +12,8 @@
 </p>
 
 # Announcements
-## alphaXiv
-The `fastprop` paper is freely available online at [arxiv.org/abs/2404.02058](https://arxiv.org/abs/2404.02058) and we are conducting open source peer review on [alphaXiv](https://alphaxiv.org/abs/2404.02058) - comments are appreciated!
+## alphaXiv Paper
+The companion academic paper describing `fastprop` is freely available online at [alphaXiv](https://www.alphaxiv.org/abs/2404.02058).
 The source for the paper is stored in this repository under the `paper` directory.
 
 ## Initial Release :tada:
@@ -22,7 +22,7 @@ Please try `fastprop` on your datasets and let us know what you think.
 Feature requests and bug reports are **very** appreciated!
 
 # Installing `fastprop`
-`fastprop` supports Mac, Windows, and Linux on Python versions 3.8 to 3.12.
+`fastprop` supports Mac, Windows, and Linux on Python versions 3.8 or newer.
 Installing from `pip` is the best way to get `fastprop`, but if you need to check out a specific GitHub branch or you want to contribute to `fastprop` a source installation is recommended.
 Pending interest from users, a `conda` package will be added.
 
@@ -69,6 +69,7 @@ There are four distinct steps in `fastprop` that define its framework:
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
+    - standardize: call `rdkit`'s `rdMolStandardize.Cleanup` function on the input molecules before calculating descriptors (`False` by default)
     - _not configurable_: `fastprop` will always rescale input features, set invariant and missing features to zero, and impute missing values with the per-feature mean
  3. Training
     - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).
@@ -76,7 +77,7 @@ There are four distinct steps in `fastprop` that define its framework:
     _and_
     - Number of FNN layers (default 2; repeated fully connected layers of hidden size)
     - Hidden Size: number of neurons per FNN layer (default 1800)
-    - Clamp Input: Enable/Disable input clamp to +/-3 to aid in extrapolation (default False).
+    - Clamp Input: Enable/Disable input clamp to +/-3 (winsorization) to aid in extrapolation (default False).
 
     _or_
     - Hyperparameter optimization: runs hyperparameter optimization identify the optimal number of layers and hidden size
@@ -86,6 +87,7 @@ There are four distinct steps in `fastprop` that define its framework:
     - Learning rate
     - Batch size
     - Problem type (one of: regression, binary, multiclass (start labels from 0), multilabel)
+    - Training, Validation, and Testing fraction (set testing to zero to use all data for training and validation)
  4. Prediction
     - Input SMILES: either a single SMILES or file of SMILES strings on individual lines
     - Output format: filepath to write the results or nothing, defaults to stdout
@@ -101,6 +103,9 @@ After installation, `fastprop` is accessible from the command line via `fastprop
  - `shap` performs SHAP analysis on a trained model to determine which of the input features are important.
 
 Try `fastprop --help` or `fastprop subcommand --help` for more information and see below.
+
+> [!TIP]
+> `fastprop` will use all of your CPUs for descriptor calculation by default - set the `MORDRED_NUM_PROC` environment variable to some other number to change this behavior.
 
 ### Configuration File [recommended]
 See `examples/example_fastprop_train_config.yaml` for configuration files that show all options that can be configured during training.

@@ -26,6 +26,8 @@ optimize: False # True
 #
 # Which set of descriptors to calculate (either all or optimized)
 descriptor_set: all
+# Call rdMolStandardize.Cleanup on molecules before calculating descriptors
+standardize: False
 # Allow caching of descriptors
 enable_cache: True
 #
