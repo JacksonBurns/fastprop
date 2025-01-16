@@ -32,6 +32,7 @@ def main():
     train_subparser.add_argument("-tc", "--target-columns", nargs="+", help="column name(s) for target(s)")
     train_subparser.add_argument("-sc", "--smiles-column", help="column name for SMILES")
     train_subparser.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
+    train_subparser.add_argument("-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules")
     train_subparser.add_argument("-ec", "--enable-cache", type=bool, help="allow saving and loading of cached descriptors")
     train_subparser.add_argument("-p", "--precomputed", help="precomputed descriptors from fastprop or mordred")
 
@@ -60,6 +61,7 @@ def main():
     input_group.add_argument("-sf", "--smiles-file", help="file containing SMILES strings only")
     input_group = predict_subparser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
+    input_group.add_argument("-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules")
     input_group.add_argument("-pd", "--precomputed-descriptors", help="precomputed descriptors")
     predict_subparser.add_argument("-o", "--output", required=False, help="output file for predictions (defaults to stdout)")
 
@@ -94,7 +96,7 @@ def main():
         training_default = dict(DEFAULT_TRAINING_CONFIG)
         optim_requested = args.pop("optimize")
         if args["config_file"] is not None:
-            if any(value is not None and arg_name not in {"clamp_input", "config_file"} for arg_name, value in args.items()):
+            if any(value is not None and arg_name not in {"clamp_input", "config_file", "standardize"} for arg_name, value in args.items()):
                 raise parser.error("Cannot specify config_file with other command line arguments (except --optimize).")
             with open(args["config_file"], "r") as f:
                 cfg = yaml.safe_load(f)

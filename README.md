@@ -69,6 +69,7 @@ There are four distinct steps in `fastprop` that define its framework:
     _or_
     - Load precomputed descriptors: filepath to where descriptors are already cached either manually or by `fastprop`
  2. Preprocessing
+    - standardize: call `rdkit`'s `rdMolStandardize.Cleanup` function on the input molecules before calculating descriptors (`False` by default)
     - _not configurable_: `fastprop` will always rescale input features, set invariant and missing features to zero, and impute missing values with the per-feature mean
  3. Training
     - Number of Repeats: How many times to split/train/test on the dataset (increments random seed by 1 each time).

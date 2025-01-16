@@ -114,17 +114,21 @@ def inverse_standard_scale(data: torch.Tensor, means: torch.Tensor, variances: t
     return data * variances.sqrt() + means
 
 
-def clean_dataset(targets: np.ndarray, smiles: np.ndarray):
+def clean_dataset(targets: np.ndarray, smiles: np.ndarray, standardize: bool = False):
     """Removes targets with missing values and SMILES which cannot be converted to molecules.
 
     Args:
         targets (np.ndarray): Targets corresponding to mols.
         smiles (np.ndarray): SMILES corresponding to the targets.
+        standardize (bool, optional): Call rdMolStandardize.Cleanup on molecules. Default False.
 
     Returns:
         tuple[np.ndarray, np.ndarray]: Valid targets and RDKit Molecules.
     """
     rdkit_mols = np.array(list(Chem.MolFromSmiles(i) for i in smiles))
+    if standardize:
+        for mol in rdkit_mols:
+            Chem.Cleanup(mol)
     starting_length = len(rdkit_mols)
 
     # remove dataset entries where the molecule could not be built
