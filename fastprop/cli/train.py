@@ -146,6 +146,9 @@ def train_fastprop(
         targets_ref = ray.put(targets)
         descriptors_ref = ray.put(descriptors)
         metric = fastprop.get_metric(problem_type)
+        resources = {"cpu": psutil.cpu_count()}
+        if torch.cuda.is_available():
+            resources["gpu"] = 1
         tuner = tune.Tuner(
             tune.with_resources(
                 lambda trial: _hopt_objective(
@@ -173,7 +176,7 @@ def train_fastprop(
                     target_columns,
                     output_subdirectory,
                 ),
-                resources={"gpu": 1, "cpu": psutil.cpu_count()},
+                resources=resources,
             ),
             tune_config=tune.TuneConfig(
                 metric=metric,
