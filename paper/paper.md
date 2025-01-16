@@ -36,6 +36,13 @@ note: |
     --pdf-engine=pdflatex --pdf-engine-opt=-output-directory=foo
  Which leaves the intermediate TeX file in the `foo` directory. I then manually
  fix an image filepath which pandoc incorrectly leaves.
+note: |
+  Compile the additional file with:
+    pandoc --citeproc -s additional_file_1.md -o additional_file_1.pdf --template default.latex \
+      --pdf-engine=pdflatex --pdf-engine-opt=-output-directory=foo
+  or with the following, for arxiv:
+    pandoc --citeproc -s additional_file_1.md -o additional_file_1.pdf --template default.latex \
+      --pdf-engine=pdflatex --pdf-engine-opt=-output-directory=foo
 ---
 
 <!-- Graphical Abstract Goes Here -->
@@ -49,7 +56,7 @@ The former requires less training data and offers improved speed and interpretab
 
 This paper introduces `fastprop`, a software package and general Deep-QSPR framework that combines a cogent set of molecular descriptors with deep learning to achieve state-of-the-art performance on datasets ranging from tens to tens of thousands of molecules.
 `fastprop` provides both a user-friendly Command Line Interface and highly interoperable set of Python modules for the training and deployment of feedforward neural networks for property prediction.
-This approach yields improvements in speed and interpretability over existing methods without sacrificing performance.
+This approach yields improvements in speed and interpretability over existing methods while statistically equaling or exceeding their performance across most of the tested benchmarks.
 `fastprop` is designed with Research Software Engineering best practices and is free and open source, hosted at github.com/jacksonburns/fastprop.
 
 ## Scientific Contribution
@@ -123,6 +130,7 @@ Efforts are of course underway to address this limitation, though none are broad
 One simple but incredibly computationally expensive approach is to use delta learning, which artificially increases dataset size by generating all possible _pairs_ of molecules from the available data (thus squaring the size of the dataset).
 This was attempted by Nalini et al. [@deepdelta], who used an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
 They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
+Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn], which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
 Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review].
 
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
@@ -137,7 +145,7 @@ For the purposes of this study, it will be used to refer to datasets with ~1000 
 At its core the `fastprop` 'architecture' is simply the `mordred` molecular descriptor calculator [^2] [@mordred] connected to a Feedforward Neural Network (FNN) implemented in PyTorch Lightning [@lightning] (Figure \ref{logo}) - an existing approach formalized into an easy-to-use, reliable, and correct implementation.
 `fastprop` is highly modular for seamless integration into existing workflows and includes and end-to-end Command Line Interface (CLI) for general use.
 In the latter mode the user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding target values.
-`fastprop` automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated targets.
+`fastprop` optionally standardizes input molecule and then automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated targets.
 By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the CLI or configuration file.
 Multitask regression and multi-label classification are also supported and configurable in the same manner.
 `fastprop` principally owes its success to the cogent set of descriptors assembled by the developers of `mordred`.
@@ -155,7 +163,7 @@ Esaki and coauthors started a QSPR study with `mordred` descriptors for a datase
 Yalamanchi and coauthors used DL on `mordred` descriptors as part of a two-headed representation, but their network architecture was sequential hidden layers _decreasing_ in size to only 12 features [@yalamanchi] as opposed to the constant 1800 in `fastprop`.
 
 The reason `fastprop` stands out from these studies and contradicts previous reports is for the simple reason that it works.
-As discussed at length in the [Results & Discussion](#results--discussion) section, this approach matches the performance of leading LR approaches on common benchmark datasets and bespoke QSPR models on small real-world datasets.
+As discussed at length in the [Results & Discussion](#results--discussion) section, this approach statistically matches or exceeds the performance of leading LR approaches on common benchmark datasets and bespoke QSPR models on small real-world datasets.
 `fastprop` also overcomes the limitations of LRs discussed above.
 The FNN architecture and use of physically meaningful molecular descriptors enables the application of SHAP [@shap], a common tool for feature importance analysis (see [Interpretability](#interpretability)).
 The simplicity of the framework enables domain experts to apply it easily and makes model training dramatically faster than LRs.
@@ -239,6 +247,10 @@ The insignificant time spent manually collating Chemprop results (Chemprop does 
 `fastprop` is run on version 1.0.6 using Python 3.11 and timing values are reported according to its internal time measurement  which was verified to be nearly identical to the Unix `time` command.
 The coarse comparison of the two packages is intended to emphasize the scaling of LRs and Deep-QSPR and that `fastprop` is, generally speaking, much faster.
 All models trained for this study were run on a Dell Precision series laptop with an NVIDIA Quadro RTX 4000 GPU and Intel Xeon E-2286M CPU.
+
+Because the diversity of methods across these different datasets complicates inter-dataset comparisons, an additional set of benchmarks using an identical method across all datasets is included in Additional File 1, Table S1.
+This benchmark compares `fastprop`, Chemprop, and the aforementioned Transformer-CNN, which is especially suitable for the small datasets included therein.
+No long-form commentary on benchmark results is provided, though the conclusions are largely the same as those shown here.
 
 ### Performance Metrics
 The evaluation metrics used in each of these benchmarks are chosen to match literature precedent, particularly as established by MoleculeNet [@moleculenet], where available.
