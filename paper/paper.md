@@ -131,6 +131,7 @@ One simple but incredibly computationally expensive approach is to use delta lea
 This was attempted by Nalini et al. [@deepdelta], who used an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
 They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
 Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn], which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
+This model is unique in that it operates directly on the SMILES representation of the molecule, also offering benefits in structural attribution of predictions.
 Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review].
 
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.

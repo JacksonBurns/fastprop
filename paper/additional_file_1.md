@@ -19,8 +19,9 @@ All datasets are retrieved from MoleculeNet, except Tox24 which was retrieved fr
 
 Benchmarks are sorted by size, descending.
 Each result is the average and standard deviation across five randomly selected train/val/test splits of 0.70/0.10/0.20.
-All models were trained with their default settings.
-Augmentation at training or inference time was not performed, although suggested for Transformer-CNN by its authors, to ensure a fair comparison is made.
+All models were trained with their default settings, i.e. no hyperparameter optimization was performed.
+Augmentation at training or inference time was not performed.
+Transformer-CNN suggests using augmentation to correct for the impact of multiple valid SMILES encodings per a given molecule, but because the impact of augmentation on ChemProp and `fastprop` is not understood it is neglected.
 For Mean Absolute Error (MAE) and Root Mean Squared Error (RMSE) lower is better and for Receiver Operating Characteristic Area Under the Curve (ROC-AUC) higher is better.
 The Tukey test is used to check for pairwise statistical differences between the three models.
 The best performing model(s) which are statistically significantly different from the others are shown in bold.
