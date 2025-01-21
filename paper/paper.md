@@ -147,7 +147,7 @@ At its core the `fastprop` 'architecture' is simply the `mordred` molecular desc
 In the latter mode the user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding target values.
 `fastprop` optionally standardizes input molecule and then automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated targets.
 By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the CLI or configuration file.
-Multitask regression and multi-label classification are also supported and configurable in the same manner.
+Multitask regression and multi-label classification are also supported and configurable in the same manner, the former having been shown to significantly improve predictive power in cheminformatics models [@tetko_multitask].
 `fastprop` principally owes its success to the cogent set of descriptors assembled by the developers of `mordred`.
 Multiple descriptor calculators from the very thorough review by McGibbon et al. [@representation_review] could be used instead, though none are as readily interoperable as `mordred`.
 Additionally, the ease of training FNNs with modern software like PyTorch Lightning and the careful application of Research Software Engineering best practices make `fastprop` as user friendly as the best-maintained alternatives.
