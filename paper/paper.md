@@ -581,7 +581,7 @@ The original study did not report overall performance metrics, so they have been
 For comparison `fastprop` and Chemprop use a more typical 60/20/20 random split and 8 repetitions.
 Results are summarized in Table \ref{ysi_results_table}.
 
-Table: YSI results. \label{ysi_results_table}
+Table: Accuracy of YSI predictions from Reference model [@ysi], Linear QSPR model, `fastprop`, and Chemprop. \label{ysi_results_table}
 
 +------------+----------------+----------------+-----------------+
 | Model      | MAE            | RMSE           | WMAPE           |
