@@ -274,6 +274,7 @@ and classification:
 ## Benchmark Results
 See Table \ref{results_table} for a summary of all the results.
 Subsequent sections explore each in greater detail.
+For benchmarks with statistics, practically significant best performers are shown in bold.
 
 Table: Summary of benchmark results, best state-of-the-art method vs. `fastprop` and Chemprop. \label{results_table}
 
