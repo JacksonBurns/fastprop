@@ -711,7 +711,7 @@ First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brai
 This specific target in combination with the small dataset size makes this benchmark highly relevant for typical QSPR studies, particular via delta learning.
 DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were intra-combined to generate all possible pairs and then the differences in the property [^5] were predicted, rather than the absolute values, increasing the amount of training data by a factor of 300.
 
-DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an accuracy of 96.5 $\pm$ 1.9% when evaluated on its capacity to predict property differences.
+DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an RMSE of 0.965 $\pm$ 0.09 when evaluated on its capacity to predict property differences.
 `fastprop` is able to outperform Chemprop, though not DeepDelta, achieving an RMSE of 0.930 $\pm$ 0.029 when using the same splitting procedure above.
 It is evident that delta learning is still a powerful technique for regressing small datasets.
 
