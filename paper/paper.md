@@ -589,9 +589,9 @@ Table: YSI results. \label{ysi_results_table}
 +------------+----------------+----------------+-----------------+
 | `fastprop` | 25.0 $\pm$ 5.2 | 52 $\pm$ 20    | 13.6 $\pm$ 1.3  |
 +------------+----------------+----------------+-----------------+
-| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~               |
+| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | 16.4 $\pm$ 3.0  |
 +------------+----------------+----------------+-----------------+
-| Linear     | 82 $\pm$ 39    | 180 $\pm$ 120  | 47.0 $\pm$ 2.30 |
+| Linear     | 82 $\pm$ 39    | 180 $\pm$ 120  | 47.0 $\pm$ 2.3  |
 +------------+----------------+----------------+-----------------+
 
 `fastprop` again outperforms Chemprop, in this case approaching the overly-optimistic performance of the reference model.
