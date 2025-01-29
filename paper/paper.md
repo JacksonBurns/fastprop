@@ -131,6 +131,7 @@ One simple but incredibly computationally expensive approach is to use delta lea
 This was attempted by Nalini et al. [@deepdelta], who used an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
 They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
 Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn], which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
+This model is unique in that it operates directly on the SMILES representation of the molecule, also offering benefits in structural attribution of predictions.
 Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review].
 
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
@@ -147,7 +148,7 @@ At its core the `fastprop` 'architecture' is simply the `mordred` molecular desc
 In the latter mode the user simply specifies a set of SMILES [@smiles], a linear textual encoding of molecules, and their corresponding target values.
 `fastprop` optionally standardizes input molecule and then automatically calculates and caches the corresponding molecular descriptors with `mordred`, re-scales both the descriptors and the targets appropriately, and then trains an FNN to predict the indicated targets.
 By default this FNN is two hidden layers with 1800 neurons each connected by ReLU activation functions, though the configuration can be readily changed via the CLI or configuration file.
-Multitask regression and multi-label classification are also supported and configurable in the same manner.
+Multitask regression and multi-label classification are also supported and configurable in the same manner, the former having been shown to significantly improve predictive power in cheminformatics models [@tetko_multitask].
 `fastprop` principally owes its success to the cogent set of descriptors assembled by the developers of `mordred`.
 Multiple descriptor calculators from the very thorough review by McGibbon et al. [@representation_review] could be used instead, though none are as readily interoperable as `mordred`.
 Additionally, the ease of training FNNs with modern software like PyTorch Lightning and the careful application of Research Software Engineering best practices make `fastprop` as user friendly as the best-maintained alternatives.
@@ -273,6 +274,7 @@ and classification:
 ## Benchmark Results
 See Table \ref{results_table} for a summary of all the results.
 Subsequent sections explore each in greater detail.
+For benchmarks with statistics, practically significant best performers are shown in bold.
 
 Table: Summary of benchmark results, best state-of-the-art method vs. `fastprop` and Chemprop. \label{results_table}
 
@@ -579,7 +581,7 @@ The original study did not report overall performance metrics, so they have been
 For comparison `fastprop` and Chemprop use a more typical 60/20/20 random split and 8 repetitions.
 Results are summarized in Table \ref{ysi_results_table}.
 
-Table: YSI results. \label{ysi_results_table}
+Table: Accuracy of YSI predictions from Reference model [@ysi], Linear QSPR model, `fastprop`, and Chemprop. \label{ysi_results_table}
 
 +------------+----------------+----------------+-----------------+
 | Model      | MAE            | RMSE           | WMAPE           |
@@ -588,9 +590,9 @@ Table: YSI results. \label{ysi_results_table}
 +------------+----------------+----------------+-----------------+
 | `fastprop` | 25.0 $\pm$ 5.2 | 52 $\pm$ 20    | 13.6 $\pm$ 1.3  |
 +------------+----------------+----------------+-----------------+
-| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | ~               |
+| Chemprop   | 28.9 $\pm$ 6.5 | 63 $\pm$ 14    | 16.4 $\pm$ 3.0  |
 +------------+----------------+----------------+-----------------+
-| Linear     | 82 $\pm$ 39    | 180 $\pm$ 120  | 0.47 $\pm$ 0.23 |
+| Linear     | 82 $\pm$ 39    | 180 $\pm$ 120  | 47.0 $\pm$ 2.3  |
 +------------+----------------+----------------+-----------------+
 
 `fastprop` again outperforms Chemprop, in this case approaching the overly-optimistic performance of the reference model.
@@ -710,13 +712,13 @@ First described by Esaki and coauthors, the Fraction of Unbound Drug in the Brai
 This specific target in combination with the small dataset size makes this benchmark highly relevant for typical QSPR studies, particular via delta learning.
 DeepDelta [@deepdelta] performed a 90/0/10 cross-validation study of the Fubrain dataset in which the training and testing molecules were intra-combined to generate all possible pairs and then the differences in the property [^5] were predicted, rather than the absolute values, increasing the amount of training data by a factor of 300.
 
-DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an accuracy of 96.5 $\pm$ 1.9% when evaluated on its capacity to predict property differences.
+DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, whereas a typical Chemprop model trained to directly predict property values was only able to reach an RMSE of 0.965 $\pm$ 0.09 when evaluated on its capacity to predict property differences.
 `fastprop` is able to outperform Chemprop, though not DeepDelta, achieving an RMSE of 0.930 $\pm$ 0.029 when using the same splitting procedure above.
 It is evident that delta learning is still a powerful technique for regressing small datasets.
 
-For completeness, the performance of Chemprop and `fastprop` on Fubrain are also compared to the original study.
-The study that first generated this dataset used `mordred` descriptors but as is convention they strictly applied linear modeling methods.
+For completeness, the performance of Chemprop and `fastprop` when directly predicting the unbound fraction are also compared to the original study by Esaki and coauthors.
 Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
+They used `mordred` descriptors in their model but as is convention they strictly applied linear modeling methods.
 All told, their model achieved an RMSE of 0.53 averaged across all testing data.
 In only 39 seconds, of which 31 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.207 $\pm$ 0.024.
 This also surpasses Chemprop, itself outperforming the reference model with an RMSE of 0.223 $\pm$ 0.036.
