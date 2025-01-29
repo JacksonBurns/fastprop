@@ -715,9 +715,9 @@ DeepDelta reported an RMSE of 0.830 $\pm$ 0.023 at predicting differences, where
 `fastprop` is able to outperform Chemprop, though not DeepDelta, achieving an RMSE of 0.930 $\pm$ 0.029 when using the same splitting procedure above.
 It is evident that delta learning is still a powerful technique for regressing small datasets.
 
-For completeness, the performance of Chemprop and `fastprop` on Fubrain are also compared to the original study.
-The study that first generated this dataset used `mordred` descriptors but as is convention they strictly applied linear modeling methods.
+For completeness, the performance of Chemprop and `fastprop` when directly predicting the unbound fraction are also compared to the original study by Esaki and coauthors.
 Using both cross validation and and external test sets, they had an effective training/validation/testing split of 0.64/0.07/0.28 which will be repeated 4 times here for comparison.
+They used `mordred` descriptors in their model but as is convention they strictly applied linear modeling methods.
 All told, their model achieved an RMSE of 0.53 averaged across all testing data.
 In only 39 seconds, of which 31 are spent calculating descriptors, `fastprop` far exceeds the reference model with an RMSE of 0.207 $\pm$ 0.024.
 This also surpasses Chemprop, itself outperforming the reference model with an RMSE of 0.223 $\pm$ 0.036.
