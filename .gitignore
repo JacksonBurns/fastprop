@@ -34,6 +34,7 @@ examples/*
 !examples/example_fastprop_train_config.yml
 !examples/oom_training.py
 !examples/fastprop_computational_adme_demo.ipynb
+!examples/fastprop_polaris_classification_demo.ipynb
 
 # todo's
 benchmarks/tox21
