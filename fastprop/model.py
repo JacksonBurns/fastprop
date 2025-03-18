@@ -161,7 +161,7 @@ class fastprop(pl.LightningModule):
         self._human_loss(y_hat, batch, "test")
         return loss
 
-    def predict_step(self, batch: Tuple[torch.Tensor], rescale: bool = True):
+    def predict_step(self, batch: Tuple[torch.Tensor], *, rescale: bool = True):
         """Applies feature scaling and appropriate activation function to a Tensor of descriptors.
 
         Args:
