@@ -156,6 +156,14 @@ Additionally, the ease of training FNNs with modern software like PyTorch Lightn
 
 ![`fastprop` logo.\label{logo}](../fastprop_logo.png){ width=2in }
 
+Fitting to molecular descriptors requires careful attention given that they can be highly correlated, often have enormous outliers exacerbated with re-scaling, and can be missing or infinite for some species.
+`fastprop` includes extensive, configurable data pre-processing steps to accommodate these limitations.
+First and foremost, users can opt to use a subset of 947 less-correlated ($r<0.95$ on QM8 [@qm8]) `mordred` descriptors, though this is usually unnessecary.
+Before training, all features are standardized to have mean of zero and variance of one.
+Missing features are then set to zero, equivalent to imputing with the mean value.
+Finally, descriptors having values larger than $\pm$ 3 are set to $\pm$ 3, analogous to Winsorization based on 3 standard deviations from the mean.
+Other common pre-processing transformations, such as the $log_{10}$ function, are easily implemented when using `fastprop` as a Python module.
+
 This trivially simple idea has been alluded to in previous published work but neither described in detail nor lauded for its generalizability or accuracy.
 Comesana and coauthors, based on a review of the biofuels property prediction landscape, claimed that methods (DL or otherwise) using large numbers of molecular descriptors were unsuccessful, instead proposing a feature selection method [@fuels_qsar_method].
 As a baseline in a study of photovoltaic property prediction, Wu et al. reported using the `mordred` descriptors in combination with both a Random Forest and an Artificial Neural Network, though in their hands the performance is worse than their bespoke model and no code is available for inspection [@wu_photovoltaic].
