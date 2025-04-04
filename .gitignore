@@ -27,6 +27,7 @@ benchmarks/h2s/1-s2.0-S0167732217350985-mmc1.xlsx
 benchmarks/ocelot/174705_1_supplements.zip
 benchmarks/ocelot/ocelot_chromophore_v1.zip
 benchmarks/ocelot/ocelot_chromophore_v1/readme.txt
+paper/foo
 
 # ignore some output files from the example directory
 examples/*

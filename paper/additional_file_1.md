@@ -16,6 +16,8 @@ The following table shows the performance (see Metric column) for Chemprop, Tran
 
 For further information about exact software versions for reproducing these results, see this GitHub repository which hosts both the training code and the results: [github.com/JacksonBurns/fastprop-benchmark](https://github.com/JacksonBurns/fastprop-benchmark).
 All datasets are retrieved from MoleculeNet, except Tox24 which was retrieved from [OChem.eu](https://ochem.eu/static/challenge.do) - direct links are provided in the aforementioned repository.
+The version of Transformer-CNN used is that referenced in the original publication, as made available on GitHub at [github.com/bigchem/transformer-cnn](https://github.com/bigchem/transformer-cnn).
+A more user-friendly version with updated dependencies has been made available on GitHub at [github.com/osmoai/transformer-CNN](https://github.com/osmoai/transformer-CNN) and may be preferable for users looking to use Transformer-CNN on their own data.
 
 Benchmarks are sorted by size, descending.
 Each result is the average and standard deviation across five randomly selected train/val/test splits of 0.70/0.10/0.20.
