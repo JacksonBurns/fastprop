@@ -126,12 +126,13 @@ This limitation is especially challenging because it is a _fundamental_ drawback
 Without the use of advanced DL techniques like pre-training or transfer learning, the model is essentially starting from near-zero information every time a model is created.
 This inherently requires larger datasets to allow the model to effectively 're-learn' the chemical intuition which was built in to descriptor- and fixed fingerprint-based representations.
 
-Efforts are of course underway to address this limitation, though none are broadly successful.
+Efforts are of course underway to address this limitation, though no clear universal solution has emerged.
 One simple but incredibly computationally expensive approach is to use delta learning, which artificially increases dataset size by generating all possible _pairs_ of molecules from the available data (thus squaring the size of the dataset).
 This was attempted by Nalini et al. [@deepdelta], who used an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
 They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
-Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn], which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
+Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn] which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
 This model is unique in that it operates directly on the SMILES representation of the molecule, also offering benefits in structural attribution of predictions.
+Due to the extensive pre-training this model is often more performant on small datasets than alternatives like ChemProp with the small additional cost of data augmentation.
 Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review].
 
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
@@ -139,7 +140,7 @@ A turning point in this domain was the release of `mordred`, a fast and well-dev
 Critically this package was fully open source and written in Python, allowing it to readily interoperate with the world-class Python DL software ecosystem that greatly benefitted the LR community.
 Despite previous claims that molecular descriptors _cannot_ achieve generalizable QSPR in combination with DL, the opposite is shown here with `fastprop`.
 
-[^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon by researchers.
+[^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon.
 For the purposes of this study, it will be used to refer to datasets with ~1000 molecules or fewer, which the authors believe better reflects the size of real-world datasets.
 
 # Implementation
