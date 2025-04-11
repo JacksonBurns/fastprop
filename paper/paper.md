@@ -835,7 +835,7 @@ This has _not_ been done in this study for two reasons: (1) to emphasize the cap
 `fastprop` is fundamentally limited by the types of chemicals which can be uniquely described by the `mordred` package.
 Domain-specific additions which are not just derived from the descriptors already implemented will be required to expand its application to new domains.
 To facilitate this use case `fastprop` allows users to pass pre-computed descriptors from the CLI.
-This allows seamless interopation with other user-developed descriptors or other molecular descriptor calculators.
+This allows seamless interoperation with other user-developed descriptors or other molecular descriptor calculators.
 
 For example, in its current state `mordred` does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
 While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stereo Signature Molecular Descriptor [@stereo_signature] may prove helpful in the future if re-implemented in `mordred`.

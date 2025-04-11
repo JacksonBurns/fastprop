@@ -531,18 +531,22 @@ eprint = {
   pages = {23764-23775}
 }
 
-@article{tcnn,
-  title = {Transformer-CNN: Swiss knife for QSAR modeling and interpretation},
-  volume = {12},
-  ISSN = {1758-2946},
-  url = {http://dx.doi.org/10.1186/s13321-020-00423-w},
-  DOI = {10.1186/s13321-020-00423-w},
-  number = {1},
-  journal = {Journal of Cheminformatics},
-  publisher = {Springer Science and Business Media LLC},
-  author = {Karpov,  Pavel and Godin,  Guillaume and Tetko,  Igor V.},
-  year = {2020},
-  month = mar 
+@Article{tcnn,
+        author={Karpov, Pavel
+        and Godin, Guillaume
+        and Tetko, Igor V.},
+        title={Transformer-CNN: Swiss knife for QSAR modeling and interpretation},
+        journal={Journal of Cheminformatics},
+        year={2020},
+        month={Mar},
+        day={18},
+        volume={12},
+        number={1},
+        pages={17},
+        abstract={We present SMILES-embeddings derived from the internal encoder state of a Transformer [1] model trained to canonize SMILES as a Seq2Seq problem. Using a CharNN [2] architecture upon the embeddings results in higher quality interpretable QSAR/QSPR models on diverse benchmark datasets including regression and classification tasks. The proposed Transformer-CNN method uses SMILES augmentation for training and inference, and thus the prognosis is based on an internal consensus. That both the augmentation and transfer learning are based on embeddings allows the method to provide good results for small datasets. We discuss the reasons for such effectiveness and draft future directions for the development of the method. The source code and the embeddings needed to train a QSAR model are available on https://github.com/bigchem/transformer-cnn. The repository also has a standalone program for QSAR prognosis which calculates individual atoms contributions, thus interpreting the model's result. OCHEM [3] environment (https://ochem.eu) hosts the on-line implementation of the method proposed.},
+        issn={1758-2946},
+        doi={10.1186/s13321-020-00423-w},
+        url={https://doi.org/10.1186/s13321-020-00423-w}
 }
 
 @article{hopv15_original,
