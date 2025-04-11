@@ -126,12 +126,13 @@ This limitation is especially challenging because it is a _fundamental_ drawback
 Without the use of advanced DL techniques like pre-training or transfer learning, the model is essentially starting from near-zero information every time a model is created.
 This inherently requires larger datasets to allow the model to effectively 're-learn' the chemical intuition which was built in to descriptor- and fixed fingerprint-based representations.
 
-Efforts are of course underway to address this limitation, though none are broadly successful.
+Efforts are of course underway to address this limitation, though no clear universal solution has emerged.
 One simple but incredibly computationally expensive approach is to use delta learning, which artificially increases dataset size by generating all possible _pairs_ of molecules from the available data (thus squaring the size of the dataset).
 This was attempted by Nalini et al. [@deepdelta], who used an unmodified version of Chemprop referred to as 'DeepDelta' to predict _differences_ in molecular properties for _pairs_ of molecules.
 They achieve increased performance over standard LR approaches but _lost_ the ability to train on large datasets due to simple runtime limitations.
-Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn], which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
+Another promising line of inquiry is the Transformer-CNN model of Karpov et al. [@tcnn] which leverages a pre-trained transformer model for prediction, circumventing the need for massive datasets and offering additional benefits in interpretability.
 This model is unique in that it operates directly on the SMILES representation of the molecule, also offering benefits in structural attribution of predictions.
+Due to the extensive pre-training this model is often more performant on small datasets than alternatives like ChemProp with the small additional cost of data augmentation.
 Other increasingly complex approaches are discussed in the outstanding review by van Tilborg et al. [@low_data_review].
 
 While iterations on LRs and novel approaches to low-data regimes have been in development, the classical QSPR community has continued their work.
@@ -139,7 +140,7 @@ A turning point in this domain was the release of `mordred`, a fast and well-dev
 Critically this package was fully open source and written in Python, allowing it to readily interoperate with the world-class Python DL software ecosystem that greatly benefitted the LR community.
 Despite previous claims that molecular descriptors _cannot_ achieve generalizable QSPR in combination with DL, the opposite is shown here with `fastprop`.
 
-[^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon by researchers.
+[^1]: What constitutes a 'small' dataset is decidedly _not_ agreed upon.
 For the purposes of this study, it will be used to refer to datasets with ~1000 molecules or fewer, which the authors believe better reflects the size of real-world datasets.
 
 # Implementation
@@ -154,6 +155,14 @@ Multiple descriptor calculators from the very thorough review by McGibbon et al.
 Additionally, the ease of training FNNs with modern software like PyTorch Lightning and the careful application of Research Software Engineering best practices make `fastprop` as user friendly as the best-maintained alternatives.
 
 ![`fastprop` logo.\label{logo}](../fastprop_logo.png){ width=2in }
+
+Fitting to molecular descriptors requires careful attention given that they can be highly correlated, often have enormous outliers exacerbated with re-scaling, and can be missing or infinite for some species.
+`fastprop` includes extensive, configurable data pre-processing steps to accommodate these limitations.
+First and foremost, users can opt to use a subset of 947 less-correlated ($r<0.95$ on QM8 [@qm8]) `mordred` descriptors, though this is usually unnessecary.
+Before training, all features are standardized to have mean of zero and variance of one.
+Missing features are then set to zero, equivalent to imputing with the mean value.
+Finally, descriptors having values larger than $\pm$ 3 are set to $\pm$ 3, analogous to Winsorization based on 3 standard deviations from the mean.
+Other common pre-processing transformations, such as the $log_{10}$ function, are easily implemented when using `fastprop` as a Python module.
 
 This trivially simple idea has been alluded to in previous published work but neither described in detail nor lauded for its generalizability or accuracy.
 Comesana and coauthors, based on a review of the biofuels property prediction landscape, claimed that methods (DL or otherwise) using large numbers of molecular descriptors were unsuccessful, instead proposing a feature selection method [@fuels_qsar_method].
@@ -171,7 +180,9 @@ The simplicity of the framework enables domain experts to apply it easily and ma
 Most importantly this approach is successful on the _smallest_ of real-world datasets.
 By starting from such an informed initialization the FNN can be readily trained on datasets with as few as _forty_ training examples (see [PAHs](#pahs)).
 
-[^2]: The original `mordred` package is no longer maintained. `fastprop` uses a fork of `mordred` called `mordredcommunity` that is maintained by community-contributed patches (see github.com/JacksonBurns/mordred-community).
+[^2]: The original `mordred` package is no longer maintained.
+`fastprop` uses a fork of `mordred` called `mordredcommunity` that is maintained by community-contributed patches (see [github.com/JacksonBurns/mordred-community](https://github.com/JacksonBurns/mordred-community)).
+Others have re-implemented the `mordred` calculator as [`osmordred`](https://github.com/osmoai/osmordred) which can be used in `fastprop` via the CLI.
 
 ## Example Usage
 `fastprop` is built with ease of use at the forefront of design.
@@ -823,6 +834,8 @@ This has _not_ been done in this study for two reasons: (1) to emphasize the cap
 ## Coverage of Descriptors
 `fastprop` is fundamentally limited by the types of chemicals which can be uniquely described by the `mordred` package.
 Domain-specific additions which are not just derived from the descriptors already implemented will be required to expand its application to new domains.
+To facilitate this use case `fastprop` allows users to pass pre-computed descriptors from the CLI.
+This allows seamless interoperation with other user-developed descriptors or other molecular descriptor calculators.
 
 For example, in its current state `mordred` does not include any connectivity based-descriptors that reflect the presence or absence of stereocenters.
 While some of the 3D descriptors it implements could implicitly reflect sterochemistry, more explicit descriptors like the Stereo Signature Molecular Descriptor [@stereo_signature] may prove helpful in the future if re-implemented in `mordred`.

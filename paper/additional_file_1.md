@@ -16,6 +16,8 @@ The following table shows the performance (see Metric column) for Chemprop, Tran
 
 For further information about exact software versions for reproducing these results, see this GitHub repository which hosts both the training code and the results: [github.com/JacksonBurns/fastprop-benchmark](https://github.com/JacksonBurns/fastprop-benchmark).
 All datasets are retrieved from MoleculeNet, except Tox24 which was retrieved from [OChem.eu](https://ochem.eu/static/challenge.do) - direct links are provided in the aforementioned repository.
+The version of Transformer-CNN used is that referenced in the original publication, as made available on GitHub at [github.com/bigchem/transformer-cnn](https://github.com/bigchem/transformer-cnn).
+A more user-friendly version with updated dependencies has been made available on GitHub at [github.com/osmoai/transformer-CNN](https://github.com/osmoai/transformer-CNN) and may be preferable for users looking to use Transformer-CNN on their own data.
 
 Benchmarks are sorted by size, descending.
 Each result is the average and standard deviation across five randomly selected train/val/test splits of 0.70/0.10/0.20.
@@ -35,7 +37,7 @@ The best performing model(s) which are statistically significantly different fro
 |      HIV      |41,127| ROC-AUC |\textbf{0.828(0.015)}|0.56(0.13)|\textbf{0.784(0.020)}|
 |      QM8      |21,786|   MAE   |\textbf{0.0056(0.0001)}|0.0136(0.0004)|0.0164(0.0002)|
 |      QM7      |6,834|   MAE   |68.1(2.7)|62.4(2.2)|\textbf{57.1(2.8)}|
-| Lipophilicity |4,200|   RMSE  |0.597(0.033)|\textbf{0.702(0.030)}|\textbf{0.736(0.020)}|
+| Lipophilicity |4,200|   RMSE  |\textbf{0.597(0.033)}|0.702(0.030)|0.736(0.020)|
 |      BBBP     |2,050| ROC-AUC |0.918(0.016)|\textbf{0.9650(0.0032)}|0.903(0.013)|
 |      BACE     |1,513| ROC-AUC |0.856(0.010)|\textbf{0.899(0.016)}|\textbf{0.878(0.015)}|
 |    ClinTox    |1,484| ROC-AUC |\textbf{0.877(0.035)}|\textbf{0.9814(0.0083)}|0.64(0.13)|
