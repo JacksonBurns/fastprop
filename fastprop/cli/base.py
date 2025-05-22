@@ -33,7 +33,7 @@ def main():
     train_subparser.add_argument("-sc", "--smiles-column", help="column name for SMILES")
     train_subparser.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
     train_subparser.add_argument(
-        "-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules"
+        "-st", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules"
     )
     train_subparser.add_argument("-ec", "--enable-cache", type=bool, help="allow saving and loading of cached descriptors")
     train_subparser.add_argument("-p", "--precomputed", help="precomputed descriptors from fastprop or mordred")
@@ -63,7 +63,7 @@ def main():
     input_group.add_argument("-sf", "--smiles-file", help="file containing SMILES strings only")
     input_group = predict_subparser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("-ds", "--descriptor-set", help="descriptors to calculate (one of all, optimized, or debug)")
-    input_group.add_argument("-s", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules")
+    input_group.add_argument("-st", "--standardize", action="store_true", default=False, help="call rdMolStandardize.Cleanup function on molecules")
     input_group.add_argument("-pd", "--precomputed-descriptors", help="precomputed descriptors")
     predict_subparser.add_argument("-o", "--output", required=False, help="output file for predictions (defaults to stdout)")
 
@@ -126,5 +126,5 @@ def main():
         logger.critical(f"Unrecognized subcommand '{subcommand}', printing help and exiting.")
         parser.print_help()
         sys.exit(0)
-    logger.info("If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058")
+    logger.info("If you use fastprop in published work, please cite https://doi.org/10.1186/s13321-025-01013-4")
     logger.info("Total elapsed time: " + str(datetime.timedelta(seconds=perf_counter() - cli_start)))
