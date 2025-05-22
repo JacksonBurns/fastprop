@@ -126,5 +126,5 @@ def main():
         logger.critical(f"Unrecognized subcommand '{subcommand}', printing help and exiting.")
         parser.print_help()
         sys.exit(0)
-    logger.info("If you use fastprop in published work, please cite https://arxiv.org/abs/2404.02058")
+    logger.info("If you use fastprop in published work, please cite https://doi.org/10.1186/s13321-025-01013-4")
     logger.info("Total elapsed time: " + str(datetime.timedelta(seconds=perf_counter() - cli_start)))
