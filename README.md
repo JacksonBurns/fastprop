@@ -159,3 +159,9 @@ Follow [this tutorial from GitHub](https://docs.github.com/en/get-started/explor
 See the [section on the package layout](#python-module) for information on where all the other functions are, and check out the docstrings and inline comments in each file for more information on what each does.
 
 Note that the `pyproject.toml` defines optional `dev` and `bmark` packages, which will get you setup with the same dependencies used for CI and benchmarking.
+
+# Licenses
+
+`fastprop` source code is available under the MIT license, a copy of which is provided in theis repository and which can also be found [here](https://opensource.org/license/mit).
+The [`fastprop` log](fastprop_logo.png) is available under the Creative Commons Zero license found [here](https://creativecommons.org/public-domain/cc0/).
+Please reuse it at your leisure, including in any and all scientific publications.
