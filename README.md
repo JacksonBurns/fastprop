@@ -163,5 +163,5 @@ Note that the `pyproject.toml` defines optional `dev` and `bmark` packages, whic
 # Licenses
 
 `fastprop` source code is available under the MIT license, a copy of which is provided in theis repository and which can also be found [here](https://opensource.org/license/mit).
-The [`fastprop` log](fastprop_logo.png) is available under the Creative Commons Zero license found [here](https://creativecommons.org/public-domain/cc0/).
+The [`fastprop` logo](fastprop_logo.png) is available under the Creative Commons Zero license found [here](https://creativecommons.org/public-domain/cc0/).
 Please reuse it at your leisure, including in any and all scientific publications.
