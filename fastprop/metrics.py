@@ -31,7 +31,7 @@ def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, predictio
         truth.numpy(force=True),
         prediction.numpy(force=True),
         multioutput="raw_values" if multitask else "uniform_average",
-        sample_weight=truth.numpy(force=True),
+        sample_weight=truth.numpy(force=True).ravel(),
     )
 
 
