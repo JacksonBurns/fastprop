@@ -1,6 +1,5 @@
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -11,8 +10,10 @@ from fastprop.io import load_saved_descriptors
 from fastprop.model import fastprop
 
 shap = None
+plt = None
 try:
     import shap
+    import matplotlib.pyplot as plt
 except ImportError as ie:
     shape_error = ie
 
