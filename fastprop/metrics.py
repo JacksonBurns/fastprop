@@ -27,12 +27,23 @@ def mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.
 
 
 def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):
-    return mape(
-        truth.numpy(force=True),
-        prediction.numpy(force=True),
-        multioutput="raw_values" if multitask else "uniform_average",
-        sample_weight=truth.numpy(force=True).ravel(),
-    )
+    if multitask:
+        out = []
+        for task_idx in range(truth.shape[1]):
+            out.append(mape(
+                truth[:, task_idx].numpy(force=True),
+                prediction[:, task_idx].numpy(force=True),
+                multioutput="raw_values" if multitask else "uniform_average",
+                sample_weight=truth[:, task_idx].numpy(force=True).ravel(),
+            )[0])
+        return out
+    else:
+        return mape(
+            truth.numpy(force=True),
+            prediction.numpy(force=True),
+            multioutput="raw_values" if multitask else "uniform_average",
+            sample_weight=truth.numpy(force=True).ravel(),
+        )
 
 
 def mean_absolute_error_score(truth: torch.Tensor, prediction: torch.Tensor, ignored: None, multitask: bool = False):

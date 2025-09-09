@@ -103,6 +103,10 @@ def main():
             with open(args["config_file"], "r") as f:
                 cfg = yaml.safe_load(f)
                 cfg["target_columns"] = cfg["target_columns"].split(" ")
+                # incorrect variable name - do this for backwards compat
+                if cfg.get("optimize", None) is not None:
+                    cfg["hopt"] = cfg["optimize"]
+                    cfg.pop("optimize")
                 training_default.update(cfg)
         else:
             training_default.update({k: v for k, v in args.items() if v is not None})
