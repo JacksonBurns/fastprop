@@ -7,6 +7,7 @@ import yaml
 
 from fastprop import DEFAULT_TRAINING_CONFIG
 from fastprop.cli.train import train_fastprop
+from fastprop.cli.shap import shap_fastprop
 
 
 class Test_fastprop(unittest.TestCase):
@@ -31,6 +32,10 @@ class Test_fastprop(unittest.TestCase):
             train_args.update(fastprop_args)
             _, res = train_fastprop(**train_args)
             assert res.describe().loc["mean", "test_r2_score"] > 0.90
+        
+        ckpt_dir = list(Path(fastprop_args["output_directory"]).glob("fastprop_*"))[0] / "checkpoints"
+        cached_descs = list(Path(fastprop_args["output_directory"]).glob("cache*csv"))[0]
+        shap_fastprop(ckpt_dir, cached_descs, "all")
 
     @classmethod
     def tearDownClass(cls):

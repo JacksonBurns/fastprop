@@ -1,4 +1,5 @@
 import os
+from packaging.version import Version
 
 import numpy as np
 import torch
@@ -68,7 +69,12 @@ def shap_fastprop(
         if not isinstance(model_shap_values, list):
             model_shap_values = [model_shap_values]
         per_model_shap.append(model_shap_values)
-    all_shap_values = np.mean(np.array(per_model_shap), axis=0)
+
+    # backwards compat for an old version of SHAP
+    if Version(shap.__version__ ) >= Version("0.45.0"):
+        all_shap_values = np.mean(np.array(per_model_shap), axis=0).squeeze(-1)
+    else:
+        all_shap_values = np.mean(np.array(per_model_shap), axis=0)
 
     # for each target, create a plot of the most important features
     for i, target_name in enumerate(f"task_{i}" for i in range(all_models[0].readout.out_features)):
