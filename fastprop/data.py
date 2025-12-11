@@ -2,8 +2,11 @@ from typing import List, Literal, Optional, Tuple
 
 import numpy as np
 import torch
-from astartes import train_val_test_split, train_test_split
-from astartes.molecules import train_val_test_split_molecules, train_test_split_molecules
+from astartes import train_test_split, train_val_test_split
+from astartes.molecules import (
+    train_test_split_molecules,
+    train_val_test_split_molecules,
+)
 from rdkit import Chem
 from torch.utils.data import DataLoader as TorchDataloader
 from torch.utils.data import Dataset as TorchDataset

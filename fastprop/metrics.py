@@ -30,12 +30,14 @@ def weighted_mean_absolute_percentage_error_score(truth: torch.Tensor, predictio
     if multitask:
         out = []
         for task_idx in range(truth.shape[1]):
-            out.append(mape(
-                truth[:, task_idx].numpy(force=True),
-                prediction[:, task_idx].numpy(force=True),
-                multioutput="raw_values" if multitask else "uniform_average",
-                sample_weight=truth[:, task_idx].numpy(force=True).ravel(),
-            )[0])
+            out.append(
+                mape(
+                    truth[:, task_idx].numpy(force=True),
+                    prediction[:, task_idx].numpy(force=True),
+                    multioutput="raw_values" if multitask else "uniform_average",
+                    sample_weight=truth[:, task_idx].numpy(force=True).ravel(),
+                )[0]
+            )
         return out
     else:
         return mape(

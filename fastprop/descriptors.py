@@ -1,5 +1,5 @@
-import os
 import datetime
+import os
 from importlib.metadata import version
 from time import perf_counter
 from typing import List, Union

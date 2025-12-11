@@ -1,8 +1,8 @@
 import os
-from packaging.version import Version
 
 import numpy as np
 import torch
+from packaging.version import Version
 from tqdm import tqdm
 
 from fastprop.data import standard_scale
@@ -13,8 +13,8 @@ from fastprop.model import fastprop
 shap = None
 plt = None
 try:
-    import shap
     import matplotlib.pyplot as plt
+    import shap
 except ImportError as ie:
     shape_error = ie
 
@@ -71,7 +71,7 @@ def shap_fastprop(
         per_model_shap.append(model_shap_values)
 
     # backwards compat for an old version of SHAP
-    if Version(shap.__version__ ) >= Version("0.45.0"):
+    if Version(shap.__version__) >= Version("0.45.0"):
         all_shap_values = np.mean(np.array(per_model_shap), axis=0).squeeze(-1)
     else:
         all_shap_values = np.mean(np.array(per_model_shap), axis=0)
