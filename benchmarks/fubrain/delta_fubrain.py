@@ -21,9 +21,9 @@ from itertools import product
 import numpy as np
 import pandas as pd
 import torch
+from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import TensorBoardLogger
 from sklearn.model_selection import KFold
-from pytorch_lightning import Trainer
 
 from fastprop.data import (
     clean_dataset,

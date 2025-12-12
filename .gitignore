@@ -46,6 +46,9 @@ benchmarks/ftrs
 benchmarks/cepdb_subset
 benchmarks/pairs_fubrain
 
+# vscode
+.vscode
+
 # example plots
 *_feature_importance_beeswarm.png
 

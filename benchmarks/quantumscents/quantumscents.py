@@ -18,9 +18,9 @@ import pickle as pkl
 import numpy as np
 import pandas as pd
 import torch
+from mordred import Calculator
 from rdkit import Chem
 from rdkit.Chem import rdDetermineBonds
-from mordred import Calculator
 
 from fastprop.data import (
     clean_dataset,

@@ -23,7 +23,6 @@ from fastprop.descriptors import get_descriptors
 from fastprop.io import load_saved_descriptors, read_input_csv
 from fastprop.model import fastprop, train_and_test
 
-
 tune, OptunaSearch = None, None
 try:
     import ray
